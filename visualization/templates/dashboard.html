@@ -2250,6 +2250,106 @@
                     }
 
                     map.appendChild(asset);
+
+                    // Draw orange boundary distance indicator if asset is outside grid
+                    const GRID_MIN = -60;
+                    const GRID_MAX = 60;
+                    const assetX = t.position[0];
+                    const assetY = t.position[1];
+
+                    let isOutsideBoundary = false;
+                    let boundaryX = assetX;
+                    let boundaryY = assetY;
+
+                    // Determine if outside and find closest boundary point
+                    if (assetX < GRID_MIN) {
+                        boundaryX = GRID_MIN;
+                        isOutsideBoundary = true;
+                    } else if (assetX > GRID_MAX) {
+                        boundaryX = GRID_MAX;
+                        isOutsideBoundary = true;
+                    }
+
+                    if (assetY < GRID_MIN) {
+                        boundaryY = GRID_MIN;
+                        isOutsideBoundary = true;
+                    } else if (assetY > GRID_MAX) {
+                        boundaryY = GRID_MAX;
+                        isOutsideBoundary = true;
+                    }
+
+                    if (isOutsideBoundary) {
+                        // Calculate orthogonal distance (closest point on boundary)
+                        // For orthogonal distance, we find which boundary edge is closest
+                        let lineStartX = assetX;
+                        let lineStartY = assetY;
+                        let lineEndX = boundaryX;
+                        let lineEndY = boundaryY;
+
+                        // Determine if we should draw horizontal or vertical line
+                        const distX = Math.abs(assetX < GRID_MIN ? assetX - GRID_MIN : (assetX > GRID_MAX ? assetX - GRID_MAX : 0));
+                        const distY = Math.abs(assetY < GRID_MIN ? assetY - GRID_MIN : (assetY > GRID_MAX ? assetY - GRID_MAX : 0));
+
+                        // Draw line perpendicular to nearest boundary
+                        if (distX > 0 && distY === 0) {
+                            // Outside left or right boundary - draw horizontal line
+                            lineEndY = assetY;
+                        } else if (distY > 0 && distX === 0) {
+                            // Outside top or bottom boundary - draw vertical line
+                            lineEndX = assetX;
+                        } else if (distX > 0 && distY > 0) {
+                            // In corner - draw to nearest edge orthogonally
+                            if (distX < distY) {
+                                // Closer to vertical boundary
+                                lineEndY = assetY;
+                            } else {
+                                // Closer to horizontal boundary
+                                lineEndX = assetX;
+                            }
+                        }
+
+                        // Convert to pixel coordinates
+                        const x1 = assetX * 4 + w/2;
+                        const y1 = h/2 - assetY * 4;
+                        const x2 = lineEndX * 4 + w/2;
+                        const y2 = h/2 - lineEndY * 4;
+
+                        // Calculate line properties
+                        const dx = x2 - x1;
+                        const dy = y2 - y1;
+                        const length = Math.sqrt(dx*dx + dy*dy);
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                        // Draw thin orange line
+                        const boundaryLine = document.createElement('div');
+                        boundaryLine.style.position = 'absolute';
+                        boundaryLine.style.left = x1 + 'px';
+                        boundaryLine.style.top = y1 + 'px';
+                        boundaryLine.style.width = length + 'px';
+                        boundaryLine.style.height = '1.5px';
+                        boundaryLine.style.background = '#ff8c00'; // Dark orange
+                        boundaryLine.style.transformOrigin = '0 0';
+                        boundaryLine.style.transform = 'rotate(' + angle + 'deg)';
+                        boundaryLine.style.pointerEvents = 'none';
+                        boundaryLine.style.opacity = '0.8';
+                        boundaryLine.style.zIndex = '5';
+
+                        map.appendChild(boundaryLine);
+
+                        // Draw small orange dot at boundary point
+                        const boundaryDot = document.createElement('div');
+                        boundaryDot.style.position = 'absolute';
+                        boundaryDot.style.left = (x2 - 3) + 'px';
+                        boundaryDot.style.top = (y2 - 3) + 'px';
+                        boundaryDot.style.width = '6px';
+                        boundaryDot.style.height = '6px';
+                        boundaryDot.style.background = '#ff8c00';
+                        boundaryDot.style.borderRadius = '50%';
+                        boundaryDot.style.pointerEvents = 'none';
+                        boundaryDot.style.zIndex = '5';
+
+                        map.appendChild(boundaryDot);
+                    }
                 } else if (t.type === 'delivery' && t.pickup) {
                     // Delivery Package: Show pickup and dropoff markers
                     if (t.status !== 'delivered') {
@@ -2348,8 +2448,10 @@
 
             // UAV Trails - Draw before UAV markers
             const currentTime = Date.now();
-            const trailDuration = 3000; // 3 seconds in milliseconds
+            const trailDuration = 15000; // 15 seconds in milliseconds (5x longer)
             const minDistanceForNewPoint = 0.5; // Only add trail point if UAV moved at least 0.5 meters
+            const minThickness = 2; // Thinnest trail (oldest points)
+            const maxThickness = 20; // Thickest trail (newest points, 2x UAV size)
 
             Object.entries(uavs).forEach(([id, u]) => {
                 // Initialize trail history for this UAV if not exists
@@ -2381,7 +2483,7 @@
                     });
                 }
 
-                // Remove trail points older than 3 seconds
+                // Remove trail points older than 15 seconds
                 uavTrailHistory[id] = uavTrailHistory[id].filter(point =>
                     (currentTime - point.timestamp) <= trailDuration
                 );
@@ -2392,10 +2494,14 @@
                     const p2 = uavTrailHistory[id][i + 1];
 
                     const age = currentTime - p1.timestamp;
-                    const ageRatio = age / trailDuration; // 0 to 1
+                    const ageRatio = age / trailDuration; // 0 to 1 (0 = newest, 1 = oldest)
+
+                    // Variable thickness: thin at old end, thick at UAV end
+                    // Starts at minThickness (old) and grows to maxThickness (new)
+                    const thickness = minThickness + (1 - ageRatio) * (maxThickness - minThickness);
 
                     // Exponential fade: opacity decreases exponentially with age
-                    const opacity = Math.exp(-4 * ageRatio) * 0.8; // Max opacity 0.8 (increased for visibility)
+                    const opacity = Math.exp(-3 * ageRatio) * 0.7; // Max opacity 0.7, slower fade for longer trail
 
                     // Calculate positions in pixels
                     const x1 = p1.position[0] * 4 + w/2;
@@ -2411,19 +2517,19 @@
 
                     // Only draw if line has meaningful length
                     if (length > 0.5) {
-                        // Create trail segment
+                        // Create trail segment with variable thickness
                         const segment = document.createElement('div');
                         segment.style.position = 'absolute';
                         segment.style.left = x1 + 'px';
-                        segment.style.top = y1 + 'px';
+                        segment.style.top = (y1 - thickness/2) + 'px'; // Center the line vertically
                         segment.style.width = length + 'px';
-                        segment.style.height = '3px'; // Increased from 2px for better visibility
+                        segment.style.height = thickness + 'px'; // Variable thickness
                         segment.style.background = 'rgba(135, 206, 250, ' + opacity + ')'; // Light blue
-                        segment.style.transformOrigin = '0 0';
+                        segment.style.transformOrigin = '0 50%'; // Rotate around left-center point
                         segment.style.transform = 'rotate(' + angle + 'deg)';
                         segment.style.pointerEvents = 'none';
-                        segment.style.borderRadius = '1.5px';
-                        segment.style.boxShadow = '0 0 2px rgba(135, 206, 250, 0.5)'; // Add glow effect
+                        segment.style.borderRadius = (thickness/2) + 'px'; // Rounded ends scale with thickness
+                        segment.style.boxShadow = '0 0 ' + (thickness/2) + 'px rgba(135, 206, 250, ' + (opacity * 0.6) + ')'; // Glow scales with thickness
 
                         map.appendChild(segment);
                     }
