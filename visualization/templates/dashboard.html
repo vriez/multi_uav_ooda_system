@@ -2349,6 +2349,32 @@
                         boundaryDot.style.zIndex = '5';
 
                         map.appendChild(boundaryDot);
+
+                        // Calculate orthogonal distance in meters
+                        const orthogonalDistance = Math.max(distX, distY);
+
+                        // Display distance label near the middle of the orange line
+                        const midX = (x1 + x2) / 2;
+                        const midY = (y1 + y2) / 2;
+
+                        const distanceLabel = document.createElement('div');
+                        distanceLabel.style.position = 'absolute';
+                        distanceLabel.style.left = midX + 'px';
+                        distanceLabel.style.top = (midY - 12) + 'px'; // Offset above the line
+                        distanceLabel.style.transform = 'translate(-50%, 0)'; // Center horizontally
+                        distanceLabel.style.fontSize = '11px';
+                        distanceLabel.style.fontWeight = '600';
+                        distanceLabel.style.color = '#ff8c00';
+                        distanceLabel.style.background = 'rgba(0, 0, 0, 0.7)';
+                        distanceLabel.style.padding = '2px 6px';
+                        distanceLabel.style.borderRadius = '3px';
+                        distanceLabel.style.border = '1px solid #ff8c00';
+                        distanceLabel.style.whiteSpace = 'nowrap';
+                        distanceLabel.style.pointerEvents = 'none';
+                        distanceLabel.style.zIndex = '10';
+                        distanceLabel.textContent = orthogonalDistance.toFixed(1) + 'm';
+
+                        map.appendChild(distanceLabel);
                     }
                 } else if (t.type === 'delivery' && t.pickup) {
                     // Delivery Package: Show pickup and dropoff markers
