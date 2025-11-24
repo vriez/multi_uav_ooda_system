@@ -1084,30 +1084,104 @@
 
             <h3 onclick="toggleSection(this)">OODA Loop Monitor</h3>
             <div class="section-content">
-                <div style="display: grid; gap: 10px;">
-                    <div class="ooda-phase">
-                        <div style="font-weight: 600; color: var(--primary); margin-bottom: 5px;">Observe</div>
-                        <div id="ooda-observe" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
-                            Waiting for mission start...
+                <!-- Cycle Metrics -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
+                    <div class="stat-box" style="padding: 8px;">
+                        <div class="stat-value" id="ooda-cycle-count" style="font-size: 20px;">0</div>
+                        <div class="stat-label" style="font-size: 11px;">Total Cycles</div>
+                    </div>
+                    <div class="stat-box" style="padding: 8px;">
+                        <div class="stat-value" id="ooda-avg-time" style="font-size: 20px;">0ms</div>
+                        <div class="stat-label" style="font-size: 11px;">Avg Cycle Time</div>
+                    </div>
+                </div>
+
+                <!-- Circular OODA Diagram -->
+                <div style="position: relative; margin: 20px auto; width: 220px; height: 220px;" id="ooda-circle-container">
+                    <svg width="220" height="220" style="transform: rotate(-90deg);">
+                        <!-- Background circle -->
+                        <circle cx="110" cy="110" r="90" fill="none" stroke="var(--border-color)" stroke-width="2"/>
+
+                        <!-- Phase arcs (will be dynamically updated) -->
+                        <circle id="ooda-arc-observe" cx="110" cy="110" r="90" fill="none"
+                                stroke="var(--primary)" stroke-width="20"
+                                stroke-dasharray="141.37 565.49" stroke-dashoffset="0"
+                                opacity="0.3"/>
+                        <circle id="ooda-arc-orient" cx="110" cy="110" r="90" fill="none"
+                                stroke="var(--warning)" stroke-width="20"
+                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-141.37"
+                                opacity="0.3"/>
+                        <circle id="ooda-arc-decide" cx="110" cy="110" r="90" fill="none"
+                                stroke="var(--success)" stroke-width="20"
+                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-282.74"
+                                opacity="0.3"/>
+                        <circle id="ooda-arc-act" cx="110" cy="110" r="90" fill="none"
+                                stroke="var(--danger)" stroke-width="20"
+                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-424.11"
+                                opacity="0.3"/>
+
+                        <!-- Center text -->
+                        <text x="110" y="115" text-anchor="middle" fill="var(--text-primary)"
+                              font-size="14" font-weight="600" transform="rotate(90 110 110)" id="ooda-center-text">
+                            IDLE
+                        </text>
+                    </svg>
+
+                    <!-- Phase labels -->
+                    <div style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--primary);">OBSERVE</div>
+                    <div style="position: absolute; right: -5px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: var(--warning);">ORIENT</div>
+                    <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--success);">DECIDE</div>
+                    <div style="position: absolute; left: -5px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: var(--danger);">ACT</div>
+                </div>
+
+                <!-- Phase Details (Expandable) -->
+                <div style="margin-top: 15px;">
+                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('observe')" style="cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; color: var(--primary);">Observe</div>
+                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-observe-time">-</div>
+                        </div>
+                        <div id="ooda-observe-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                            <div id="ooda-observe-content">Waiting for cycle...</div>
                         </div>
                     </div>
-                    <div class="ooda-phase">
-                        <div style="font-weight: 600; color: var(--warning); margin-bottom: 5px;">Orient</div>
-                        <div id="ooda-orient" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
-                            Waiting for mission start...
+
+                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('orient')" style="cursor: pointer; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; color: var(--warning);">Orient</div>
+                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-orient-time">-</div>
+                        </div>
+                        <div id="ooda-orient-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                            <div id="ooda-orient-content">Waiting for cycle...</div>
                         </div>
                     </div>
-                    <div class="ooda-phase">
-                        <div style="font-weight: 600; color: var(--success); margin-bottom: 5px;">Decide</div>
-                        <div id="ooda-decide" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
-                            Waiting for mission start...
+
+                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('decide')" style="cursor: pointer; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; color: var(--success);">Decide</div>
+                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-decide-time">-</div>
+                        </div>
+                        <div id="ooda-decide-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                            <div id="ooda-decide-content">Waiting for cycle...</div>
                         </div>
                     </div>
-                    <div class="ooda-phase">
-                        <div style="font-weight: 600; color: var(--danger); margin-bottom: 5px;">Act</div>
-                        <div id="ooda-act" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
-                            Waiting for mission start...
+
+                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('act')" style="cursor: pointer; margin-top: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-weight: 600; color: var(--danger);">Act</div>
+                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-act-time">-</div>
                         </div>
+                        <div id="ooda-act-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                            <div id="ooda-act-content">Waiting for cycle...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Events Log -->
+                <div style="margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 5px; color: var(--text-secondary);">RECENT EVENTS</div>
+                    <div id="ooda-event-log" style="font-size: 11px; color: var(--text-muted); max-height: 150px; overflow-y: auto;">
+                        <div style="font-style: italic;">No events yet...</div>
                     </div>
                 </div>
             </div>
@@ -1374,6 +1448,169 @@
             localStorage.setItem('sectionStates', JSON.stringify(collapseStates));
         }
 
+        // OODA Loop Visualization Functions
+        const oodaState = {
+            cycleCount: 0,
+            cycleTimes: [],
+            phaseTimes: {observe: [], orient: [], decide: [], act: []},
+            currentPhase: 'idle',
+            eventLog: []
+        };
+
+        function toggleOodaPhaseDetails(phase) {
+            const details = document.getElementById(`ooda-${phase}-details`);
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+            } else {
+                details.style.display = 'none';
+            }
+        }
+
+        function updateOodaCircle(phase) {
+            // Reset all arcs to dim
+            ['observe', 'orient', 'decide', 'act'].forEach(p => {
+                const arc = document.getElementById(`ooda-arc-${p}`);
+                if (arc) arc.setAttribute('opacity', '0.3');
+            });
+
+            // Highlight active phase
+            if (phase !== 'idle') {
+                const arc = document.getElementById(`ooda-arc-${phase}`);
+                if (arc) arc.setAttribute('opacity', '1.0');
+            }
+
+            // Update center text
+            const centerText = document.getElementById('ooda-center-text');
+            if (centerText) {
+                centerText.textContent = phase.toUpperCase();
+            }
+
+            oodaState.currentPhase = phase;
+        }
+
+        function updateOodaMetrics() {
+            // Update cycle count
+            document.getElementById('ooda-cycle-count').textContent = oodaState.cycleCount;
+
+            // Calculate average cycle time
+            if (oodaState.cycleTimes.length > 0) {
+                const avg = oodaState.cycleTimes.reduce((a, b) => a + b, 0) / oodaState.cycleTimes.length;
+                document.getElementById('ooda-avg-time').textContent = avg.toFixed(1) + 'ms';
+            }
+
+            // Update phase times
+            ['observe', 'orient', 'decide', 'act'].forEach(phase => {
+                const times = oodaState.phaseTimes[phase];
+                if (times.length > 0) {
+                    const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                    const el = document.getElementById(`ooda-${phase}-time`);
+                    if (el) el.textContent = avg.toFixed(1) + 'ms';
+                }
+            });
+        }
+
+        function addOodaEvent(event) {
+            const timestamp = new Date().toLocaleTimeString();
+            const phaseColor = {
+                observe: 'var(--primary)',
+                orient: 'var(--warning)',
+                decide: 'var(--success)',
+                act: 'var(--danger)'
+            }[event.phase] || 'var(--text-muted)';
+
+            const eventHTML = `
+                <div style="padding: 5px; margin-bottom: 5px; border-left: 3px solid ${phaseColor}; padding-left: 8px; background: var(--bg-tertiary); border-radius: 3px;">
+                    <div style="font-weight: 600; font-size: 10px; color: ${phaseColor}; text-transform: uppercase;">
+                        ${event.phase || 'system'} ${event.cycle_num ? `(Cycle #${event.cycle_num})` : ''}
+                    </div>
+                    <div style="margin-top: 2px;">${event.message}</div>
+                    <div style="font-size: 9px; color: var(--text-muted); margin-top: 2px;">${timestamp}</div>
+                </div>
+            `;
+
+            const log = document.getElementById('ooda-event-log');
+            if (log) {
+                // Remove "no events" placeholder if it exists
+                if (log.querySelector('[style*="italic"]')) {
+                    log.innerHTML = '';
+                }
+
+                log.insertAdjacentHTML('afterbegin', eventHTML);
+
+                // Keep only last 10 events
+                while (log.children.length > 10) {
+                    log.removeChild(log.lastChild);
+                }
+            }
+
+            oodaState.eventLog.unshift(event);
+            if (oodaState.eventLog.length > 50) {
+                oodaState.eventLog.pop();
+            }
+        }
+
+        function updateOodaPhaseDetails(phase, event) {
+            const content = document.getElementById(`ooda-${phase}-content`);
+            if (!content) return;
+
+            let detailsHTML = `<div style="line-height: 1.6;">${event.message}</div>`;
+
+            // Add specific details based on phase
+            if (event.details) {
+                detailsHTML += '<div style="margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border-color);">';
+
+                if (phase === 'observe') {
+                    const d = event.details;
+                    detailsHTML += `
+                        <div>Operational: ${d.operational_uavs?.length || 0} UAVs</div>
+                        <div>Failed: ${d.failed_uavs?.length || 0} UAVs</div>
+                        <div>Lost Tasks: ${d.lost_tasks?.length || 0}</div>
+                    `;
+                } else if (phase === 'orient') {
+                    const d = event.details;
+                    detailsHTML += `
+                        <div>Coverage Loss: ${d.coverage_loss?.toFixed(1) || 0}%</div>
+                        <div>Battery Spare: ${d.battery_spare?.toFixed(1) || 0}%</div>
+                        <div>Recoverable: ${d.recoverable_tasks || 0}/${d.total_lost_tasks || 0}</div>
+                    `;
+                } else if (phase === 'decide') {
+                    const d = event.details;
+                    detailsHTML += `
+                        <div>Strategy: ${d.strategy || 'N/A'}</div>
+                        <div>Recovery Rate: ${d.recovery_rate?.toFixed(1) || 0}%</div>
+                        <div>Reallocations: ${d.reallocation_count || 0}</div>
+                    `;
+                }
+
+                detailsHTML += '</div>';
+            }
+
+            content.innerHTML = detailsHTML;
+        }
+
+        function resetOodaVisualization() {
+            oodaState.cycleCount = 0;
+            oodaState.cycleTimes = [];
+            oodaState.phaseTimes = {observe: [], orient: [], decide: [], act: []};
+            oodaState.currentPhase = 'idle';
+            oodaState.eventLog = [];
+
+            updateOodaCircle('idle');
+            document.getElementById('ooda-cycle-count').textContent = '0';
+            document.getElementById('ooda-avg-time').textContent = '0ms';
+
+            ['observe', 'orient', 'decide', 'act'].forEach(phase => {
+                document.getElementById(`ooda-${phase}-time`).textContent = '-';
+                document.getElementById(`ooda-${phase}-content`).textContent = 'Waiting for cycle...';
+                document.getElementById(`ooda-${phase}-details`).style.display = 'none';
+            });
+
+            const log = document.getElementById('ooda-event-log');
+            if (log) {
+                log.innerHTML = '<div style="font-style: italic;">No events yet...</div>';
+            }
+        }
+
         // Restore section states from localStorage
         function restoreSectionStates() {
             const collapseStates = JSON.parse(localStorage.getItem('sectionStates') || '{}');
@@ -1416,11 +1653,8 @@
             selectedUavInfo = null;
             render(); // Re-render to show clean map with just grid and home base
 
-            // Reset OODA displays
-            document.getElementById('ooda-observe').textContent = 'Waiting for mission start...';
-            document.getElementById('ooda-orient').textContent = 'Waiting for mission start...';
-            document.getElementById('ooda-decide').textContent = 'Waiting for mission start...';
-            document.getElementById('ooda-act').textContent = 'Waiting for mission start...';
+            // Reset OODA visualization
+            resetOodaVisualization();
         }
 
         function setHome(x, y) {
@@ -1863,13 +2097,38 @@
         socket.on('ooda_event', e => {
             log(e.message, e.critical);
 
-            const timestamp = new Date().toLocaleTimeString();
-            const displayHTML = `${e.message}<br><span style="color: var(--text-muted); font-size: 11px;">${timestamp}</span>`;
+            // Add to event log
+            addOodaEvent(e);
 
-            const elementId = `ooda-${e.phase}`;
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.innerHTML = displayHTML;
+            // Update circular visualization if phase is specified
+            if (e.phase) {
+                updateOodaCircle(e.phase);
+                updateOodaPhaseDetails(e.phase, e);
+
+                // Track timing if duration is provided
+                if (e.duration_ms) {
+                    oodaState.phaseTimes[e.phase].push(e.duration_ms);
+                }
+
+                // Track cycle completion (when Act phase completes)
+                if (e.phase === 'act' && e.duration_ms) {
+                    oodaState.cycleCount = e.cycle_num || oodaState.cycleCount + 1;
+
+                    // Calculate total cycle time from all phases
+                    const totalTime = ['observe', 'orient', 'decide', 'act'].reduce((sum, p) => {
+                        const times = oodaState.phaseTimes[p];
+                        return sum + (times.length > 0 ? times[times.length - 1] : 0);
+                    }, 0);
+
+                    if (totalTime > 0) {
+                        oodaState.cycleTimes.push(totalTime);
+                    }
+
+                    // Return to idle after act completes
+                    setTimeout(() => updateOodaCircle('idle'), 1000);
+                }
+
+                updateOodaMetrics();
             }
         });
 

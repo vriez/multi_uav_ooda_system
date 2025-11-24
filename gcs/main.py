@@ -40,24 +40,29 @@ class GroundControlStation:
         with open(config_path, 'r') as f:
             self.config = yaml.safe_load(f)
             
+        # Dashboard bridge (optional) - Initialize early so OODA can use it
+        self.dashboard_bridge = None
+        self.socketio = None
+
         # Initialize subsystems
-        self.ooda_engine = OODAEngine(self.config)
+        self.ooda_engine = OODAEngine(self.config, dashboard_bridge=None)  # Will be set later
         self.fleet_monitor = FleetMonitor(self.config)
         self.constraint_validator = ConstraintValidator(self.config)
         self.mission_db = MissionDatabase()
-        
+
         # Communication
         self.server_socket: Optional[socket.socket] = None
         self.running = False
         self.accept_thread: Optional[threading.Thread] = None
         
-        # Dashboard bridge (optional)
-        self.dashboard_bridge = None
-        self.socketio = None
-        
         # Register failure callback
         self.fleet_monitor.add_failure_callback(self.on_uav_failure)
-        
+
+    def set_dashboard_bridge(self, dashboard_bridge):
+        """Connect dashboard bridge to GCS and OODA engine"""
+        self.dashboard_bridge = dashboard_bridge
+        self.ooda_engine.dashboard_bridge = dashboard_bridge
+
     def start(self):
         """Start GCS server"""
         host = self.config['communication']['server_host']

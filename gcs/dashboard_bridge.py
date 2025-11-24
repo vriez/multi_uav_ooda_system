@@ -74,9 +74,18 @@ class DashboardBridge:
             import time
             time.sleep(0.5)
             
-    def notify_ooda_event(self, event_message: str, is_critical: bool = False):
+    def notify_ooda_event(self, event_message: str, is_critical: bool = False,
+                          phase: str = None, uav_id: int = None,
+                          cycle_num: int = None, duration_ms: float = None,
+                          details: dict = None):
         """Send OODA event notification to dashboard"""
         self.socketio.emit('ooda_event', {
             'message': event_message,
-            'critical': is_critical
+            'critical': is_critical,
+            'phase': phase,
+            'uav_id': uav_id,
+            'cycle_num': cycle_num,
+            'duration_ms': duration_ms,
+            'details': details or {},
+            'timestamp': __import__('time').time()
         })

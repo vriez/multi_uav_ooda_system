@@ -68,12 +68,13 @@ class OODAEngine:
     for fault-tolerant mission control
     """
     
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, dashboard_bridge=None):
         self.config = config
         self.phase = OODAPhase.IDLE
         self.cycle_start_time = 0
         self.phase_timeouts = config['ooda_engine']['phase_timeouts']
-        
+        self.dashboard_bridge = dashboard_bridge
+
         # Performance tracking
         self.cycle_count = 0
         self.phase_times = {phase: [] for phase in OODAPhase}
@@ -135,17 +136,38 @@ class OODAEngine:
         """
         phase_start = time.time()
         self.phase = OODAPhase.OBSERVE
-        
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Observing fleet: {len(fleet_state.operational_uavs)} operational, "
+                f"{len(fleet_state.failed_uavs)} failed",
+                phase='observe',
+                cycle_num=self.cycle_count,
+                details={
+                    'operational_uavs': fleet_state.operational_uavs,
+                    'failed_uavs': fleet_state.failed_uavs,
+                    'lost_tasks': fleet_state.lost_tasks
+                }
+            )
+
         # Aggregate fleet state
         # Identify failed vehicles
         # Extract lost tasks
-        
+
         elapsed = time.time() - phase_start
         self.phase_times[OODAPhase.OBSERVE].append(elapsed)
-        
+
         if elapsed > self.phase_timeouts['observe']:
             logger.warning(f"Observe phase timeout: {elapsed:.3f}s")
-            
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Observe complete: {elapsed*1000:.1f}ms",
+                phase='observe',
+                cycle_num=self.cycle_count,
+                duration_ms=elapsed*1000
+            )
+
         return fleet_state
     
     def _orient_phase(self, fleet_state: FleetState, mission_db) -> MissionImpact:
@@ -154,12 +176,19 @@ class OODAEngine:
         """
         phase_start = time.time()
         self.phase = OODAPhase.ORIENT
-        
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Orienting: Analyzing mission impact...",
+                phase='orient',
+                cycle_num=self.cycle_count
+            )
+
         # Calculate coverage loss
         total_tasks = len(mission_db.tasks)
         lost_tasks = len(fleet_state.lost_tasks)
         coverage_loss = (lost_tasks / total_tasks * 100) if total_tasks > 0 else 0
-        
+
         # Fleet capacity analysis
         battery_spare = self._calculate_battery_spare_capacity(
             fleet_state, mission_db
@@ -167,15 +196,15 @@ class OODAEngine:
         payload_spare = self._calculate_payload_spare_capacity(
             fleet_state, mission_db
         )
-        
+
         # Temporal margin
         temporal_margin = self._calculate_temporal_margin(mission_db)
-        
+
         # Determine recoverability
         recoverable = self._estimate_recoverable_tasks(
             fleet_state, mission_db, battery_spare, payload_spare
         )
-        
+
         impact = MissionImpact(
             coverage_loss_percent=coverage_loss,
             affected_zones=mission_db.get_affected_zones(fleet_state.lost_tasks),
@@ -185,13 +214,30 @@ class OODAEngine:
             recoverable_tasks=recoverable,
             total_lost_tasks=lost_tasks
         )
-        
+
         elapsed = time.time() - phase_start
         self.phase_times[OODAPhase.ORIENT].append(elapsed)
-        
+
         if elapsed > self.phase_timeouts['orient']:
             logger.warning(f"Orient phase timeout: {elapsed:.3f}s")
-            
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Orient complete: {coverage_loss:.1f}% coverage loss, "
+                f"{recoverable}/{lost_tasks} tasks recoverable",
+                phase='orient',
+                cycle_num=self.cycle_count,
+                duration_ms=elapsed*1000,
+                details={
+                    'coverage_loss': coverage_loss,
+                    'battery_spare': battery_spare,
+                    'payload_spare': payload_spare,
+                    'temporal_margin': temporal_margin,
+                    'recoverable_tasks': recoverable,
+                    'total_lost_tasks': lost_tasks
+                }
+            )
+
         return impact
     
     def _decide_phase(self, impact: MissionImpact, fleet_state: FleetState,
@@ -245,10 +291,23 @@ class OODAEngine:
         
         elapsed = time.time() - phase_start
         self.phase_times[OODAPhase.DECIDE].append(elapsed)
-        
+
         if elapsed > self.phase_timeouts['decide']:
             logger.warning(f"Decide phase timeout: {elapsed:.3f}s")
-            
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Decide complete: {strategy.value} - {rationale}",
+                phase='decide',
+                cycle_num=self.cycle_count,
+                duration_ms=elapsed*1000,
+                details={
+                    'strategy': strategy.value,
+                    'recovery_rate': recovery_rate,
+                    'reallocation_count': len(reallocation_plan)
+                }
+            )
+
         return decision
     
     def _act_phase(self, decision: OODADecision, mission_db):
@@ -257,19 +316,34 @@ class OODAEngine:
         """
         phase_start = time.time()
         self.phase = OODAPhase.ACT
-        
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Acting: Executing {decision.strategy.value}...",
+                phase='act',
+                cycle_num=self.cycle_count
+            )
+
         # Commit reallocation to mission database
         if decision.reallocation_plan:
             mission_db.commit_reallocation(decision.reallocation_plan)
-        
+
         # Mission updates will be dispatched by fleet manager
-        
+
         elapsed = time.time() - phase_start
         self.phase_times[OODAPhase.ACT].append(elapsed)
-        
+
         if elapsed > self.phase_timeouts['act']:
             logger.warning(f"Act phase timeout: {elapsed:.3f}s")
-        
+
+        if self.dashboard_bridge:
+            self.dashboard_bridge.notify_ooda_event(
+                f"Act complete: Strategy executed in {elapsed*1000:.1f}ms",
+                phase='act',
+                cycle_num=self.cycle_count,
+                duration_ms=elapsed*1000
+            )
+
         self.phase = OODAPhase.IDLE
     
     def _calculate_battery_spare_capacity(self, fleet_state: FleetState,
