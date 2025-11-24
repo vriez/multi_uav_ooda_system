@@ -685,35 +685,22 @@ class WorkloadBalancer:
         num_zones = len(tasks)
         num_uavs = len(operational_uavs)
 
-        # Check if priority-based allocation (for SAR)
-        has_priority = any(task.get('priority', 1.0) > 1.0 for task in tasks.values())
-
-        if has_priority:
-            # PRIORITY-BASED ALLOCATION (SAR)
-            # Sort zones by priority (highest first)
-            sorted_zones = sorted(tasks.keys(), key=lambda zid: tasks[zid].get('priority', 1.0), reverse=True)
-
-            # Distribute zones round-robin but prioritize high-priority zones
-            zone_groups = [[] for _ in range(num_uavs)]
-            for i, zid in enumerate(sorted_zones):
-                zone_groups[i % num_uavs].append(zid)
-
+        # SPATIAL CONTIGUITY ALLOCATION (Both Surveillance and SAR)
+        # Always use spatial allocation for balanced zone assignments
+        if num_zones == 9 and num_uavs == 5:
+            # Standard 9-zone, 5-UAV layout - spatially contiguous
+            zone_groups = [
+                [1, 2],      # UAV 1: Top left-middle (2 zones)
+                [3, 6],      # UAV 2: Right column (2 zones)
+                [4, 5],      # UAV 3: Middle left-center (2 zones)
+                [7, 8],      # UAV 4: Bottom left-middle (2 zones)
+                [9]          # UAV 5: Bottom right (1 zone)
+            ]
         else:
-            # SPATIAL CONTIGUITY ALLOCATION (Surveillance)
-            if num_zones == 9 and num_uavs == 5:
-                # Surveillance 9-zone, 5-UAV layout
-                zone_groups = [
-                    [1, 2],      # Top left-middle
-                    [3, 6],      # Right column
-                    [4, 5],      # Middle left-center
-                    [7, 8],      # Bottom left-middle
-                    [9]          # Bottom right
-                ]
-            else:
-                # Generic: Distribute zones evenly
-                zone_groups = [[] for _ in range(num_uavs)]
-                for i, zid in enumerate(sorted(tasks.keys())):
-                    zone_groups[i % num_uavs].append(zid)
+            # Generic: Distribute zones evenly
+            zone_groups = [[] for _ in range(num_uavs)]
+            for i, zid in enumerate(sorted(tasks.keys())):
+                zone_groups[i % num_uavs].append(zid)
 
         assignments = []
         uav_list = sorted(operational_uavs)
@@ -1112,6 +1099,7 @@ def init_scenario(scenario, custom_home=None):
             tasks[f'asset_{i+1}'] = {
                 'type': 'asset',
                 'position': asset_pos,
+                'last_known_position': asset_pos.copy(),  # Last detected position (UAVs target this)
                 'search_radius': initial_radius,  # Current search radius (reduces to SAR_DETECTION_RADIUS)
                 'searching_uavs': [],  # UAVs currently circling this asset
                 'detected_by': [],  # UAVs that have pinpointed this asset
@@ -1336,6 +1324,18 @@ def simulation_loop():
                         uav['position'][0] += (dx / dist) * speed_factor * dt
                         uav['position'][1] += (dy / dist) * speed_factor * dt
                         uav['state'] = 'returning'
+
+                        # Battery drains during return flight
+                        battery_drain = BASE_BATTERY_DRAIN * dt
+                        uav['battery'] -= battery_drain
+
+                        if uav['battery'] <= 0:
+                            uav['battery'] = 0
+                            uav['operational'] = False
+                            uav['state'] = 'crashed'
+                            uav['returning'] = False
+                            logger.error(f"{uid} battery depleted during return flight")
+                            emit_ooda('observe', f'{uid} CRASHED during return (battery exhausted)', critical=True)
                     else:
                         # Snap to home position to prevent floating point drift
                         uav['position'][0] = home_base[0]
@@ -1377,11 +1377,22 @@ def simulation_loop():
                     asset_id = uav['searching_asset'] or uav['guardian_of_asset']
                     if asset_id in tasks:
                         asset = tasks[asset_id]
-                        asset_pos = np.array(asset['position'][:2])
+                        # Use last known position for targeting (not real-time position)
+                        asset_pos = np.array(asset['last_known_position'][:2])
                         current_radius = asset['search_radius']
 
-                        # SAFETY CHECK: Asset outside grid requires permission
-                        asset_outside_grid = is_position_outside_grid(asset['position'])
+                        # Check if UAV is within detection radius of REAL asset position
+                        real_asset_pos = np.array(asset['position'][:2])
+                        uav_pos = np.array(uav['position'][:2])
+                        distance_to_real_asset = np.linalg.norm(real_asset_pos - uav_pos)
+
+                        # Update last known position if UAV is within detection radius of real asset
+                        if distance_to_real_asset <= SAR_VISIBILITY_RADIUS:
+                            asset['last_known_position'] = asset['position'].copy()
+                            asset_pos = np.array(asset['last_known_position'][:2])
+
+                        # SAFETY CHECK: Last known position outside grid requires permission
+                        asset_outside_grid = is_position_outside_grid(asset['last_known_position'])
                         permission_granted = uav.get('permission_granted_for_target') == tuple(asset_pos)
 
                         if asset_outside_grid and not permission_granted:
@@ -1396,9 +1407,9 @@ def simulation_loop():
                                     uav['position'][1] = boundary_pos[1]
                                     uav['awaiting_permission'] = True
                                     uav['boundary_stop_position'] = boundary_pos.copy()
-                                    uav['out_of_grid_target'] = asset['position'].copy()
+                                    uav['out_of_grid_target'] = asset['last_known_position'].copy()
                                     uav['state'] = 'awaiting_permission'
-                                    logger.warning(f"{uid} stopped at boundary - {asset_id} at ({asset['position'][0]:.1f}, {asset['position'][1]:.1f}) is outside grid")
+                                    logger.warning(f"{uid} stopped at boundary - {asset_id} last known at ({asset['last_known_position'][0]:.1f}, {asset['last_known_position'][1]:.1f}) is outside grid")
                                     emit_ooda('observe', f'{uid} BOUNDARY STOP - {asset_id} outside safe zone. Double-click UAV to grant permission.', critical=True)
 
                                 # Battery still drains while hovering at boundary waiting for permission
@@ -1630,6 +1641,9 @@ def simulation_loop():
                                 if uav_id not in asset['searching_uavs'] and uav['state'] in ['patrolling', 'deploying']:
                                     # Check if this is first detection or confirmation
                                     is_first_contact = len(asset['searching_uavs']) == 0
+
+                                    # UPDATE: Set last known position when asset is detected
+                                    asset['last_known_position'] = asset['position'].copy()
 
                                     # Assign UAV to search this asset
                                     uav['searching_asset'] = asset_id
@@ -1886,10 +1900,10 @@ def simulation_loop():
                     objectives_complete = mission_metrics['deliveries_completed'] >= mission_metrics.get('total_packages', 0)
 
                     if objectives_complete:
-                        # Check if all UAVs are home (returning, charging, or crashed)
+                        # Check if all UAVs are home (charging or crashed)
+                        # Note: UAVs transition from 'returning' to 'charging' when they arrive home
                         all_home = all(
-                            u['state'] in ['charging', 'crashed'] or
-                            (u['state'] == 'returning' and np.linalg.norm(np.array(u['position'][:2]) - np.array(home_base[:2])) < HOME_ARRIVAL_THRESHOLD)
+                            u['state'] in ['charging', 'crashed']
                             for u in uavs.values()
                         )
 
@@ -1906,8 +1920,9 @@ def simulation_loop():
                                 'success': True
                             }, broadcast=True)
 
-            # --- OODA Loop: Re-assignment Check (Only for surveillance/SAR) ---
-            if scenario_type in ['surveillance', 'search_rescue'] and current_time - last_reassignment_time > REASSIGNMENT_INTERVAL / simulation_speed:
+            # --- OODA Loop: Re-assignment Check (Only for surveillance) ---
+            # NOTE: Disabled for SAR to prevent zone reassignment while searching for assets
+            if scenario_type == 'surveillance' and current_time - last_reassignment_time > REASSIGNMENT_INTERVAL / simulation_speed:
 
                 # FIRST: Ensure all zones are covered (fix any orphaned zones)
                 coverage_changed = workload_balancer.ensure_full_coverage(uavs, tasks)
