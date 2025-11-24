@@ -4,10 +4,25 @@ Interactive OODA loop demonstration platform for autonomous fleet management.
 
 ## Quick Start
 
+### With uv (Recommended - Fast!)
+
 ```bash
-tar -xzf uav_system_interactive.tar.gz
-cd uav_system
-pip install flask flask-socketio numpy scipy
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies (100x faster than pip!)
+uv sync
+
+# Run the dashboard
+uv run run_dashboard.py
+# Or even shorter:
+make dash
+```
+
+### With pip (Traditional)
+
+```bash
+pip install -r requirements.txt
 python run_dashboard.py
 ```
 
@@ -49,10 +64,23 @@ When you inject a failure:
 For complete GCS + UAV simulation:
 
 ```bash
-python launch_with_gui.py
+make gui
+# or: uv run launch_with_gui.py
+# or: python launch_with_gui.py
 ```
 
 This runs the full backend with realistic physics, battery models, and distributed UAV processes.
+
+## Quick Command Reference
+
+| Command | What It Does | Speed |
+|---------|-------------|-------|
+| `make dash` | Dashboard only (demo mode) | Fastest |
+| `make gui` | Full system with GUI | Fast |
+| `make launch` | Full system (programmatic) | Fast |
+| `make gcs` | GCS only | Fast |
+| `make test` | Run test suite | - |
+| `make help` | Show all commands | - |
 
 ## Architecture
 
@@ -82,36 +110,70 @@ This runs the full backend with realistic physics, battery models, and distribut
 
 ### Installation
 
+**With uv (Recommended):**
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install all dependencies with lockfile (reproducible builds)
+uv sync
+
+# Or install with development tools
+uv sync --group dev
+
+# Verify structure
+ls -la gcs/ uav/ config/ missions/
+```
+
+**With pip (Traditional):**
 ```bash
 # Install dependencies
 pip install -r requirements.txt
 
 # Verify structure
-cd uav_system
 ls -la gcs/ uav/ config/ missions/
 ```
 
 ### Running the System
 
-**Option 1: Launch Script (Easiest)**
+**Option 1: Quick Commands (Shortest)**
 ```bash
-python launch.py
+make gui        # Launch with GUI (full system)
+make dash       # Dashboard only (fastest demo)
+make launch     # Full system programmatic
+make gcs        # GCS only
 ```
 
-**Option 2: Manual Launch**
+**Option 2: uv Commands**
+```bash
+# Launch with GUI
+uv run launch_with_gui.py
+
+# Dashboard only
+uv run run_dashboard.py
+
+# Full system
+uv run launch.py
+
+# Or with traditional python
+python launch.py  # (if dependencies installed)
+```
+
+**Option 3: Manual Launch (Multiple Terminals)**
 
 Terminal 1 (GCS):
 ```bash
-python -m gcs.main
+uv run python -m gcs.main
+# or: make gcs
 ```
 
 Terminal 2-6 (UAVs):
 ```bash
-python -m uav.client 1 0 0 10
-python -m uav.client 2 20 0 10
-python -m uav.client 3 40 0 10
-python -m uav.client 4 0 20 10
-python -m uav.client 5 20 20 10
+uv run python -m uav.client 1 0 0 10
+uv run python -m uav.client 2 20 0 10
+uv run python -m uav.client 3 40 0 10
+uv run python -m uav.client 4 0 20 10
+uv run python -m uav.client 5 20 20 10
 ```
 
 ### Testing Failure Response
