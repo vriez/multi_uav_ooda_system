@@ -1953,9 +1953,9 @@ def simulation_loop():
                                 'success': True
                             }, broadcast=True)
 
-            # --- OODA Loop: Re-assignment Check (Only for surveillance) ---
-            # NOTE: Disabled for SAR to prevent zone reassignment while searching for assets
-            if scenario_type == 'surveillance' and current_time - last_reassignment_time > REASSIGNMENT_INTERVAL / simulation_speed:
+            # --- OODA Loop: Re-assignment Check (Surveillance and SAR) ---
+            # SAR: Only reassigns recovered UAVs (after guardian duty), doesn't interrupt searching/guardian UAVs
+            if scenario_type in ['surveillance', 'search_rescue'] and current_time - last_reassignment_time > REASSIGNMENT_INTERVAL / simulation_speed:
 
                 # FIRST: Ensure all zones are covered (fix any orphaned zones)
                 coverage_changed = workload_balancer.ensure_full_coverage(uavs, tasks)
@@ -1965,9 +1965,12 @@ def simulation_loop():
                     safe_emit('workload_update', {'assignments': workload_balancer.get_current_assignments(uavs, tasks, scenario_type)})
 
                 # THEN: Handle recovered AND idle UAVs (any UAV ready for assignment)
+                # Exclude UAVs actively searching or guarding assets in SAR missions
                 ready_uavs = [uid for uid, u in uavs.items()
-                             if u['state'] in ['recovered', 'idle']
-                             or (u['state'] == 'patrolling' and not u['assigned_zones'])]
+                             if (u['state'] in ['recovered', 'idle']
+                                 or (u['state'] == 'patrolling' and not u['assigned_zones']))
+                             and not u.get('searching_asset')
+                             and not u.get('guardian_of_asset')]
 
                 if ready_uavs:
                     logger.info(f"Found {len(ready_uavs)} UAVs ready for assignment: {ready_uavs}")

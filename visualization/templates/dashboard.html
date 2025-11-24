@@ -434,6 +434,30 @@
             color: white;
             cursor: pointer;
         }
+        .uav-searching {
+            background: #17a2b8;  /* Cyan/Teal: actively searching/circling asset */
+            border-color: #17a2b8;
+            color: white;
+        }
+        body.dark-theme .uav-searching {
+            box-shadow: 0 0 15px rgba(23, 162, 184, 0.5);
+        }
+        .uav-guardian {
+            background: #6f42c1;  /* Purple: guardian protecting asset */
+            border-color: #6f42c1;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        body.dark-theme .uav-guardian {
+            box-shadow: 0 0 15px rgba(111, 66, 193, 0.5);
+        }
+        .uav-awaiting-boundary {
+            background: #fd7e14;  /* Orange: SAR waiting at boundary */
+            border-color: #fd7e14;
+            animation: blink 1s infinite;
+            color: white;
+            cursor: pointer;
+        }
         @keyframes pulse {
             0%, 100% {
                 transform: scale(1);
@@ -2876,9 +2900,15 @@
 
                 let statusClass = 'uav-operational';
                 if (u.state === 'crashed') statusClass = 'uav-failed';
-                // In SAR, UAVs remain green even when awaiting permission
-                else if ((u.state === 'awaiting_permission' || u.awaiting_permission) && scenario !== 'search_rescue') statusClass = 'uav-awaiting-permission';
-                else if (u.returning || u.state === 'charging' || u.state === 'recovered') statusClass = 'uav-returning';
+                // SAR-specific states
+                else if (u.guardian_of_asset) statusClass = 'uav-guardian';
+                else if (u.searching_asset || u.state === 'searching') statusClass = 'uav-searching';
+                // Awaiting permission: orange for SAR (boundary), red blinking for delivery
+                else if ((u.state === 'awaiting_permission' || u.awaiting_permission) && scenario === 'search_rescue') statusClass = 'uav-awaiting-boundary';
+                else if ((u.state === 'awaiting_permission' || u.awaiting_permission)) statusClass = 'uav-awaiting-permission';
+                // In SAR, 'recovered' means ready for reassignment - show as green (operational)
+                else if (u.returning || u.state === 'charging') statusClass = 'uav-returning';
+                else if (u.state === 'recovered' && scenario !== 'search_rescue') statusClass = 'uav-returning';
                 else if (u.battery_warning) statusClass = 'uav-low-battery';
 
                 m.innerHTML = `
