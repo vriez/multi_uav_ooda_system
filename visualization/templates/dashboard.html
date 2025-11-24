@@ -1134,6 +1134,7 @@
         let uavs = {};
         let tasks = {};
         let prevUavPositions = {}; // Track previous positions for speed calculation
+        let uavTrailHistory = {}; // Track UAV position history for trail rendering (3 second trails)
         let selectedUavInfo = null; // Currently selected UAV for info display
         let selectedUAV = null;
         let modalMode = null;
@@ -1411,6 +1412,7 @@
             uavs = {};
             tasks = {};
             prevUavPositions = {};
+            uavTrailHistory = {};
             selectedUavInfo = null;
             render(); // Re-render to show clean map with just grid and home base
 
@@ -2341,6 +2343,90 @@
                     }
 
                     map.appendChild(m);
+                }
+            });
+
+            // UAV Trails - Draw before UAV markers
+            const currentTime = Date.now();
+            const trailDuration = 3000; // 3 seconds in milliseconds
+            const minDistanceForNewPoint = 0.5; // Only add trail point if UAV moved at least 0.5 meters
+
+            Object.entries(uavs).forEach(([id, u]) => {
+                // Initialize trail history for this UAV if not exists
+                if (!uavTrailHistory[id]) {
+                    uavTrailHistory[id] = [];
+                }
+
+                // Only add current position if UAV has moved significantly from last trail point
+                const trail = uavTrailHistory[id];
+                let shouldAddPoint = false;
+
+                if (trail.length === 0) {
+                    shouldAddPoint = true; // Always add first point
+                } else {
+                    const lastPoint = trail[trail.length - 1];
+                    const dx = u.position[0] - lastPoint.position[0];
+                    const dy = u.position[1] - lastPoint.position[1];
+                    const distance = Math.sqrt(dx*dx + dy*dy);
+
+                    if (distance >= minDistanceForNewPoint) {
+                        shouldAddPoint = true;
+                    }
+                }
+
+                if (shouldAddPoint) {
+                    uavTrailHistory[id].push({
+                        position: [...u.position],
+                        timestamp: currentTime
+                    });
+                }
+
+                // Remove trail points older than 3 seconds
+                uavTrailHistory[id] = uavTrailHistory[id].filter(point =>
+                    (currentTime - point.timestamp) <= trailDuration
+                );
+
+                // Draw trail
+                for (let i = 0; i < uavTrailHistory[id].length - 1; i++) {
+                    const p1 = uavTrailHistory[id][i];
+                    const p2 = uavTrailHistory[id][i + 1];
+
+                    const age = currentTime - p1.timestamp;
+                    const ageRatio = age / trailDuration; // 0 to 1
+
+                    // Exponential fade: opacity decreases exponentially with age
+                    const opacity = Math.exp(-4 * ageRatio) * 0.8; // Max opacity 0.8 (increased for visibility)
+
+                    // Calculate positions in pixels
+                    const x1 = p1.position[0] * 4 + w/2;
+                    const y1 = h/2 - p1.position[1] * 4;
+                    const x2 = p2.position[0] * 4 + w/2;
+                    const y2 = h/2 - p2.position[1] * 4;
+
+                    // Calculate line length and angle
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const length = Math.sqrt(dx*dx + dy*dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+                    // Only draw if line has meaningful length
+                    if (length > 0.5) {
+                        // Create trail segment
+                        const segment = document.createElement('div');
+                        segment.style.position = 'absolute';
+                        segment.style.left = x1 + 'px';
+                        segment.style.top = y1 + 'px';
+                        segment.style.width = length + 'px';
+                        segment.style.height = '3px'; // Increased from 2px for better visibility
+                        segment.style.background = 'rgba(135, 206, 250, ' + opacity + ')'; // Light blue
+                        segment.style.transformOrigin = '0 0';
+                        segment.style.transform = 'rotate(' + angle + 'deg)';
+                        segment.style.pointerEvents = 'none';
+                        segment.style.borderRadius = '1.5px';
+                        segment.style.boxShadow = '0 0 2px rgba(135, 206, 250, 0.5)'; // Add glow effect
+
+                        map.appendChild(segment);
+                    }
                 }
             });
 

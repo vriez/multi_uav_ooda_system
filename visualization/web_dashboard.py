@@ -1400,6 +1400,21 @@ def simulation_loop():
                                     uav['state'] = 'awaiting_permission'
                                     logger.warning(f"{uid} stopped at boundary - {asset_id} at ({asset['position'][0]:.1f}, {asset['position'][1]:.1f}) is outside grid")
                                     emit_ooda('observe', f'{uid} BOUNDARY STOP - {asset_id} outside safe zone. Double-click UAV to grant permission.', critical=True)
+
+                                # Battery still drains while hovering at boundary waiting for permission
+                                battery_drain = BASE_BATTERY_DRAIN * dt
+                                uav['battery'] -= battery_drain
+
+                                if uav['battery'] <= 0:
+                                    uav['battery'] = 0
+                                    uav['operational'] = False
+                                    uav['state'] = 'crashed'
+                                    uav['awaiting_permission'] = False
+                                    uav['searching_asset'] = None
+                                    uav['guardian_of_asset'] = None
+                                    logger.error(f"{uid} battery depleted while awaiting permission at boundary")
+                                    emit_ooda('observe', f'{uid} CRASHED at boundary (battery exhausted)', critical=True)
+
                                 # Stay at boundary position
                                 continue
                             else:
@@ -1725,6 +1740,24 @@ def simulation_loop():
                         # If UAV is awaiting permission, don't move until permission is granted
                         if uav['awaiting_permission']:
                             # UAV stays at boundary position, waiting for permission
+                            # Battery still drains while hovering at boundary
+                            battery_drain = BASE_BATTERY_DRAIN * dt
+                            uav['battery'] -= battery_drain
+
+                            if uav['battery'] <= 0:
+                                uav['battery'] = 0
+                                uav['operational'] = False
+                                uav['state'] = 'crashed'
+                                uav['awaiting_permission'] = False
+                                logger.error(f"{uid} battery depleted while awaiting permission at boundary")
+                                emit_ooda('observe', f'{uid} CRASHED at boundary (battery exhausted)', critical=True)
+
+                            # Check for low battery warning
+                            if uav['battery'] <= BATTERY_LOW_THRESHOLD and not uav.get('battery_warning'):
+                                uav['battery_warning'] = True
+                                emit_ooda('observe', f'{uid} LOW BATTERY ({uav["battery"]:.0f}%) while awaiting permission', critical=True)
+                                logger.warning(f"{uid} low battery warning while awaiting permission: {uav['battery']:.1f}%")
+
                             continue
 
                         # Navigate to target
@@ -2043,6 +2076,11 @@ def handle_start(data):
 
     init_scenario(scenario_type, custom_home)
     mission_active = True
+
+    # Emit OODA events for all phases to clear "Waiting for mission start..." message
+    emit_ooda('observe', f'Mission started: {scenario_type.upper()} scenario with {len(uavs)} UAVs', critical=False)
+    emit_ooda('orient', f'Analyzing mission parameters and fleet capabilities', critical=False)
+    emit_ooda('decide', f'Assigning initial tasks to {len(uavs)} operational UAVs', critical=False)
     emit_ooda('act', f'All {len(uavs)} UAVs deployed from {home_base[:2]}', critical=False)
 
 @socketio.on('pause_mission')
