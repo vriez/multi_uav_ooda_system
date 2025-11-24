@@ -211,6 +211,7 @@ mission_metrics = {
     'deliveries_completed': 0,
     'deliveries_on_time': 0,
     'total_packages': 0,
+    'final_return_initiated': False,
     'assets_rescued': 0
 }
 
@@ -748,7 +749,7 @@ class WorkloadBalancer:
 
             active_uavs = [uid for uid in task.get('assigned_uavs', [])
                           if uid in uavs and uavs[uid]['operational']
-                          and uavs[uid]['state'] in ['deploying', 'patrolling']]
+                          and uavs[uid]['state'] in ['deploying', 'patrolling', 'searching']]
             if not active_uavs:
                 unassigned_zones.append(zid)
         
@@ -1010,6 +1011,7 @@ def init_scenario(scenario, custom_home=None):
         'deliveries_completed': 0,
         'deliveries_on_time': 0,
         'total_packages': 0,
+        'final_return_initiated': False,  # Track when UAVs sent home after deliveries complete
         'mission_time_limit': cfg.get('time_limit'),
         'mission_type': cfg['mission_type']
     }
@@ -1099,10 +1101,11 @@ def init_scenario(scenario, custom_home=None):
             tasks[f'asset_{i+1}'] = {
                 'type': 'asset',
                 'position': asset_pos,
-                'last_known_position': asset_pos.copy(),  # Last detected position (UAVs target this)
+                'last_known_position': None,  # Set when first detected (None = undiscovered)
                 'search_radius': initial_radius,  # Current search radius (reduces to SAR_DETECTION_RADIUS)
                 'searching_uavs': [],  # UAVs currently circling this asset
                 'detected_by': [],  # UAVs that have pinpointed this asset
+                'detected': False,  # True when first UAV spots the asset
                 'pinpointed': False,  # True when search_radius reaches SAR_DETECTION_RADIUS
                 'identified': False,  # True when guardian has been assigned (asset location confirmed)
                 'rescued': False,
@@ -1192,6 +1195,7 @@ def init_scenario(scenario, custom_home=None):
             'circle_angle': 0.0,  # Current angle in circle (for smooth circling)
             'circle_count': 0,  # Number of complete circles around asset
             'guardian_of_asset': None,  # Asset ID if this UAV is guardian (stays circling)
+            'guardian_start_time': None,  # Timestamp when UAV became guardian
             'awaiting_permission': False,  # Delivery safety - waiting at boundary for permission
             'boundary_stop_position': None,  # Position where UAV stopped at boundary
             'out_of_grid_target': None,  # The original out-of-grid target position
@@ -1386,9 +1390,13 @@ def simulation_loop():
                         uav_pos = np.array(uav['position'][:2])
                         distance_to_real_asset = np.linalg.norm(real_asset_pos - uav_pos)
 
-                        # Update last known position if UAV is within detection radius of real asset
-                        if distance_to_real_asset <= SAR_VISIBILITY_RADIUS:
-                            asset['last_known_position'] = asset['position'].copy()
+                        # Refine search area as UAV gets closer (narrowing uncertainty)
+                        # But don't give exact position until pinpointed
+                        if distance_to_real_asset <= SAR_VISIBILITY_RADIUS and not asset['pinpointed']:
+                            # Update with refined estimate (less noise as we get closer)
+                            uncertainty = max(2, distance_to_real_asset * 0.1)  # Reduce uncertainty as we approach
+                            noise = np.random.uniform(-uncertainty, uncertainty, 2)
+                            asset['last_known_position'] = asset['position'].copy() + np.append(noise, [0])
                             asset_pos = np.array(asset['last_known_position'][:2])
 
                         # SAFETY CHECK: Last known position outside grid requires permission
@@ -1423,6 +1431,7 @@ def simulation_loop():
                                     uav['awaiting_permission'] = False
                                     uav['searching_asset'] = None
                                     uav['guardian_of_asset'] = None
+                                    uav['guardian_start_time'] = None
                                     logger.error(f"{uid} battery depleted while awaiting permission at boundary")
                                     emit_ooda('observe', f'{uid} CRASHED at boundary (battery exhausted)', critical=True)
 
@@ -1483,13 +1492,14 @@ def simulation_loop():
                                     # After 3 circles, decide guardian assignment
                                     if uav['circle_count'] >= 3 and uav['guardian_of_asset'] is None:
                                         # Not yet a guardian - check if we should become one
-                                        # If no guardian assigned yet, become the guardian
-                                        if asset['guardian_uav'] is None:
+                                        # If asset not yet rescued and no active guardian, become the guardian
+                                        if not asset.get('rescued', False) and asset['guardian_uav'] is None:
                                             asset['guardian_uav'] = uid
                                             asset['identified'] = True  # Mark asset as identified
                                             uav['guardian_of_asset'] = asset_id
                                             uav['searching_asset'] = None
                                             uav['circle_count'] = 0  # Reset count for guardian phase
+                                            uav['guardian_start_time'] = time.time()  # Track when guardian duty started
                                             logger.info(f"{uid} assigned as guardian for {asset_id}")
                                             emit_ooda('decide', f'{uid} assigned as guardian for {asset_id}', critical=False)
                                         # Otherwise, release to search for other assets
@@ -1497,26 +1507,34 @@ def simulation_loop():
                                             uav['searching_asset'] = None
                                             uav['circle_waypoints'] = []
                                             uav['circle_count'] = 0
-                                            uav['state'] = 'patrolling'
+                                            uav['state'] = 'recovered'  # Set to recovered so it gets reassigned zones
                                             # Remove from searching list
                                             if uid in asset['searching_uavs']:
                                                 asset['searching_uavs'].remove(uid)
-                                            logger.info(f"{uid} released from {asset_id} after 3 circles - resuming patrol")
-                                            emit_ooda('orient', f'{uid} completed search of {asset_id} - resuming patrol for other assets', critical=False)
-                                    # Guardian has completed 5 monitoring loops - release back to searching
-                                    elif uav['guardian_of_asset'] == asset_id and uav['circle_count'] >= 5:
-                                        logger.info(f"{uid} completed 5 guardian loops around {asset_id} - releasing to search for other assets")
-                                        emit_ooda('orient', f'{uid} completed monitoring {asset_id} (5 loops) - resuming search for other assets', critical=False)
-                                        # Release guardian but keep asset as identified
-                                        asset['guardian_uav'] = None
-                                        uav['guardian_of_asset'] = None
-                                        uav['searching_asset'] = None
-                                        uav['circle_waypoints'] = []
-                                        uav['circle_count'] = 0
-                                        uav['state'] = 'patrolling'
-                                        # Remove from searching list
-                                        if uid in asset['searching_uavs']:
-                                            asset['searching_uavs'].remove(uid)
+                                            logger.info(f"{uid} released from {asset_id} after 3 circles - will be reassigned to patrol zones")
+                                            emit_ooda('orient', f'{uid} completed search of {asset_id} - reassigning to patrol zones', critical=False)
+                                    # Guardian monitors for limited time (3 seconds)
+                                    elif uav['guardian_of_asset'] == asset_id:
+                                        guardian_duration = time.time() - uav.get('guardian_start_time', time.time())
+
+                                        # Release guardian after 3 seconds
+                                        if guardian_duration >= 3.0:
+                                            logger.info(f"{uid} completed guardian duty for {asset_id} ({guardian_duration:.1f}s) - returning to patrol")
+                                            emit_ooda('orient', f'{uid} completed monitoring {asset_id} - returning to patrol', critical=False)
+
+                                            # Asset remains identified and rescued, but no longer has active guardian
+                                            # (Asset is considered secured - location confirmed and logged)
+                                            asset['guardian_uav'] = None  # Clear guardian reference
+                                            uav['guardian_of_asset'] = None
+                                            uav['searching_asset'] = None
+                                            uav['circle_waypoints'] = []
+                                            uav['circle_count'] = 0
+                                            uav['guardian_start_time'] = None
+                                            uav['state'] = 'recovered'  # Get reassigned to patrol zones
+
+                                            # Remove from searching list
+                                            if uid in asset['searching_uavs']:
+                                                asset['searching_uavs'].remove(uid)
                             else:
                                 # Move toward waypoint
                                 speed_factor = BASE_CRUISE_SPEED * 0.8  # Slightly slower when searching
@@ -1534,6 +1552,7 @@ def simulation_loop():
                                 uav['state'] = 'crashed'
                                 uav['searching_asset'] = None
                                 uav['guardian_of_asset'] = None
+                                uav['guardian_start_time'] = None
                                 uav['circle_waypoints'] = []
                                 # Remove from asset's searching list and guardian
                                 if asset_id in tasks:
@@ -1642,25 +1661,32 @@ def simulation_loop():
                                     # Check if this is first detection or confirmation
                                     is_first_contact = len(asset['searching_uavs']) == 0
 
-                                    # UPDATE: Set last known position when asset is detected
-                                    asset['last_known_position'] = asset['position'].copy()
+                                    # Mark asset as detected on first contact
+                                    if is_first_contact:
+                                        asset['detected'] = True
+                                        # Set approximate last known position (add some noise/uncertainty)
+                                        # UAVs don't know exact position, just approximate area
+                                        noise = np.random.uniform(-5, 5, 2)  # +/- 5m uncertainty
+                                        asset['last_known_position'] = asset['position'].copy() + np.append(noise, [0])
 
                                     # Assign UAV to search this asset
                                     uav['searching_asset'] = asset_id
                                     uav['state'] = 'searching'
                                     asset['searching_uavs'].append(uav_id)
 
-                                    # Format coordinates
-                                    coord_str = f"[{asset['position'][0]:.1f}, {asset['position'][1]:.1f}]"
+                                    # Format coordinates (show approximate area, not exact position)
+                                    approx_x = round(asset['position'][0] / 10) * 10  # Round to nearest 10m
+                                    approx_y = round(asset['position'][1] / 10) * 10
+                                    coord_str = f"~[{approx_x:.0f}, {approx_y:.0f}]"
 
                                     if is_first_contact:
                                         # First UAV to detect this asset
-                                        logger.info(f"{uav_id} FIRST CONTACT with {asset_id} at {coord_str}")
-                                        emit_ooda('observe', f'{uav_id} - contact visual at {coord_str}', critical=False)
+                                        logger.info(f"{uav_id} FIRST CONTACT with {asset_id} in area {coord_str}")
+                                        emit_ooda('observe', f'{uav_id} - contact visual in area {coord_str}', critical=False)
                                     else:
                                         # Additional UAVs confirming the contact
-                                        logger.info(f"{uav_id} CONFIRMING {asset_id} at {coord_str}")
-                                        emit_ooda('observe', f'{uav_id} - confirming {coord_str}', critical=False)
+                                        logger.info(f"{uav_id} CONFIRMING {asset_id} in area {coord_str}")
+                                        emit_ooda('observe', f'{uav_id} - confirming area {coord_str}', critical=False)
 
                             # UAV is searching this asset - circle and reduce radius
                             if uav['searching_asset'] == asset_id or uav['guardian_of_asset'] == asset_id:
@@ -1671,6 +1697,8 @@ def simulation_loop():
                                 # Check if pinpointed (use global constant)
                                 if asset['search_radius'] <= SAR_DETECTION_RADIUS and not asset['pinpointed']:
                                     asset['pinpointed'] = True
+                                    # Now we have exact position - update last_known_position
+                                    asset['last_known_position'] = asset['position'].copy()
                                     # Add all searching UAVs to detected_by
                                     for searching_uav in asset['searching_uavs']:
                                         if searching_uav not in asset['detected_by']:
@@ -1867,15 +1895,18 @@ def simulation_loop():
 
                                 # Check if all deliveries complete - send all UAVs home
                                 if mission_metrics['deliveries_completed'] >= mission_metrics['total_packages']:
-                                    emit_ooda('act', f' ALL DELIVERIES COMPLETE - Sending all UAVs home', critical=False)
-                                    logger.info("All deliveries completed - returning all UAVs to base")
+                                    # Only send UAVs home once when deliveries complete
+                                    if not mission_metrics.get('final_return_initiated', False):
+                                        mission_metrics['final_return_initiated'] = True
+                                        emit_ooda('act', f' ALL DELIVERIES COMPLETE - Sending all UAVs home', critical=False)
+                                        logger.info("All deliveries completed - returning all UAVs to base")
 
-                                    # Send all operational UAVs home
-                                    for uav_id, u in uavs.items():
-                                        if u['operational'] and u['state'] not in ['returning', 'charging', 'crashed']:
-                                            u['state'] = 'returning'
-                                            u['returning'] = True
-                                            logger.info(f"{uav_id} returning to base after mission completion")
+                                        # Send all operational UAVs home
+                                        for uav_id, u in uavs.items():
+                                            if u['operational'] and u['state'] not in ['returning', 'charging', 'crashed']:
+                                                u['state'] = 'returning'
+                                                u['returning'] = True
+                                                logger.info(f"{uav_id} returning to base after mission completion")
 
             # --- Auto-stop mission when objectives complete ---
             if scenario_type in ['search_rescue', 'delivery']:
@@ -1896,10 +1927,12 @@ def simulation_loop():
                         # Continue mission - guardians watch assets, others patrol for additional unknowns
 
                 elif scenario_type == 'delivery':
-                    # Delivery completes when all packages delivered AND all UAVs returned home
+                    # Delivery completes when all packages delivered AND all UAVs returned home AFTER final return
                     objectives_complete = mission_metrics['deliveries_completed'] >= mission_metrics.get('total_packages', 0)
+                    final_return_initiated = mission_metrics.get('final_return_initiated', False)
 
-                    if objectives_complete:
+                    # Only check if all home AFTER we've initiated the final return
+                    if objectives_complete and final_return_initiated:
                         # Check if all UAVs are home (charging or crashed)
                         # Note: UAVs transition from 'returning' to 'charging' when they arrive home
                         all_home = all(

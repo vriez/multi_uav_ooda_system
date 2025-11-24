@@ -2502,9 +2502,9 @@
                     asset.style.width = '16px';
                     asset.style.height = '16px';
 
-                    // Color coding: Red -> Blue (identified) -> Green (rescued)
-                    let assetColor = '#dc3545'; // Red: unidentified
-                    let assetStatus = 'UNIDENTIFIED';
+                    // Color coding: Red -> Yellow (detected) -> Blue (pinpointed) -> Green (rescued)
+                    let assetColor = '#dc3545'; // Red: undiscovered
+                    let assetStatus = 'UNDISCOVERED';
 
                     // Debug logging to check asset state
                     if (t.guardian_uav) {
@@ -2517,6 +2517,12 @@
                     } else if (t.identified) {
                         assetColor = '#007bff'; // Blue: identified/location confirmed
                         assetStatus = 'IDENTIFIED';
+                    } else if (t.pinpointed) {
+                        assetColor = '#ffc107'; // Orange: pinpointed but not yet identified
+                        assetStatus = 'PINPOINTED';
+                    } else if (t.detected) {
+                        assetColor = '#ffeb3b'; // Yellow: detected/searching
+                        assetStatus = 'DETECTED';
                     }
 
                     asset.style.background = assetColor;
@@ -2870,7 +2876,8 @@
 
                 let statusClass = 'uav-operational';
                 if (u.state === 'crashed') statusClass = 'uav-failed';
-                else if (u.state === 'awaiting_permission' || u.awaiting_permission) statusClass = 'uav-awaiting-permission';
+                // In SAR, UAVs remain green even when awaiting permission
+                else if ((u.state === 'awaiting_permission' || u.awaiting_permission) && scenario !== 'search_rescue') statusClass = 'uav-awaiting-permission';
                 else if (u.returning || u.state === 'charging' || u.state === 'recovered') statusClass = 'uav-returning';
                 else if (u.battery_warning) statusClass = 'uav-low-battery';
 
