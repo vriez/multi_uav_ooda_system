@@ -1396,7 +1396,7 @@ def simulation_loop():
                             # Update with refined estimate (less noise as we get closer)
                             uncertainty = max(2, distance_to_real_asset * 0.1)  # Reduce uncertainty as we approach
                             noise = np.random.uniform(-uncertainty, uncertainty, 2)
-                            asset['last_known_position'] = asset['position'].copy() + np.append(noise, [0])
+                            asset['last_known_position'] = (asset['position'].copy() + np.append(noise, [0])).tolist()
                             asset_pos = np.array(asset['last_known_position'][:2])
 
                         # SAFETY CHECK: Last known position outside grid requires permission
@@ -1414,8 +1414,8 @@ def simulation_loop():
                                     uav['position'][0] = boundary_pos[0]
                                     uav['position'][1] = boundary_pos[1]
                                     uav['awaiting_permission'] = True
-                                    uav['boundary_stop_position'] = boundary_pos.copy()
-                                    uav['out_of_grid_target'] = asset['last_known_position'].copy()
+                                    uav['boundary_stop_position'] = boundary_pos.tolist() if hasattr(boundary_pos, 'tolist') else list(boundary_pos)
+                                    uav['out_of_grid_target'] = list(asset['last_known_position'])
                                     uav['state'] = 'awaiting_permission'
                                     logger.warning(f"{uid} stopped at boundary - {asset_id} last known at ({asset['last_known_position'][0]:.1f}, {asset['last_known_position'][1]:.1f}) is outside grid")
                                     emit_ooda('observe', f'{uid} BOUNDARY STOP - {asset_id} outside safe zone. Double-click UAV to grant permission.', critical=True)
@@ -1667,7 +1667,7 @@ def simulation_loop():
                                         # Set approximate last known position (add some noise/uncertainty)
                                         # UAVs don't know exact position, just approximate area
                                         noise = np.random.uniform(-5, 5, 2)  # +/- 5m uncertainty
-                                        asset['last_known_position'] = asset['position'].copy() + np.append(noise, [0])
+                                        asset['last_known_position'] = (asset['position'].copy() + np.append(noise, [0])).tolist()
 
                                     # Assign UAV to search this asset
                                     uav['searching_asset'] = asset_id
@@ -1698,7 +1698,7 @@ def simulation_loop():
                                 if asset['search_radius'] <= SAR_DETECTION_RADIUS and not asset['pinpointed']:
                                     asset['pinpointed'] = True
                                     # Now we have exact position - update last_known_position
-                                    asset['last_known_position'] = asset['position'].copy()
+                                    asset['last_known_position'] = list(asset['position'])
                                     # Add all searching UAVs to detected_by
                                     for searching_uav in asset['searching_uavs']:
                                         if searching_uav not in asset['detected_by']:
@@ -1827,8 +1827,8 @@ def simulation_loop():
                                     uav['position'][1] = boundary_pos[1]
                                     uav['position'][2] = 10
                                     uav['awaiting_permission'] = True
-                                    uav['boundary_stop_position'] = boundary_pos.copy()
-                                    uav['out_of_grid_target'] = target.copy()
+                                    uav['boundary_stop_position'] = boundary_pos.tolist() if hasattr(boundary_pos, 'tolist') else list(boundary_pos)
+                                    uav['out_of_grid_target'] = target.tolist() if hasattr(target, 'tolist') else list(target)
                                     uav['state'] = 'awaiting_permission'
 
                                     target_type = "pickup" if task['status'] == 'assigned' else "dropoff"
