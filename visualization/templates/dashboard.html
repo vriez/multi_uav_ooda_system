@@ -2086,48 +2086,73 @@
             legendBox.style.lineHeight = '1.5';
             legendBox.style.boxShadow = 'var(--shadow-md)';
             legendBox.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 8px; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
-                    LEGEND
+                <div style="font-weight: bold; margin-bottom: 8px; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="legend-header">
+                    <span>LEGEND</span>
+                    <span id="legend-toggle" style="font-size: 16px; user-select: none;">▼</span>
                 </div>
 
-                <div style="margin-bottom: 8px;">
-                    <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">UAV Status</div>
-                    <div style="display: flex; align-items: center; margin: 3px 0;">
-                        <div style="width: 14px; height: 14px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
-                        <span>Operational</span>
+                <div id="legend-content" style="transition: max-height 0.3s ease-out, opacity 0.3s ease-out; overflow: hidden;">
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">UAV Status</div>
+                        <div style="display: flex; align-items: center; margin: 3px 0;">
+                            <div style="width: 14px; height: 14px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Operational</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 3px 0;">
+                            <div style="width: 14px; height: 14px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Low Battery</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 3px 0;">
+                            <div style="width: 14px; height: 14px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Returning/Charging</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 3px 0;">
+                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Crashed</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 3px 0;">
+                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite;"></div>
+                            <span>Awaiting Permission</span>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; margin: 3px 0;">
-                        <div style="width: 14px; height: 14px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
-                        <span>Low Battery</span>
-                    </div>
-                    <div style="display: flex; align-items: center; margin: 3px 0;">
-                        <div style="width: 14px; height: 14px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
-                        <span>Returning/Charging</span>
-                    </div>
-                    <div style="display: flex; align-items: center; margin: 3px 0;">
-                        <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
-                        <span>Crashed</span>
-                    </div>
-                    <div style="display: flex; align-items: center; margin: 3px 0;">
-                        <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite;"></div>
-                        <span>Awaiting Permission</span>
-                    </div>
-                </div>
 
-                <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
-                    <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">Scale & Performance</div>
-                    <div>Grid: 20m spacing</div>
-                    <div>Speed: 8 m/s (29 km/h)</div>
-                    <div>Range: ~2.7 km</div>
-                    <div>Endurance: ~5.5 min</div>
-                </div>
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
+                        <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">Scale & Performance</div>
+                        <div>Grid: 20m spacing</div>
+                        <div>Speed: 8 m/s (29 km/h)</div>
+                        <div>Range: ~2.7 km</div>
+                        <div>Endurance: ~5.5 min</div>
+                    </div>
 
-                <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px; font-size: 9px; color: var(--text-muted); font-style: italic;">
-                    Click UAV for details<br>
-                    Double-click red blinking UAV to grant permission
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px; font-size: 9px; color: var(--text-muted); font-style: italic;">
+                        Click UAV for details<br>
+                        Double-click red blinking UAV to grant permission
+                    </div>
                 </div>
             `;
             map.appendChild(legendBox);
+
+            // Add collapse/expand functionality
+            const legendHeader = legendBox.querySelector('#legend-header');
+            const legendContent = legendBox.querySelector('#legend-content');
+            const legendToggle = legendBox.querySelector('#legend-toggle');
+            let isCollapsed = false;
+
+            legendHeader.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    legendContent.style.maxHeight = '0';
+                    legendContent.style.opacity = '0';
+                    legendToggle.textContent = '▶';
+                } else {
+                    legendContent.style.maxHeight = legendContent.scrollHeight + 'px';
+                    legendContent.style.opacity = '1';
+                    legendToggle.textContent = '▼';
+                }
+            });
+
+            // Set initial max-height for smooth transitions
+            legendContent.style.maxHeight = legendContent.scrollHeight + 'px';
 
             // Visual scale bar (bottom left)
             const scaleBar = document.createElement('div');
