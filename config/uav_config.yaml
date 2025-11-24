@@ -1,0 +1,50 @@
+dynamics:
+  mass_kg: 1.5
+  arm_length_m: 0.225
+  motor_time_constant: 0.02
+  drag_coefficient: 0.01
+  inertia_matrix: [0.0075, 0.0075, 0.013]  # Ixx, Iyy, Izz
+
+control:
+  position_gains:
+    kp: [2.0, 2.0, 5.0]
+  velocity_gains:
+    kp: [5.0, 5.0, 8.0]
+    ki: [0.1, 0.1, 0.2]
+    kd: [0.5, 0.5, 0.8]
+  attitude_gains:
+    kp: [6.0, 6.0, 3.0]
+  rate_gains:
+    kp: [0.15, 0.15, 0.1]
+    kd: [0.002, 0.002, 0.001]
+
+battery:
+  capacity_wh: 100.0
+  efficiency_m_per_wh: 150.0
+  discharge_model: "linear"
+  voltage_nominal: 22.2
+  cells: 6
+
+sensors:
+  gps:
+    rate_hz: 10.0
+    noise_std_m: [2.0, 2.0, 3.0]
+  imu:
+    rate_hz: 100.0
+    accel_noise_std: 0.02
+    gyro_noise_std: 0.01
+  battery_monitor:
+    rate_hz: 1.0
+    resolution_percent: 1.0
+
+communication:
+  gcs_host: "127.0.0.1"
+  gcs_port: 5555
+  telemetry_rate_hz: 2.0
+  heartbeat_timeout_sec: 3.0
+
+limits:
+  max_velocity_ms: 15.0
+  max_altitude_m: 120.0
+  min_altitude_m: 5.0
+  max_tilt_deg: 45.0

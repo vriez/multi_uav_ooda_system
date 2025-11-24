@@ -1,0 +1,49 @@
+tasks:
+  - type: surveillance
+    position: [50, 50, 20]
+    priority: 80
+    zone_id: 1
+    duration_sec: 120
+    
+  - type: surveillance
+    position: [100, 50, 20]
+    priority: 75
+    zone_id: 2
+    duration_sec: 120
+    
+  - type: surveillance
+    position: [50, 100, 20]
+    priority: 70
+    zone_id: 3
+    duration_sec: 120
+    
+  - type: search_rescue
+    position: [150, 150, 15]
+    priority: 95
+    deadline: 1800  # 30 minutes
+    duration_sec: 180
+    
+  - type: delivery
+    position: [200, 100, 10]
+    priority: 85
+    payload_kg: 2.5
+    deadline: 900  # 15 minutes
+    duration_sec: 60
+    
+  - type: surveillance
+    position: [120, 120, 20]
+    priority: 60
+    zone_id: 4
+    duration_sec: 120
+    
+  - type: delivery
+    position: [180, 80, 10]
+    priority: 70
+    payload_kg: 1.5
+    duration_sec: 60
+    
+  - type: search_rescue
+    position: [90, 180, 15]
+    priority: 90
+    deadline: 2400  # 40 minutes
+    duration_sec: 180

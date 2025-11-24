@@ -1,0 +1,35 @@
+ooda_engine:
+  telemetry_rate_hz: 2.0
+  timeout_threshold_sec: 1.5
+  phase_timeouts:
+    observe: 1.5
+    orient: 1.5
+    decide: 1.5
+    act: 1.0
+
+constraints:
+  battery_safety_reserve_percent: 20.0
+  anomaly_thresholds:
+    battery_discharge_rate: 5.0  # percent per 30 seconds
+    position_discontinuity: 100.0  # meters
+    altitude_deviation: 50.0  # meters
+  
+collision_avoidance:
+  safety_buffer_meters: 15.0
+  temporal_buffer_seconds: 10.0
+
+communication:
+  server_host: "0.0.0.0"
+  server_port: 5555
+  max_packet_size: 65536
+  socket_timeout: 2.0
+  
+fleet:
+  max_uavs: 12
+  min_uavs: 3
+  
+logging:
+  enabled: true
+  log_level: "INFO"
+  log_directory: "logs"
+  performance_metrics: true

@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Realistic Mission Completion Assistance</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Theme Variables - Light Mode (Default) */
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e8ecf1;
+            --border-color: #d1d8e0;
+            --border-accent: #4a90e2;
+
+            --text-primary: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --text-muted: #8898aa;
+
+            --accent-primary: #4a90e2;
+            --accent-secondary: #5dade2;
+
+            --status-operational: #28a745;
+            --status-operational-bg: #d4edda;
+            --status-warning: #ffc107;
+            --status-warning-bg: #fff3cd;
+            --status-danger: #dc3545;
+            --status-danger-bg: #f8d7da;
+
+            --btn-primary: #28a745;
+            --btn-primary-hover: #218838;
+            --btn-danger: #dc3545;
+            --btn-danger-hover: #c82333;
+            --btn-warning: #ffc107;
+            --btn-warning-hover: #e0a800;
+            --btn-info: #6c757d;
+            --btn-info-hover: #5a6268;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 2px 6px rgba(0,0,0,0.12);
+
+            --grid-line: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dark Mode Theme */
+        body.dark-theme {
+            --bg-primary: #0a0e27;
+            --bg-secondary: #141b2d;
+            --bg-tertiary: #1a1f3a;
+            --border-color: #2d3561;
+            --border-accent: #3498db;
+
+            --text-primary: #e0e0e0;
+            --text-secondary: #b0b8c1;
+            --text-muted: #7f8c8d;
+
+            --accent-primary: #3498db;
+            --accent-secondary: #5dade2;
+
+            --status-operational: #27ae60;
+            --status-operational-bg: rgba(39, 174, 96, 0.2);
+            --status-warning: #f39c12;
+            --status-warning-bg: rgba(243, 156, 18, 0.2);
+            --status-danger: #e74c3c;
+            --status-danger-bg: rgba(231, 76, 60, 0.2);
+
+            --btn-primary: #27ae60;
+            --btn-primary-hover: #2ecc71;
+            --btn-danger: #e74c3c;
+            --btn-danger-hover: #c0392b;
+            --btn-warning: #f39c12;
+            --btn-warning-hover: #e67e22;
+            --btn-info: #9b59b6;
+            --btn-info-hover: #8e44ad;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-md: 0 2px 6px rgba(0,0,0,0.4);
+
+            --grid-line: rgba(52, 152, 219, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            padding: 18px 30px;
+            border-bottom: 2px solid var(--border-accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+        }
+        .header h1 {
+            font-size: 24px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .theme-toggle:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+        .status-badge {
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .status-operational {
+            background: var(--status-operational-bg);
+            color: var(--status-operational);
+            border: 1px solid var(--status-operational);
+        }
+        .status-warning {
+            background: var(--status-warning-bg);
+            color: var(--status-warning);
+            border: 1px solid var(--status-warning);
+        }
+
+        .main {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            height: calc(100vh - 70px);
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            overflow-y: auto;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .panel h3 {
+            color: var(--text-primary);
+            font-size: 13px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .panel h3:hover {
+            color: var(--accent-primary);
+        }
+        .panel h3::after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.2s;
+            color: var(--text-muted);
+        }
+        .panel h3.collapsed::after {
+            transform: rotate(-90deg);
+        }
+        .section-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 2000px;
+            opacity: 1;
+        }
+        .section-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+        }
+
+        .scenario-card {
+            background: var(--bg-tertiary);
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .scenario-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .scenario-card.selected {
+            border-color: var(--status-operational);
+            background: var(--status-operational-bg);
+        }
+        .scenario-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .scenario-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 5px;
+        }
+
+        .home-base-inputs {
+            background: var(--bg-tertiary);
+            padding: 16px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .input-group {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .input-group input {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .preset-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        .preset-btn {
+            padding: 5px;
+            font-size: 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .preset-btn:hover {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+        .btn-primary {
+            background: var(--btn-primary);
+            color: white;
+        }
+        .btn-primary:hover { background: var(--btn-primary-hover); }
+        .btn-primary:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .btn-danger { background: var(--btn-danger); color: white; }
+        .btn-danger:hover { background: var(--btn-danger-hover); }
+        .btn-warning { background: var(--btn-warning); color: white; }
+        .btn-warning:hover { background: var(--btn-warning-hover); }
+        .btn-info { background: var(--btn-info); color: white; }
+        .btn-info:hover { background: var(--btn-info-hover); }
+        .btn-charge { background: #17a2b8; color: white; }
+        .btn-charge:hover { background: #138496; }
+        .btn-drain { background: #fd7e14; color: white; }
+        .btn-drain:hover { background: #e66a00; }
+
+        .failure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .failure-btn { padding: 8px; font-size: 11px; }
+
+        .pattern-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn-pattern {
+            padding: 8px 5px;
+            font-size: 10px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-pattern:hover {
+            background: var(--accent-secondary);
+            color: white;
+            border-color: var(--accent-secondary);
+        }
+        .btn-pattern.active {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .mode-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .btn-mode {
+            padding: 8px 5px;
+            font-size: 11px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .btn-mode:hover {
+            background: var(--accent-secondary);
+            color: white;
+            border-color: var(--accent-secondary);
+        }
+        .btn-mode.active {
+            background: var(--btn-info);
+            color: white;
+            border-color: var(--btn-info);
+        }
+
+        .time-display {
+            background: var(--bg-tertiary);
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            margin-top: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .map {
+            background:
+                repeating-linear-gradient(0deg, transparent, transparent 19px, var(--grid-line) 20px),
+                repeating-linear-gradient(90deg, transparent, transparent 19px, var(--grid-line) 20px);
+            position: relative;
+        }
+
+        .uav-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.5s;
+        }
+        .uav-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+            border: 3px solid;
+            transition: transform 0.2s;
+        }
+        .uav-marker:hover .uav-icon { transform: scale(1.15); }
+        .uav-operational {
+            background: var(--status-operational);
+            border-color: var(--status-operational);
+            color: white;
+        }
+        body.dark-theme .uav-operational {
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.4);
+        }
+        .uav-failed {
+            background: var(--status-danger);
+            border-color: var(--status-danger);
+            animation: pulse 1.5s infinite;
+            color: white;
+        }
+        .uav-returning {
+            background: var(--status-warning);
+            border-color: var(--status-warning);
+            color: white;
+        }
+        body.dark-theme .uav-returning {
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.4);
+        }
+        .uav-low-battery {
+            background: #fd7e14;
+            border-color: #fd7e14;
+            color: white;
+        }
+        .uav-awaiting-permission {
+            background: var(--status-danger);
+            border-color: var(--status-danger);
+            animation: blink 1s infinite;
+            color: white;
+            cursor: pointer;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.9;
+            }
+        }
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+                box-shadow: 0 0 20px rgba(220, 53, 69, 0.8);
+            }
+            50% {
+                opacity: 0.4;
+                box-shadow: 0 0 10px rgba(220, 53, 69, 0.4);
+            }
+        }
+        .uav-label {
+            position: absolute;
+            top: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            background: var(--bg-secondary);
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+            white-space: nowrap;
+            font-weight: 500;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .task-area {
+            position: absolute;
+            border: 2px solid;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            opacity: 0.4;
+        }
+        .task-surveillance {
+            background: rgba(74, 144, 226, 0.15);
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        .task-search_rescue {
+            background: rgba(231, 76, 60, 0.15);
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+        .task-delivery {
+            background: rgba(243, 156, 18, 0.15);
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: var(--bg-tertiary);
+            padding: 14px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .workload-assignments {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .assignment-item {
+            padding: 8px 10px;
+            margin-bottom: 8px;
+            background: var(--status-operational-bg);
+            border-radius: 4px;
+            border-left: 3px solid var(--status-operational);
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            color: var(--text-primary);
+        }
+
+        .events {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .event {
+            padding: 12px;
+            margin-bottom: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            border-left: 3px solid var(--accent-primary);
+            font-size: 11px;
+            border: 1px solid var(--border-color);
+        }
+        .event.critical {
+            border-left-color: var(--status-danger);
+            background: var(--status-danger-bg);
+        }
+        .event-time {
+            color: var(--text-muted);
+            font-size: 10px;
+            margin-top: 5px;
+        }
+
+        .ooda-phase {
+            padding: 14px;
+            background: var(--bg-tertiary);
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .ooda-phase:hover {
+            background: var(--surface);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .capability-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            cursor: not-allowed;
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .capability-checkbox input[type="checkbox"] {
+            cursor: not-allowed;
+        }
+        .capability-checkbox input[type="checkbox"]:checked + span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) 20%, var(--border-color) 20%, var(--border-color) 100%);
+            outline: none;
+            border-radius: 3px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: var(--accent-primary);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            width: 400px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .modal h3 {
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .uav-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .uav-option {
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 5px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .uav-option:hover {
+            border-color: var(--accent-primary);
+            background: var(--bg-secondary);
+            transform: translateY(-2px);
+        }
+        .uav-option.selected {
+            border-color: var(--status-operational);
+            background: var(--status-operational-bg);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-actions button {
+            flex: 1;
+        }
+
+        .charge-all-btn {
+            margin-top: 8px;
+            font-size: 11px;
+            padding: 8px;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .loading-overlay.show {
+            opacity: 1;
+        }
+        .loading-content {
+            text-align: center;
+            color: var(--text-primary);
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <h1>Realistic Mission Completion Assistance</h1>
+            <span id="status" class="status-badge status-operational">READY</span>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">Dark Mode</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="panel">
+            <h3 onclick="toggleSection(this)">Home Base Position</h3>
+            <div class="section-content">
+                <div class="home-base-inputs">
+                    <div class="input-group">
+                        <label>X:</label>
+                        <input type="number" id="homeX" value="0" step="10">
+                    </div>
+                    <div class="input-group">
+                        <label>Y:</label>
+                        <input type="number" id="homeY" value="0" step="10">
+                    </div>
+                    <div class="preset-btns">
+                        <button class="preset-btn" onclick="setHome(0, 0)">Center</button>
+                        <button class="preset-btn" onclick="setHome(-80, 80)">NW</button>
+                        <button class="preset-btn" onclick="setHome(80, 80)">NE</button>
+                        <button class="preset-btn" onclick="setHome(-80, -80)">SW</button>
+                        <button class="preset-btn" onclick="setHome(80, -80)">SE</button>
+                        <button class="preset-btn" onclick="setHome(0, 80)">N</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">Scenarios</h3>
+            <div class="section-content">
+                <div class="scenario-card selected" data-scenario="surveillance" onclick="selectScenario('surveillance')">
+                    <div class="scenario-title">Surveillance</div>
+                    <div class="scenario-desc">5 UAVs, 9 zones - Continuous patrol</div>
+                </div>
+                <div class="scenario-card" data-scenario="search_rescue" onclick="selectScenario('search_rescue')">
+                    <div class="scenario-title">Search & Rescue</div>
+                    <div class="scenario-desc">5 UAVs, 9 zones - Asset rescue with consensus</div>
+                </div>
+                <div class="scenario-card" data-scenario="delivery" onclick="selectScenario('delivery')">
+                    <div class="scenario-title">Delivery</div>
+                    <div class="scenario-desc">6 UAVs, 12 packages - Logistics</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Fleet Configuration</h3>
+            <div class="section-content">
+                <div class="home-base-inputs">
+                    <div class="input-group">
+                        <label>Number of UAVs:</label>
+                        <input type="number" id="numUAVs" value="5" min="1" max="20" step="1" onchange="updateFleetConfig()">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                        <input type="range" id="numUAVsSlider" min="1" max="20" value="5"
+                               style="flex: 1; height: 6px; border-radius: 3px; background: var(--border-color);"
+                               oninput="syncUAVSlider(this.value)">
+                        <span id="uavCountLabel" style="font-size: 14px; font-weight: 600; color: var(--accent-primary); min-width: 30px;">5</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                    <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">
+                        UAV Capabilities (Future Use)
+                    </div>
+                    <div style="display: grid; gap: 8px;">
+                        <label class="capability-checkbox">
+                            <input type="checkbox" id="cap_ftc" checked disabled>
+                            <span>Fault-Tolerant Control</span>
+                        </label>
+                        <label class="capability-checkbox">
+                            <input type="checkbox" id="cap_autonomous" checked disabled>
+                            <span>Autonomous Navigation</span>
+                        </label>
+                        <label class="capability-checkbox">
+                            <input type="checkbox" id="cap_swarm" checked disabled>
+                            <span>Swarm Coordination</span>
+                        </label>
+                        <label class="capability-checkbox">
+                            <input type="checkbox" id="cap_payload" disabled>
+                            <span>Heavy Payload Capacity</span>
+                        </label>
+                        <label class="capability-checkbox">
+                            <input type="checkbox" id="cap_weather" disabled>
+                            <span>Weather Resistance</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                    Configure fleet size before starting mission. Capabilities are for future implementation.
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Mission Configuration</h3>
+            <div class="section-content">
+                <!-- Surveillance Configuration -->
+                <div id="surveillance-config" class="mission-config-section" style="display: block;">
+                    <div class="home-base-inputs">
+                        <div class="input-group">
+                            <label>Patrol Pattern:</label>
+                            <select id="patrolPattern" style="padding: 6px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+                                <option value="lawnmower">Lawnmower</option>
+                                <option value="perimeter">Perimeter</option>
+                                <option value="spiral">Spiral</option>
+                                <option value="creeping">Creeping</option>
+                                <option value="random">Random</option>
+                                <option value="figure8">Figure 8</option>
+                                <option value="sector">Sector</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Pattern Mode:</label>
+                            <select id="patternMode" style="padding: 6px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
+                                <option value="per_zone">Per Zone</option>
+                                <option value="grouped">Grouped</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                        Pattern Mode: Apply pattern to each zone independently or across combined area
+                    </div>
+                </div>
+
+                <!-- SAR Configuration -->
+                <div id="sar-config" class="mission-config-section" style="display: none;">
+                    <div class="home-base-inputs">
+                        <div class="input-group">
+                            <label>Assets:</label>
+                            <input type="number" id="numAssets" value="3" min="1" max="10" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Consensus:</label>
+                            <input type="number" id="consensusRequired" value="2" min="1" max="5" step="1">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                        Consensus: Number of UAVs required to confirm asset rescue
+                    </div>
+                </div>
+
+                <!-- Delivery Configuration -->
+                <div id="delivery-config" class="mission-config-section" style="display: none;">
+                    <div class="home-base-inputs">
+                        <div class="input-group">
+                            <label>Packages:</label>
+                            <input type="number" id="numPackages" value="12" min="1" max="20" step="1">
+                        </div>
+                        <div class="input-group">
+                            <label>Time Window (s):</label>
+                            <input type="number" id="timeWindow" value="600" min="60" max="1800" step="60">
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                        Time Window: Delivery deadline in seconds (affects priority calculations)
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Playback</h3>
+            <div class="section-content">
+                <button class="btn btn-primary" id="btn-start">Start Mission</button>
+                <button class="btn btn-warning" id="btn-pause" disabled>Pause</button>
+                <button class="btn btn-danger" id="btn-stop" disabled>Stop</button>
+                <div class="time-display">
+                    <div style="font-size: 10px; color: var(--text-muted);">Mission Time</div>
+                    <div id="time" style="font-size: 18px; color: var(--accent-primary); font-weight: 600;">00:00</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Movement Pattern</h3>
+            <div class="section-content">
+                <div class="mode-toggle">
+                    <button class="btn btn-mode active" data-mode="per_zone" onclick="setMode('per_zone')">Per Zone</button>
+                    <button class="btn btn-mode" data-mode="grouped" onclick="setMode('grouped')">Grouped</button>
+                </div>
+                <div class="pattern-grid">
+                    <button class="btn btn-pattern active" data-pattern="lawnmower" onclick="setPattern('lawnmower')">Lawnmower</button>
+                    <button class="btn btn-pattern" data-pattern="perimeter" onclick="setPattern('perimeter')">Perimeter</button>
+                    <button class="btn btn-pattern" data-pattern="spiral" onclick="setPattern('spiral')">Spiral</button>
+                    <button class="btn btn-pattern" data-pattern="creeping" onclick="setPattern('creeping')">Creeping</button>
+                    <button class="btn btn-pattern" data-pattern="random" onclick="setPattern('random')">Random</button>
+                    <button class="btn btn-pattern" data-pattern="figure8" onclick="setPattern('figure8')">Figure-8</button>
+                    <button class="btn btn-pattern" data-pattern="sector" onclick="setPattern('sector')">Sector</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Speed</h3>
+            <div class="section-content">
+                <div class="failure-grid">
+                    <button class="btn btn-warning failure-btn" onclick="setSpeed(0.5)">0.5x</button>
+                    <button class="btn btn-warning failure-btn" onclick="setSpeed(1)">1x</button>
+                    <button class="btn btn-warning failure-btn" onclick="setSpeed(2)">2x</button>
+                    <button class="btn btn-warning failure-btn" onclick="setSpeed(5)">5x</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Inject Failures</h3>
+            <div class="section-content">
+                <div class="failure-grid">
+                    <button class="btn btn-danger failure-btn" onclick="openFailureModal('battery')">Battery</button>
+                    <button class="btn btn-danger failure-btn" onclick="openFailureModal('gps')">GPS</button>
+                    <button class="btn btn-danger failure-btn" onclick="openFailureModal('comm')">Comm</button>
+                    <button class="btn btn-danger failure-btn" onclick="openFailureModal('motor')">Motor</button>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Charge Battery</h3>
+            <div class="section-content">
+                <button class="btn btn-charge" onclick="openChargeModal()">Charge UAV to 100%</button>
+                <button class="btn btn-charge charge-all-btn" onclick="chargeAllUAVs()">Charge ALL UAVs</button>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Drain Battery</h3>
+            <div class="section-content">
+                <button class="btn btn-drain" onclick="openDrainModal()">Drain UAV to 15%</button>
+                <button class="btn btn-drain charge-all-btn" onclick="drainAllUAVs()">Drain ALL to 15%</button>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Asset Positioning</h3>
+            <div class="section-content">
+                <button class="btn btn-warning" onclick="randomizeAssets()">Randomize Assets</button>
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                    Click and drag SAR assets or delivery packages on the map to reposition them.
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Recovery</h3>
+            <div class="section-content">
+                <button class="btn btn-info" onclick="openRecoveryModal()">Recover Failed UAVs</button>
+
+                <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
+                    UAVs auto-return at 15% battery, charge at base, and redeploy automatically.
+                </div>
+            </div>
+        </div>
+
+        <div class="panel map" id="map"></div>
+
+        <div class="panel">
+            <h3 onclick="toggleSection(this)">Statistics</h3>
+            <div class="section-content">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value" id="op">0</div>
+                        <div class="stat-label">Operational</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="fail">0</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="returning">0</div>
+                        <div class="stat-label">Returning</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="comp">0%</div>
+                        <div class="stat-label">Complete</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="ooda">0</div>
+                        <div class="stat-label">OODA Cycles</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="zones">0</div>
+                        <div class="stat-label" id="zones-label">Zones</div>
+                    </div>
+                </div>
+                <!-- Scenario-specific metrics -->
+                <div id="sar-metrics" style="display: none; margin-top: 15px;">
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="assets-rescued">0</div>
+                            <div class="stat-label">Assets Rescued</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="mission-time">0:00</div>
+                            <div class="stat-label">Mission Time</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="consensus-count">2</div>
+                            <div class="stat-label">Consensus Required</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="delivery-metrics" style="display: none; margin-top: 15px;">
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <div class="stat-value" id="deliveries">0</div>
+                            <div class="stat-label">Delivered</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value" id="on-time">0</div>
+                            <div class="stat-label">On-Time</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">Workload Assignments</h3>
+            <div class="section-content">
+                <!-- Legend for delivery scenario -->
+                <div id="delivery-legend" style="display: none; background: var(--bg-tertiary); padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid var(--border-color);">
+                    <div style="font-size: 10px; font-weight: 600; margin-bottom: 5px; color: var(--text-primary);">LEGEND:</div>
+                    <div style="font-size: 10px; line-height: 1.6; color: var(--text-secondary);">
+                        <div>Yellow circle = Pending package (pickup)</div>
+                        <div>Green circle = Package picked up</div>
+                        <div>Red outline = Dropoff destination</div>
+                        <div>Green line = Active delivery route</div>
+                    </div>
+                </div>
+                <div class="workload-assignments" id="workloadAssignments">
+                    <div class="assignment-item">No assignments yet</div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">Event Log</h3>
+            <div class="section-content">
+                <div class="events" id="events">
+                    <div class="event">
+                        <div>System ready. UAVs will auto-return & recharge when low on battery.</div>
+                        <div class="event-time">System Ready</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">OODA Loop Monitor</h3>
+            <div class="section-content">
+                <div style="display: grid; gap: 10px;">
+                    <div class="ooda-phase">
+                        <div style="font-weight: 600; color: var(--primary); margin-bottom: 5px;">Observe</div>
+                        <div id="ooda-observe" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
+                            Waiting for mission start...
+                        </div>
+                    </div>
+                    <div class="ooda-phase">
+                        <div style="font-weight: 600; color: var(--warning); margin-bottom: 5px;">Orient</div>
+                        <div id="ooda-orient" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
+                            Waiting for mission start...
+                        </div>
+                    </div>
+                    <div class="ooda-phase">
+                        <div style="font-weight: 600; color: var(--success); margin-bottom: 5px;">Decide</div>
+                        <div id="ooda-decide" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
+                            Waiting for mission start...
+                        </div>
+                    </div>
+                    <div class="ooda-phase">
+                        <div style="font-weight: 600; color: var(--danger); margin-bottom: 5px;">Act</div>
+                        <div id="ooda-act" style="font-size: 13px; color: var(--text-muted); min-height: 30px;">
+                            Waiting for mission start...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="failureModal" class="modal-overlay" style="display: none;">
+        <div class="modal">
+            <h3 id="modalTitle">Select UAV</h3>
+            <div class="uav-list" id="uavList"></div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="modalActionButton">Inject Failure</button>
+                <button class="btn btn-primary" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        let running = false;
+        let scenario = 'surveillance';
+        let startTime = 0;
+        let uavs = {};
+        let tasks = {};
+        let prevUavPositions = {}; // Track previous positions for speed calculation
+        let selectedUavInfo = null; // Currently selected UAV for info display
+        let selectedUAV = null;
+        let modalMode = null;
+        let failureType = null;
+        let draggingAsset = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        // Theme management
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+
+            if (body.classList.contains('dark-theme')) {
+                body.classList.remove('dark-theme');
+                themeIcon.textContent = 'Dark Mode';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.add('dark-theme');
+                themeIcon.textContent = 'Light Mode';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Load saved theme preference
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-theme');
+                document.getElementById('theme-icon').textContent = 'Light Mode';
+            }
+        }
+
+        // Initialize theme on page load
+        loadTheme();
+
+        // Initialize drag and drop for assets
+        function initAssetDragAndDrop() {
+            const map = document.getElementById('map');
+            map.addEventListener('mousedown', handleAssetMouseDown);
+            map.addEventListener('mousemove', handleAssetMouseMove);
+            map.addEventListener('mouseup', handleAssetMouseUp);
+            map.addEventListener('mouseleave', handleAssetMouseUp);  // Cancel drag if mouse leaves map
+        }
+
+        // Initialize drag and drop on page load
+        initAssetDragAndDrop();
+
+        // Fleet Configuration
+        function syncUAVSlider(value) {
+            const numInput = document.getElementById('numUAVs');
+            const slider = document.getElementById('numUAVsSlider');
+            const label = document.getElementById('uavCountLabel');
+
+            // Update all elements
+            numInput.value = value;
+            slider.value = value;
+            label.textContent = value;
+
+            // Update slider background gradient
+            const percent = ((value - 1) / 19) * 100;  // 1-20 range
+            slider.style.background = `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${percent}%, var(--border-color) ${percent}%, var(--border-color) 100%)`;
+
+            // Call update function
+            updateFleetConfig();
+        }
+
+        function updateFleetConfig() {
+            const numUAVs = parseInt(document.getElementById('numUAVs').value);
+            const label = document.getElementById('uavCountLabel');
+            const slider = document.getElementById('numUAVsSlider');
+
+            // Sync slider and label
+            label.textContent = numUAVs;
+            slider.value = numUAVs;
+
+            // Update slider gradient
+            const percent = ((numUAVs - 1) / 19) * 100;
+            slider.style.background = `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${percent}%, var(--border-color) ${percent}%, var(--border-color) 100%)`;
+
+            // Log configuration (will be used for future backend integration)
+            const capabilities = {
+                ftc: document.getElementById('cap_ftc').checked,
+                autonomous: document.getElementById('cap_autonomous').checked,
+                swarm: document.getElementById('cap_swarm').checked,
+                payload: document.getElementById('cap_payload').checked,
+                weather: document.getElementById('cap_weather').checked
+            };
+
+            console.log('Fleet Configuration Updated:', {
+                numUAVs: numUAVs,
+                capabilities: capabilities
+            });
+
+            // Future: Send to backend when implemented
+            // socket.emit('update_fleet_config', { numUAVs, capabilities });
+        }
+
+        // Loading Overlay Helpers
+        function showLoading(message = 'Loading...') {
+            const overlay = document.getElementById('loadingOverlay');
+            const text = document.getElementById('loadingText');
+            text.textContent = message;
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.classList.add('show'), 10);
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.classList.remove('show');
+            setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function clearVisualizationState() {
+            // Clear canvas
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Reset metrics
+            document.getElementById('elapsed').textContent = '00:00';
+            document.getElementById('coverage').textContent = '0%';
+            document.getElementById('recovered').textContent = '0';
+            document.getElementById('crashed').textContent = '0';
+
+            // Reset SAR metrics if visible
+            const sarMetrics = document.getElementById('sar-metrics');
+            if (sarMetrics.style.display !== 'none') {
+                document.getElementById('detected').textContent = '0';
+                document.getElementById('secured').textContent = '0';
+            }
+
+            // Reset delivery metrics if visible
+            const deliveryMetrics = document.getElementById('delivery-metrics');
+            if (deliveryMetrics.style.display !== 'none') {
+                document.getElementById('completed').textContent = '0';
+                document.getElementById('remaining').textContent = '0';
+            }
+        }
+
+        // Scenario selection with smooth transition
+        function selectScenario(scenarioName) {
+            console.log('selectScenario called with:', scenarioName);
+
+            if (running) {
+                // Confirm and auto-stop mission for smooth transition
+                if (confirm('A mission is currently running. Stop it and switch scenarios?')) {
+                    showLoading('Stopping current mission...');
+
+                    // Stop mission and wait for cleanup
+                    socket.emit('stop_mission');
+
+                    // Wait for mission_stopped event before switching
+                    socket.once('mission_stopped', () => {
+                        clearVisualizationState();
+                        running = false;
+
+                        // Reset buttons
+                        document.getElementById('btn-start').disabled = false;
+                        document.getElementById('btn-start').textContent = 'Start';
+                        document.getElementById('btn-pause').disabled = true;
+                        document.getElementById('btn-stop').disabled = true;
+                        document.getElementById('status').textContent = 'READY';
+
+                        // Now switch scenario
+                        setTimeout(() => {
+                            hideLoading();
+                            applyScenarioSelection(scenarioName);
+                        }, 300);
+                    });
+                }
+                return;
+            }
+
+            applyScenarioSelection(scenarioName);
+        }
+
+        function applyScenarioSelection(scenarioName) {
+            scenario = scenarioName;
+            console.log('scenario variable set to:', scenario);
+
+            // Update UI
+            document.querySelectorAll('.scenario-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.dataset.scenario === scenarioName) {
+                    card.classList.add('selected');
+                }
+            });
+
+            // Hide all mission config sections first
+            document.querySelectorAll('.mission-config-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            // Show the appropriate mission configuration section
+            if (scenarioName === 'surveillance') {
+                document.getElementById('surveillance-config').style.display = 'block';
+            } else if (scenarioName === 'search_rescue') {
+                document.getElementById('sar-config').style.display = 'block';
+            } else if (scenarioName === 'delivery') {
+                document.getElementById('delivery-config').style.display = 'block';
+            }
+
+            // Show/hide scenario-specific metrics
+            document.getElementById('sar-metrics').style.display = scenarioName === 'search_rescue' ? 'block' : 'none';
+            document.getElementById('delivery-metrics').style.display = scenarioName === 'delivery' ? 'block' : 'none';
+
+            // Show/hide delivery legend
+            document.getElementById('delivery-legend').style.display = scenarioName === 'delivery' ? 'block' : 'none';
+
+            // Update zones label
+            const zonesLabel = document.getElementById('zones-label');
+            if (scenarioName === 'delivery') {
+                zonesLabel.textContent = 'Packages';
+            } else {
+                zonesLabel.textContent = 'Zones';
+            }
+
+            log(`Scenario selected: ${scenarioName}`);
+        }
+
+        // Section collapse/expand functionality
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const isCollapsed = content.classList.contains('collapsed');
+
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+
+            // Save collapse state to localStorage
+            const sectionName = header.textContent.trim();
+            const collapseStates = JSON.parse(localStorage.getItem('sectionStates') || '{}');
+            collapseStates[sectionName] = !isCollapsed;
+            localStorage.setItem('sectionStates', JSON.stringify(collapseStates));
+        }
+
+        // Restore section states from localStorage
+        function restoreSectionStates() {
+            const collapseStates = JSON.parse(localStorage.getItem('sectionStates') || '{}');
+            document.querySelectorAll('.panel h3').forEach(header => {
+                const sectionName = header.textContent.trim();
+                if (collapseStates[sectionName] === false) {
+                    const content = header.nextElementSibling;
+                    content.classList.add('collapsed');
+                    header.classList.add('collapsed');
+                }
+            });
+        }
+
+        // Initialize section states on page load
+        restoreSectionStates();
+
+        // Add event listeners to home position inputs for interactive updates
+        function initHomePositionListeners() {
+            const homeXInput = document.getElementById('homeX');
+            const homeYInput = document.getElementById('homeY');
+
+            homeXInput.addEventListener('input', () => {
+                render(); // Re-render the map with new home position
+            });
+
+            homeYInput.addEventListener('input', () => {
+                render(); // Re-render the map with new home position
+            });
+        }
+
+        // Initialize home position listeners on page load
+        initHomePositionListeners();
+
+        // Clear all simulation state for fresh start
+        function clearSimulation() {
+            uavs = {};
+            tasks = {};
+            prevUavPositions = {};
+            selectedUavInfo = null;
+            render(); // Re-render to show clean map with just grid and home base
+
+            // Reset OODA displays
+            document.getElementById('ooda-observe').textContent = 'Waiting for mission start...';
+            document.getElementById('ooda-orient').textContent = 'Waiting for mission start...';
+            document.getElementById('ooda-decide').textContent = 'Waiting for mission start...';
+            document.getElementById('ooda-act').textContent = 'Waiting for mission start...';
+        }
+
+        function setHome(x, y) {
+            document.getElementById('homeX').value = x;
+            document.getElementById('homeY').value = y;
+            render(); // Re-render immediately with new home position
+            log(`Home base set: (${x}, ${y})`);
+        }
+
+        function createUavOption(id, uav, showAllInfo = false) {
+            const div = document.createElement('div');
+            div.className = 'uav-option';
+            div.onclick = () => {
+                document.querySelectorAll('.uav-option').forEach(o => o.classList.remove('selected'));
+                div.classList.add('selected');
+                selectedUAV = id;
+            };
+
+            let statusColor = 'var(--status-operational)';
+            if (uav.state === 'crashed') statusColor = 'var(--status-danger)';
+            else if (uav.returning || uav.state === 'charging' || uav.state === 'recovered') statusColor = 'var(--status-warning)';
+            else if (uav.battery_warning) statusColor = '#fd7e14';
+
+            div.innerHTML = `
+                <div style="font-weight: 600; font-size: 13px;">UAV ${id.split('_')[1]}</div>
+                <div style="margin-top: 8px; font-size: 12px;">${Math.round(uav.battery)}%</div>
+                <div style="font-size: 10px; color: ${statusColor}; margin-top: 4px; font-weight: 600;">
+                    ${uav.state.toUpperCase()}
+                </div>
+            `;
+            return div;
+        }
+
+        function openChargeModal() {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+
+            modalMode = 'charge';
+            document.getElementById('modalTitle').textContent = 'CHARGE BATTERY TO 100%';
+
+            const actionBtn = document.getElementById('modalActionButton');
+            actionBtn.textContent = 'Charge Battery';
+            actionBtn.onclick = confirmCharge;
+            actionBtn.className = 'btn btn-charge';
+
+            const list = document.getElementById('uavList');
+            list.innerHTML = '';
+            selectedUAV = null;
+
+            let hasUAVs = false;
+            Object.entries(uavs).forEach(([id, uav]) => {
+                if (uav.battery < 100) {
+                    hasUAVs = true;
+                    list.appendChild(createUavOption(id, uav, true));
+                }
+            });
+
+            if (!hasUAVs) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">All UAVs are fully charged!</div>';
+            }
+
+            document.getElementById('failureModal').style.display = 'flex';
+        }
+
+        function chargeAllUAVs() {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+            socket.emit('charge_all_batteries');
+            log('Charging all UAVs to 100%', false);
+        }
+
+        function openDrainModal() {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+
+            modalMode = 'drain';
+            document.getElementById('modalTitle').textContent = 'DRAIN BATTERY TO 15%';
+
+            const actionBtn = document.getElementById('modalActionButton');
+            actionBtn.textContent = 'Drain Battery';
+            actionBtn.onclick = confirmDrain;
+            actionBtn.className = 'btn btn-drain';
+
+            const list = document.getElementById('uavList');
+            list.innerHTML = '';
+            selectedUAV = null;
+
+            let hasUAVs = false;
+            Object.entries(uavs).forEach(([id, uav]) => {
+                if (uav.battery > 15) {
+                    hasUAVs = true;
+                    list.appendChild(createUavOption(id, uav, true));
+                }
+            });
+
+            if (!hasUAVs) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">All UAVs are already at 15% or below!</div>';
+            }
+
+            document.getElementById('failureModal').style.display = 'flex';
+        }
+
+        function drainAllUAVs() {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+            socket.emit('drain_all_batteries');
+            log('Draining all UAVs to 15%', false);
+        }
+
+        function randomizeAssets() {
+            if (!running) {
+                alert('Start a mission first!');
+                return;
+            }
+
+            socket.emit('randomize_assets');
+            log('Randomizing asset positions...');
+        }
+
+        function confirmDrain() {
+            if (!selectedUAV) {
+                alert('Please select a UAV');
+                return;
+            }
+            socket.emit('drain_battery', { uav_id: selectedUAV });
+            log(`Draining ${selectedUAV} to 15%`, false);
+            closeModal();
+        }
+
+        function openRecoveryModal() {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+
+            modalMode = 'recovery';
+            document.getElementById('modalTitle').textContent = 'MANUAL RECOVERY';
+
+            const actionBtn = document.getElementById('modalActionButton');
+            actionBtn.textContent = 'Initiate Recovery';
+            actionBtn.onclick = confirmRecovery;
+            actionBtn.className = 'btn btn-info';
+
+            const list = document.getElementById('uavList');
+            list.innerHTML = '';
+            selectedUAV = null;
+
+            let hasCrashed = false;
+            Object.entries(uavs).forEach(([id, uav]) => {
+                if (uav.state === 'crashed') {
+                    hasCrashed = true;
+                    list.appendChild(createUavOption(id, uav));
+                }
+            });
+
+            if (!hasCrashed) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">No crashed UAVs to recover</div>';
+            }
+
+            document.getElementById('failureModal').style.display = 'flex';
+        }
+
+        function openFailureModal(type) {
+            if (!running) {
+                alert('Start mission first');
+                return;
+            }
+
+            modalMode = 'failure';
+            failureType = type;
+            document.getElementById('modalTitle').textContent = type.toUpperCase() + ' FAILURE';
+
+            const actionBtn = document.getElementById('modalActionButton');
+            actionBtn.textContent = 'Inject Failure';
+            actionBtn.onclick = confirmFailure;
+            actionBtn.className = 'btn btn-danger';
+
+            const list = document.getElementById('uavList');
+            list.innerHTML = '';
+            selectedUAV = null;
+
+            let hasOperational = false;
+            Object.entries(uavs).forEach(([id, uav]) => {
+                if (uav.operational && !uav.returning) {
+                    hasOperational = true;
+                    list.appendChild(createUavOption(id, uav));
+                }
+            });
+
+            if (!hasOperational) {
+                list.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">No operational UAVs</div>';
+            }
+
+            document.getElementById('failureModal').style.display = 'flex';
+        }
+
+        function confirmCharge() {
+            if (!selectedUAV) {
+                alert('Please select a UAV');
+                return;
+            }
+            socket.emit('charge_battery', { uav_id: selectedUAV });
+            log(`Charging ${selectedUAV} to 100%`, false);
+            closeModal();
+        }
+
+        function confirmRecovery() {
+            if (!selectedUAV) {
+                alert('Please select a UAV');
+                return;
+            }
+            socket.emit('manual_recovery', { uav_id: selectedUAV });
+            log(`Recovery initiated for ${selectedUAV}`, true);
+            closeModal();
+        }
+
+        function confirmFailure() {
+            if (!selectedUAV) {
+                alert('Please select a UAV');
+                return;
+            }
+            socket.emit('inject_failure', { uav_id: selectedUAV, type: failureType });
+            log(`${failureType} failure injected into ${selectedUAV}`, true);
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('failureModal').style.display = 'none';
+            selectedUAV = null;
+            modalMode = null;
+            failureType = null;
+        }
+
+        function closeFailureModal() {
+            closeModal();
+        }
+
+        document.getElementById('btn-start').onclick = () => {
+            console.log('Start button clicked. Current scenario:', scenario);
+
+            // Show loading
+            showLoading('Initializing mission...');
+
+            const homeX = parseFloat(document.getElementById('homeX').value) || 0;
+            const homeY = parseFloat(document.getElementById('homeY').value) || 0;
+            const numUAVs = parseInt(document.getElementById('numUAVs').value) || 5;
+
+            const missionData = {
+                scenario: scenario,
+                home_base: [homeX, homeY],
+                num_uavs: numUAVs
+            };
+
+            // Add Surveillance-specific configuration
+            if (scenario === 'surveillance') {
+                missionData.patrol_pattern = document.getElementById('patrolPattern').value || 'lawnmower';
+                missionData.pattern_mode = document.getElementById('patternMode').value || 'per_zone';
+            }
+
+            // Add SAR-specific configuration
+            if (scenario === 'search_rescue') {
+                missionData.num_assets = parseInt(document.getElementById('numAssets').value) || 3;
+                missionData.consensus_required = parseInt(document.getElementById('consensusRequired').value) || 2;
+            }
+
+            // Add Delivery-specific configuration
+            if (scenario === 'delivery') {
+                missionData.num_packages = parseInt(document.getElementById('numPackages').value) || 12;
+                missionData.time_window = parseInt(document.getElementById('timeWindow').value) || 600;
+            }
+
+            console.log('Sending start_mission event with data:', missionData);
+            socket.emit('start_mission', missionData);
+
+            // Hide loading after a short delay to show smooth transition
+            setTimeout(() => {
+                hideLoading();
+                running = true;
+                startTime = Date.now();
+                document.getElementById('btn-start').disabled = true;
+                document.getElementById('btn-pause').disabled = false;
+                document.getElementById('btn-stop').disabled = false;
+                document.getElementById('status').textContent = 'ACTIVE';
+                log(`Mission started from (${homeX}, ${homeY})`, false);
+            }, 500);
+        };
+
+        document.getElementById('btn-pause').onclick = () => {
+            socket.emit('pause_mission');
+            running = false;
+            document.getElementById('btn-start').disabled = false;
+            document.getElementById('btn-start').textContent = 'Resume';
+        };
+
+        document.getElementById('btn-stop').onclick = () => {
+            socket.emit('stop_mission');
+            running = false;
+            document.getElementById('btn-start').disabled = false;
+            document.getElementById('btn-start').textContent = 'Start Mission';
+            document.getElementById('btn-pause').disabled = true;
+            document.getElementById('btn-stop').disabled = true;
+            document.getElementById('status').textContent = 'READY';
+
+            // Clear all simulation state
+            clearSimulation();
+
+            log('Mission stopped');
+        };
+
+        function setSpeed(speed) {
+            socket.emit('set_speed', { speed });
+            log(`Simulation speed: ${speed}x`);
+        }
+
+        function setPattern(pattern) {
+            socket.emit('set_pattern', { pattern });
+
+            document.querySelectorAll('.btn-pattern').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.pattern === pattern) {
+                    btn.classList.add('active');
+                }
+            });
+
+            log(`Patrol pattern: ${pattern}`);
+        }
+
+        function setMode(mode) {
+            socket.emit('set_pattern_mode', { mode });
+
+            document.querySelectorAll('.btn-mode').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === mode) {
+                    btn.classList.add('active');
+                }
+            });
+
+            log(`Pattern mode: ${mode === 'grouped' ? 'Grouped' : 'Per Zone'}`);
+        }
+
+        socket.on('pattern_update', data => {
+            document.querySelectorAll('.btn-pattern').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.pattern === data.pattern) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        socket.on('mode_update', data => {
+            document.querySelectorAll('.btn-mode').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === data.mode) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        socket.on('telemetry', data => {
+            uavs = data.uavs || {};
+            tasks = data.tasks || {};
+            render();
+        });
+
+        socket.on('update', data => {
+            document.getElementById('op').textContent = data.fleet?.operational || 0;
+            document.getElementById('fail').textContent = data.fleet?.failed || 0;
+            document.getElementById('returning').textContent = data.fleet?.returning || 0;
+            document.getElementById('comp').textContent = Math.round(data.mission?.completion_percent || 0) + '%';
+            document.getElementById('ooda').textContent = data.ooda_stats?.total_cycles || 0;
+
+            // Count zones/packages based on scenario
+            let taskCount = 0;
+            if (scenario === 'delivery') {
+                // Only count package tasks (pkg_*)
+                taskCount = Object.keys(tasks).filter(tid => tid.startsWith('pkg_')).length;
+            } else {
+                // Count all tasks (zones for surveillance/SAR)
+                taskCount = Object.keys(tasks).filter(tid => !tid.startsWith('asset_')).length;
+            }
+            document.getElementById('zones').textContent = taskCount;
+
+            // Update scenario-specific metrics
+            if (data.metrics) {
+                if (scenario === 'search_rescue') {
+                    document.getElementById('assets-rescued').textContent =
+                        `${data.metrics.assets_rescued || 0}/${data.metrics.total_assets || 0}`;
+
+                    document.getElementById('consensus-count').textContent =
+                        data.metrics.consensus_required || 2;
+
+                    // Calculate mission time if running
+                    if (running) {
+                        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                        document.getElementById('mission-time').textContent =
+                            `${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,'0')}`;
+                    }
+                } else if (scenario === 'delivery') {
+                    document.getElementById('deliveries').textContent =
+                        `${data.metrics.deliveries_completed || 0}/${data.metrics.total_packages || 0}`;
+                    document.getElementById('on-time').textContent =
+                        data.metrics.deliveries_on_time || 0;
+                }
+            }
+
+            const status = document.getElementById('status');
+            if (data.fleet?.failed > 0) {
+                status.textContent = 'DEGRADED';
+                status.className = 'status-badge status-warning';
+            } else if (running) {
+                status.textContent = 'ACTIVE';
+                status.className = 'status-badge status-operational';
+            }
+        });
+
+        socket.on('workload_update', data => {
+            const container = document.getElementById('workloadAssignments');
+            container.innerHTML = '';
+
+            if (data.assignments && data.assignments.length > 0) {
+                data.assignments.forEach(assignment => {
+                    const item = document.createElement('div');
+                    item.className = 'assignment-item';
+                    item.textContent = assignment;
+                    container.appendChild(item);
+                });
+            } else {
+                container.innerHTML = '<div class="assignment-item">No assignments</div>';
+            }
+        });
+
+        socket.on('ooda_event', e => {
+            log(e.message, e.critical);
+
+            const timestamp = new Date().toLocaleTimeString();
+            const displayHTML = `${e.message}<br><span style="color: var(--text-muted); font-size: 11px;">${timestamp}</span>`;
+
+            const elementId = `ooda-${e.phase}`;
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.innerHTML = displayHTML;
+            }
+        });
+
+        socket.on('mission_stopped', data => {
+            // Stop the mission timer
+            running = false;
+
+            // Re-enable start button and reset text
+            document.getElementById('btn-start').disabled = false;
+            document.getElementById('btn-start').textContent = 'Start Mission';
+
+            // Disable pause/stop buttons
+            document.getElementById('btn-pause').disabled = true;
+            document.getElementById('btn-stop').disabled = true;
+
+            // Update status
+            document.getElementById('status').textContent = 'COMPLETE';
+
+            // Clear all simulation state
+            clearSimulation();
+
+            // Log completion message
+            const missionName = data.mission_type === 'search_rescue' ? 'SAR' : data.mission_type.toUpperCase();
+            log(`${missionName} mission completed in ${data.elapsed_time.toFixed(1)}s`, false);
+        });
+
+        function handleAssetMouseDown(e) {
+            if (!running) return;
+
+            const map = document.getElementById('map');
+            const rect = map.getBoundingClientRect();
+            const w = map.offsetWidth, h = map.offsetHeight;
+            const mouseX = (e.clientX - rect.left - w / 2) / 4;
+            const mouseY = (h / 2 - (e.clientY - rect.top)) / 4;
+
+            // Check SAR assets
+            for (const [assetId, asset] of Object.entries(tasks)) {
+                if (asset.type === 'asset' && asset.position) {
+                    const dx = mouseX - asset.position[0];
+                    const dy = mouseY - asset.position[1];
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 8) {  // 8m click radius
+                        draggingAsset = { id: assetId, type: 'asset' };
+                        dragOffset = { x: dx, y: dy };
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+
+            // Check delivery packages
+            for (const [taskId, task] of Object.entries(tasks)) {
+                if (task.type === 'delivery' && task.pickup) {
+                    const dx = mouseX - task.pickup[0];
+                    const dy = mouseY - task.pickup[1];
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 8) {
+                        draggingAsset = { id: taskId, type: 'delivery' };
+                        dragOffset = { x: dx, y: dy };
+                        e.preventDefault();
+                        return;
+                    }
+                }
+            }
+        }
+
+        function handleAssetMouseMove(e) {
+            if (!draggingAsset) return;
+
+            const map = document.getElementById('map');
+            const rect = map.getBoundingClientRect();
+            const w = map.offsetWidth, h = map.offsetHeight;
+            const mouseX = (e.clientX - rect.left - w / 2) / 4;
+            const mouseY = (h / 2 - (e.clientY - rect.top)) / 4;
+
+            const newX = mouseX - dragOffset.x;
+            const newY = mouseY - dragOffset.y;
+
+            // Update local position for immediate visual feedback
+            if (draggingAsset.type === 'asset' && tasks[draggingAsset.id]) {
+                tasks[draggingAsset.id].position = [newX, newY, 0];
+            } else if (draggingAsset.type === 'delivery' && tasks[draggingAsset.id]) {
+                tasks[draggingAsset.id].pickup = [newX, newY];
+            }
+
+            render();  // Re-render to show new position
+            e.preventDefault();
+        }
+
+        function handleAssetMouseUp(e) {
+            if (!draggingAsset) return;
+
+            const map = document.getElementById('map');
+            const rect = map.getBoundingClientRect();
+            const w = map.offsetWidth, h = map.offsetHeight;
+            const mouseX = (e.clientX - rect.left - w / 2) / 4;
+            const mouseY = (h / 2 - (e.clientY - rect.top)) / 4;
+
+            const newX = mouseX - dragOffset.x;
+            const newY = mouseY - dragOffset.y;
+
+            // Send update to server
+            socket.emit('move_asset', {
+                asset_id: draggingAsset.id,
+                x: newX,
+                y: newY
+            });
+
+            log(`${draggingAsset.id} moved to (${Math.round(newX)}, ${Math.round(newY)})`);
+
+            draggingAsset = null;
+            e.preventDefault();
+        }
+
+        function render() {
+            const map = document.getElementById('map');
+            const w = map.offsetWidth, h = map.offsetHeight;
+            map.innerHTML = '';
+
+            const homeX = parseFloat(document.getElementById('homeX').value) || 0;
+            const homeY = parseFloat(document.getElementById('homeY').value) || 0;
+
+            // Coordinate system: Grid lines and labels (every 20m)
+            const gridSpacing = 20; // meters
+            const pixelsPerMeter = 4;
+            const gridColor = 'var(--border-color)';
+            const axisColor = 'var(--text-secondary)';
+
+            // Draw grid lines
+            for (let x = -100; x <= 100; x += gridSpacing) {
+                const px = x * pixelsPerMeter + w/2;
+
+                // Vertical grid line
+                const vline = document.createElement('div');
+                vline.style.position = 'absolute';
+                vline.style.left = px + 'px';
+                vline.style.top = '0';
+                vline.style.width = (x === 0 ? '2px' : '1px');
+                vline.style.height = '100%';
+                vline.style.background = (x === 0 ? axisColor : gridColor);
+                vline.style.opacity = (x === 0 ? '0.5' : '0.2');
+                vline.style.pointerEvents = 'none';
+                map.appendChild(vline);
+
+                // X-axis label
+                if (x !== 0) {
+                    const xlabel = document.createElement('div');
+                    xlabel.style.position = 'absolute';
+                    xlabel.style.left = (px - 15) + 'px';
+                    xlabel.style.bottom = '5px';
+                    xlabel.style.fontSize = '10px';
+                    xlabel.style.color = 'var(--text-secondary)';
+                    xlabel.style.pointerEvents = 'none';
+                    xlabel.textContent = x + 'm';
+                    map.appendChild(xlabel);
+                }
+            }
+
+            for (let y = -100; y <= 100; y += gridSpacing) {
+                const py = h/2 - y * pixelsPerMeter;
+
+                // Horizontal grid line
+                const hline = document.createElement('div');
+                hline.style.position = 'absolute';
+                hline.style.left = '0';
+                hline.style.top = py + 'px';
+                hline.style.width = '100%';
+                hline.style.height = (y === 0 ? '2px' : '1px');
+                hline.style.background = (y === 0 ? axisColor : gridColor);
+                hline.style.opacity = (y === 0 ? '0.5' : '0.2');
+                hline.style.pointerEvents = 'none';
+                map.appendChild(hline);
+
+                // Y-axis label
+                if (y !== 0) {
+                    const ylabel = document.createElement('div');
+                    ylabel.style.position = 'absolute';
+                    ylabel.style.left = '5px';
+                    ylabel.style.top = (py - 8) + 'px';
+                    ylabel.style.fontSize = '10px';
+                    ylabel.style.color = 'var(--text-secondary)';
+                    ylabel.style.pointerEvents = 'none';
+                    ylabel.textContent = y + 'm';
+                    map.appendChild(ylabel);
+                }
+            }
+
+            // Origin label (0,0)
+            const origin = document.createElement('div');
+            origin.style.position = 'absolute';
+            origin.style.left = (w/2 + 5) + 'px';
+            origin.style.top = (h/2 + 5) + 'px';
+            origin.style.fontSize = '11px';
+            origin.style.color = 'var(--text-primary)';
+            origin.style.fontWeight = 'bold';
+            origin.style.pointerEvents = 'none';
+            origin.textContent = '(0,0)';
+            map.appendChild(origin);
+
+            // Legend box (UAV status colors and scale)
+            const legendBox = document.createElement('div');
+            legendBox.style.position = 'absolute';
+            legendBox.style.top = '10px';
+            legendBox.style.right = '10px';
+            legendBox.style.background = 'var(--bg-secondary)';
+            legendBox.style.border = '2px solid var(--border-color)';
+            legendBox.style.borderRadius = '8px';
+            legendBox.style.padding = '10px 14px';
+            legendBox.style.fontSize = '11px';
+            legendBox.style.color = 'var(--text-secondary)';
+            legendBox.style.fontFamily = 'monospace';
+            legendBox.style.lineHeight = '1.5';
+            legendBox.style.boxShadow = 'var(--shadow-md)';
+            legendBox.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 8px; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px;">
+                    LEGEND
+                </div>
+
+                <div style="margin-bottom: 8px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">UAV Status</div>
+                    <div style="display: flex; align-items: center; margin: 3px 0;">
+                        <div style="width: 14px; height: 14px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
+                        <span>Operational</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 3px 0;">
+                        <div style="width: 14px; height: 14px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
+                        <span>Low Battery</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 3px 0;">
+                        <div style="width: 14px; height: 14px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
+                        <span>Returning/Charging</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 3px 0;">
+                        <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
+                        <span>Crashed</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 3px 0;">
+                        <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite;"></div>
+                        <span>Awaiting Permission</span>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
+                    <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">Scale & Performance</div>
+                    <div>Grid: 20m spacing</div>
+                    <div>Speed: 8 m/s (29 km/h)</div>
+                    <div>Range: ~2.7 km</div>
+                    <div>Endurance: ~5.5 min</div>
+                </div>
+
+                <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px; font-size: 9px; color: var(--text-muted); font-style: italic;">
+                    Click UAV for details<br>
+                    Double-click red blinking UAV to grant permission
+                </div>
+            `;
+            map.appendChild(legendBox);
+
+            // Visual scale bar (bottom left)
+            const scaleBar = document.createElement('div');
+            scaleBar.style.position = 'absolute';
+            scaleBar.style.bottom = '15px';
+            scaleBar.style.left = '15px';
+            scaleBar.style.background = 'var(--bg-secondary)';
+            scaleBar.style.border = '1px solid var(--border-color)';
+            scaleBar.style.borderRadius = '3px';
+            scaleBar.style.padding = '5px 8px';
+
+            // Create scale bar segments
+            const scaleBarInner = document.createElement('div');
+            scaleBarInner.style.display = 'flex';
+            scaleBarInner.style.flexDirection = 'column';
+            scaleBarInner.style.gap = '3px';
+
+            // Meters scale
+            const metersBar = document.createElement('div');
+            metersBar.style.display = 'flex';
+            metersBar.style.alignItems = 'center';
+            metersBar.innerHTML = `
+                <div style="display: flex; border-bottom: 2px solid var(--text-primary); height: 8px;">
+                    <div style="width: 80px; border-right: 2px solid var(--text-primary); background: var(--text-primary); opacity: 0.3;"></div>
+                    <div style="width: 80px; border-right: 2px solid var(--text-primary);"></div>
+                </div>
+            `;
+
+            const metersLabel = document.createElement('div');
+            metersLabel.style.display = 'flex';
+            metersLabel.style.justifyContent = 'space-between';
+            metersLabel.style.width = '160px';
+            metersLabel.style.fontSize = '10px';
+            metersLabel.style.color = 'var(--text-primary)';
+            metersLabel.style.marginTop = '2px';
+            metersLabel.innerHTML = '<span>0</span><span>20m</span><span>40m</span>';
+
+            // Feet scale
+            const feetBar = document.createElement('div');
+            feetBar.style.display = 'flex';
+            feetBar.style.alignItems = 'center';
+            feetBar.style.marginTop = '5px';
+            feetBar.innerHTML = `
+                <div style="display: flex; border-bottom: 2px solid var(--text-secondary); height: 6px;">
+                    <div style="width: 80px; border-right: 2px solid var(--text-secondary);"></div>
+                    <div style="width: 80px; border-right: 2px solid var(--text-secondary);"></div>
+                </div>
+            `;
+
+            const feetLabel = document.createElement('div');
+            feetLabel.style.display = 'flex';
+            feetLabel.style.justifyContent = 'space-between';
+            feetLabel.style.width = '160px';
+            feetLabel.style.fontSize = '9px';
+            feetLabel.style.color = 'var(--text-secondary)';
+            feetLabel.style.marginTop = '1px';
+            feetLabel.innerHTML = '<span>0</span><span>66ft</span><span>131ft</span>';
+
+            scaleBarInner.appendChild(metersBar);
+            scaleBarInner.appendChild(metersLabel);
+            scaleBarInner.appendChild(feetBar);
+            scaleBarInner.appendChild(feetLabel);
+            scaleBar.appendChild(scaleBarInner);
+            map.appendChild(scaleBar);
+
+            // Home base
+            const base = document.createElement('div');
+            base.style.position = 'absolute';
+            base.style.left = (homeX * 4 + w/2 - 10) + 'px';
+            base.style.top = (h/2 - homeY * 4 - 10) + 'px';
+            base.style.width = '20px';
+            base.style.height = '20px';
+            base.style.background = 'var(--accent-primary)';
+            base.style.border = '3px solid var(--accent-secondary)';
+            base.style.borderRadius = '3px';
+            base.style.boxShadow = 'var(--shadow-md)';
+            base.title = `Home Base (${homeX}, ${homeY})`;
+            map.appendChild(base);
+
+            // Zones or Tasks (scenario-dependent)
+            Object.entries(tasks).forEach(([id, t]) => {
+                if (t.type === 'asset') {
+                    // SAR Asset: Red (unidentified) -> Blue (identified) -> Green (rescued)
+                    const asset = document.createElement('div');
+                    asset.style.position = 'absolute';
+                    asset.style.left = (t.position[0] * 4 + w/2 - 8) + 'px';
+                    asset.style.top = (h/2 - t.position[1] * 4 - 8) + 'px';
+                    asset.style.width = '16px';
+                    asset.style.height = '16px';
+
+                    // Color coding: Red -> Blue (identified) -> Green (rescued)
+                    let assetColor = '#dc3545'; // Red: unidentified
+                    let assetStatus = 'UNIDENTIFIED';
+
+                    // Debug logging to check asset state
+                    if (t.guardian_uav) {
+                        console.log(`${id}: guardian=${t.guardian_uav}, identified=${t.identified}, rescued=${t.rescued}`);
+                    }
+
+                    if (t.rescued) {
+                        assetColor = '#28a745'; // Green: rescued/secured
+                        assetStatus = 'RESCUED';
+                    } else if (t.identified) {
+                        assetColor = '#007bff'; // Blue: identified/location confirmed
+                        assetStatus = 'IDENTIFIED';
+                    }
+
+                    asset.style.background = assetColor;
+                    asset.style.border = '3px solid var(--text-primary)';
+                    asset.style.borderRadius = '50%';
+                    asset.style.boxShadow = `0 0 10px ${assetColor}`;
+                    asset.title = `${id.toUpperCase()} - ${assetStatus} (${t.detected_by.length} detections)`;
+                    asset.style.cursor = 'grab';
+
+                    // Highlight if being dragged
+                    if (draggingAsset && draggingAsset.id === id) {
+                        asset.style.border = '4px solid #ffff00';
+                        asset.style.boxShadow = `0 0 20px #ffff00`;
+                        asset.style.cursor = 'grabbing';
+                    }
+
+                    map.appendChild(asset);
+                } else if (t.type === 'delivery' && t.pickup) {
+                    // Delivery Package: Show pickup and dropoff markers
+                    if (t.status !== 'delivered') {
+                        // Pickup marker
+                        const pickup = document.createElement('div');
+                        pickup.style.position = 'absolute';
+                        pickup.style.left = (t.pickup[0] * 4 + w/2 - 8) + 'px';
+                        pickup.style.top = (h/2 - t.pickup[1] * 4 - 8) + 'px';
+                        pickup.style.width = '16px';
+                        pickup.style.height = '16px';
+                        pickup.style.background = t.status === 'pending' ? '#ffc107' : '#28a745';
+                        pickup.style.border = '2px solid var(--text-primary)';
+                        pickup.style.borderRadius = '50%';
+                        pickup.title = `Package ${id} (${t.status})`;
+                        pickup.style.cursor = 'grab';
+
+                        // Highlight if being dragged
+                        if (draggingAsset && draggingAsset.id === id) {
+                            pickup.style.border = '4px solid #ffff00';
+                            pickup.style.boxShadow = `0 0 20px #ffff00`;
+                            pickup.style.cursor = 'grabbing';
+                        }
+
+                        map.appendChild(pickup);
+
+                        // Dropoff marker
+                        const dropoff = document.createElement('div');
+                        dropoff.style.position = 'absolute';
+                        dropoff.style.left = (t.dropoff[0] * 4 + w/2 - 6) + 'px';
+                        dropoff.style.top = (h/2 - t.dropoff[1] * 4 - 6) + 'px';
+                        dropoff.style.width = '12px';
+                        dropoff.style.height = '12px';
+                        dropoff.style.background = 'transparent';
+                        dropoff.style.border = '2px solid #dc3545';
+                        dropoff.style.borderRadius = '50%';
+                        dropoff.title = `Dropoff ${id}`;
+                        map.appendChild(dropoff);
+
+                        // Draw line from pickup to dropoff
+                        if (t.status === 'picked_up') {
+                            const line = document.createElement('div');
+                            const dx = t.dropoff[0] - t.pickup[0];
+                            const dy = t.dropoff[1] - t.pickup[1];
+                            const length = Math.sqrt(dx*dx + dy*dy) * 4;
+                            const angle = Math.atan2(-dy, dx) * 180 / Math.PI;
+
+                            line.style.position = 'absolute';
+                            line.style.left = (t.pickup[0] * 4 + w/2) + 'px';
+                            line.style.top = (h/2 - t.pickup[1] * 4) + 'px';
+                            line.style.width = length + 'px';
+                            line.style.height = '2px';
+                            line.style.background = '#28a745';
+                            line.style.transformOrigin = '0 0';
+                            line.style.transform = `rotate(${angle}deg)`;
+                            line.style.opacity = '0.5';
+                            map.appendChild(line);
+                        }
+                    }
+                } else {
+                    // Surveillance/SAR: Show zone areas
+                    const m = document.createElement('div');
+                    m.className = 'task-area task-' + t.type;
+                    const coverage = t.coverage || 0;
+                    m.style.opacity = 0.25 + (coverage / 100) * 0.5;
+
+                    const size = t.size || 20;
+                    m.style.width = (size * 4) + 'px';
+                    m.style.height = (size * 4) + 'px';
+                    m.style.left = (t.center[0] * 4 + w/2 - size * 2) + 'px';
+                    m.style.top = (h/2 - t.center[1] * 4 - size * 2) + 'px';
+
+                    // Priority zones get special styling
+                    if (t.priority && t.priority > 1.0) {
+                        m.style.borderColor = '#e74c3c';
+                        m.style.borderWidth = '3px';
+                        m.style.background = 'rgba(231, 76, 60, 0.2)';
+                    }
+
+                    // SAR: Show target status
+                    if (t.type === 'search_rescue') {
+                        if (t.target_found) {
+                            m.textContent = `Zone ${id} FOUND (${Math.round(coverage)}%)`;
+                            m.style.background = 'rgba(39, 174, 96, 0.3)';
+                        } else if (t.has_target) {
+                            m.textContent = `Zone ${id} TARGET (${Math.round(coverage)}%)`;
+                        } else {
+                            m.textContent = `Zone ${id} (${Math.round(coverage)}%)`;
+                        }
+                    } else {
+                        m.textContent = `Zone ${id} (${Math.round(coverage)}%)`;
+                    }
+
+                    map.appendChild(m);
+                }
+            });
+
+            // UAVs
+            const uavSpeeds = {}; // Store speeds for each UAV
+            Object.entries(uavs).forEach(([id, u]) => {
+                // Calculate speed from position change
+                let speed = 0;
+                if (prevUavPositions[id]) {
+                    const dx = u.position[0] - prevUavPositions[id][0];
+                    const dy = u.position[1] - prevUavPositions[id][1];
+                    const dz = u.position[2] - prevUavPositions[id][2];
+                    const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    speed = distance / 0.5; // m/s (updates every 0.5s)
+                }
+                uavSpeeds[id] = speed;
+                // Update previous position
+                prevUavPositions[id] = [...u.position];
+
+                const m = document.createElement('div');
+                m.className = 'uav-marker';
+
+                m.style.left = (u.position[0] * 4 + w/2) + 'px';
+                m.style.top = (h/2 - u.position[1] * 4) + 'px';
+
+                let statusClass = 'uav-operational';
+                if (u.state === 'crashed') statusClass = 'uav-failed';
+                else if (u.state === 'awaiting_permission' || u.awaiting_permission) statusClass = 'uav-awaiting-permission';
+                else if (u.returning || u.state === 'charging' || u.state === 'recovered') statusClass = 'uav-returning';
+                else if (u.battery_warning) statusClass = 'uav-low-battery';
+
+                m.innerHTML = `
+                    <div class="uav-icon ${statusClass}" style="pointer-events: none;">${id.split('_')[1]}</div>
+                    <div class="uav-label" style="pointer-events: none;">UAV ${id.split('_')[1]}<br>${Math.round(u.battery)}%</div>
+                `;
+
+                // Click handler to show UAV info
+                m.style.cursor = 'pointer';
+                m.style.pointerEvents = 'auto';
+                m.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedUavInfo = id;
+                    console.log('UAV clicked:', id); // Debug log
+                });
+
+                // Double-click handler to grant permission for awaiting_permission UAVs
+                m.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    if (u.state === 'awaiting_permission' || u.awaiting_permission) {
+                        console.log('Double-clicked awaiting_permission UAV:', id);
+                        // Emit grant_permission event to backend
+                        socket.emit('grant_permission', { uav_id: id });
+
+                        // Visual feedback
+                        const uavIcon = m.querySelector('.uav-icon');
+                        if (uavIcon) {
+                            const originalAnimation = uavIcon.style.animation;
+                            uavIcon.style.animation = 'none';
+                            uavIcon.style.background = '#28a745';
+                            setTimeout(() => {
+                                uavIcon.style.animation = originalAnimation;
+                            }, 500);
+                        }
+
+                        // Show notification
+                        console.log(`Permission granted for ${id}`);
+                    }
+                });
+
+                map.appendChild(m);
+            });
+
+            // Display selected UAV info box
+            if (selectedUavInfo && uavs[selectedUavInfo]) {
+                const id = selectedUavInfo;
+                const uav = uavs[id];
+                const speed = uavSpeeds[id] || 0;
+
+                const infoBox = document.createElement('div');
+                infoBox.style.position = 'absolute';
+                infoBox.style.top = '10px';
+                infoBox.style.left = '10px';
+                infoBox.style.background = 'var(--bg-secondary)';
+                infoBox.style.border = '2px solid var(--accent-primary)';
+                infoBox.style.borderRadius = '8px';
+                infoBox.style.padding = '12px 16px';
+                infoBox.style.fontSize = '12px';
+                infoBox.style.fontFamily = 'monospace';
+                infoBox.style.color = 'var(--text-primary)';
+                infoBox.style.lineHeight = '1.6';
+                infoBox.style.boxShadow = 'var(--shadow-lg)';
+                infoBox.style.minWidth = '220px';
+                infoBox.style.zIndex = '1000';
+
+                const closeBtn = document.createElement('span');
+                closeBtn.style.cssText = 'float: right; cursor: pointer; color: var(--text-secondary); font-weight: bold;';
+                closeBtn.textContent = 'X';
+                closeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    selectedUavInfo = null;
+                };
+
+                const header = document.createElement('div');
+                header.style.cssText = 'font-weight: bold; font-size: 14px; margin-bottom: 8px; color: var(--accent-primary);';
+                header.textContent = id.toUpperCase();
+                header.appendChild(closeBtn);
+
+                const content = document.createElement('div');
+                content.style.cssText = 'border-top: 1px solid var(--border-color); padding-top: 6px;';
+                content.innerHTML = `
+                    <div><strong>Position:</strong></div>
+                    <div style="margin-left: 10px;">
+                        X: ${uav.position[0].toFixed(1)}m<br>
+                        Y: ${uav.position[1].toFixed(1)}m<br>
+                        Z: ${uav.position[2].toFixed(1)}m
+                    </div>
+                    <div style="margin-top: 6px;"><strong>Speed:</strong> ${speed.toFixed(2)} m/s (${(speed * 3.6).toFixed(1)} km/h)</div>
+                    <div style="margin-top: 6px;"><strong>State:</strong> ${uav.state}</div>
+                    <div><strong>Battery:</strong> ${uav.battery.toFixed(1)}%</div>
+                    ${uav.operational ? '' : '<div style="color: #dc3545; margin-top: 6px;">NOT OPERATIONAL</div>'}
+                `;
+
+                infoBox.appendChild(header);
+                infoBox.appendChild(content);
+                map.appendChild(infoBox);
+            }
+        }
+
+        function log(msg, critical = false) {
+            const e = document.createElement('div');
+            e.className = 'event' + (critical ? ' critical' : '');
+            e.innerHTML = `<div>${msg}</div><div class="event-time">${new Date().toLocaleTimeString()}</div>`;
+            const c = document.getElementById('events');
+            c.insertBefore(e, c.firstChild);
+            while (c.children.length > 20) c.removeChild(c.lastChild);
+        }
+
+        setInterval(() => {
+            if (running) {
+                const t = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('time').textContent =
+                    `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`;
+                socket.emit('request_update');
+            }
+        }, 500);
+    </script>
+
+    <footer style="
+        margin-top: 40px;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        padding: 20px 20px 15px 20px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--text-muted);
+    ">
+        Project for the Specialization in Aeronautical Systems - School of Engineering of São Carlos, University of São Paulo |
+        Advisor: Prof. João Paulo Eguea, PhD |
+        Student: Vítor EULÁLIO REIS
+    </footer>
+</body>
+</html>
