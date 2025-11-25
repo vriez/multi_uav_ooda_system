@@ -863,18 +863,27 @@ class WorkloadBalancer:
                 # Assign to recovered UAV
                 uavs[uav_id]['assigned_zones'] = zones_to_steal
                 for zid in zones_to_steal:
-                    tasks[zid]['assigned_uavs'].append(uav_id)
-                
+                    tasks[zid]['assigned_uavs'] = [uav_id]  # Replace, not append
+
                 log_message = f"{uav_id} stole zones {zones_to_steal} from {heaviest_uav}"
             else:
                 # Fallback: just take the least covered zone
-                sorted_zones = sorted(tasks.keys(), key=lambda zid: tasks[zid].get('coverage', 0))
-                target_zone = sorted_zones[0]
-                
-                uavs[uav_id]['assigned_zones'] = [target_zone]
-                tasks[target_zone]['assigned_uavs'].append(uav_id)
-                
-                log_message = f"{uav_id} assigned to zone {target_zone} (fallback)"
+                sorted_zones = sorted([z for z in tasks.keys() if tasks[z].get('type') != 'asset'],
+                                       key=lambda zid: tasks[zid].get('coverage', 0))
+                if not sorted_zones:
+                    log_message = f"{uav_id} no zones available for assignment"
+                else:
+                    target_zone = sorted_zones[0]
+
+                    # Clear previous UAV assignments for this zone
+                    for old_uav_id in tasks[target_zone].get('assigned_uavs', []):
+                        if old_uav_id in uavs and old_uav_id != uav_id and target_zone in uavs[old_uav_id].get('assigned_zones', []):
+                            uavs[old_uav_id]['assigned_zones'].remove(target_zone)
+
+                    uavs[uav_id]['assigned_zones'] = [target_zone]
+                    tasks[target_zone]['assigned_uavs'] = [uav_id]  # Replace, not append
+
+                    log_message = f"{uav_id} assigned to zone {target_zone} (fallback)"
         
         # 4. Set recovered UAV state and compute patrol path
         uavs[uav_id]['contour_waypoints'] = self.compute_zone_contour(uavs[uav_id]['assigned_zones'], tasks)
@@ -921,9 +930,14 @@ class WorkloadBalancer:
             if candidates:
                 # Pick best: prefer adjacent zones, then lighter load
                 best_uav = min(candidates, key=lambda x: (x[1], x[2]))[0]
-                
+
+                # Clear previous UAV assignments for this zone
+                for old_uav_id in tasks[failed_zone].get('assigned_uavs', []):
+                    if old_uav_id in uavs and failed_zone in uavs[old_uav_id].get('assigned_zones', []):
+                        uavs[old_uav_id]['assigned_zones'].remove(failed_zone)
+
                 uavs[best_uav]['assigned_zones'].append(failed_zone)
-                tasks[failed_zone]['assigned_uavs'].append(best_uav)
+                tasks[failed_zone]['assigned_uavs'] = [best_uav]  # Replace, not append
                 
                 # Recompute contour (now using the robust bounding box logic)
                 new_contour = self.compute_zone_contour(uavs[best_uav]['assigned_zones'], tasks)
@@ -1041,11 +1055,17 @@ class WorkloadBalancer:
         for zid in orphaned_zones:
             # Find the UAV with fewest zones
             best_uav = min(operational_uavs, key=lambda uid: len(uavs[uid]['assigned_zones']))
-            
-            # Assign zone
-            uavs[best_uav]['assigned_zones'].append(zid)
+
+            # Clear previous UAV assignments for this zone (if any non-operational UAVs had it)
+            for old_uav_id in tasks[zid].get('assigned_uavs', []):
+                if old_uav_id in uavs and zid in uavs[old_uav_id].get('assigned_zones', []):
+                    uavs[old_uav_id]['assigned_zones'].remove(zid)
+
+            # Assign zone (only if not already assigned to this UAV)
+            if zid not in uavs[best_uav]['assigned_zones']:
+                uavs[best_uav]['assigned_zones'].append(zid)
             tasks[zid]['assigned_uavs'] = [best_uav]  # Clear old and set new
-            
+
             logger.info(f"Assigned orphaned zone {zid} to {best_uav}")
         
         # Recompute contours for all affected UAVs
@@ -2492,8 +2512,15 @@ def handle_failure(data):
             logger.warning(f"Zones {unassigned} remain unassigned after redistribution")
             for zone_id in unassigned:
                 best_uav = min(operational, key=lambda u: len(uavs[u]['assigned_zones']))
-                uavs[best_uav]['assigned_zones'].append(zone_id)
-                tasks[zone_id]['assigned_uavs'].append(best_uav)
+
+                # Clear previous UAV assignments for this zone
+                for old_uav_id in tasks[zone_id].get('assigned_uavs', []):
+                    if old_uav_id in uavs and zone_id in uavs[old_uav_id].get('assigned_zones', []):
+                        uavs[old_uav_id]['assigned_zones'].remove(zone_id)
+
+                if zone_id not in uavs[best_uav]['assigned_zones']:
+                    uavs[best_uav]['assigned_zones'].append(zone_id)
+                tasks[zone_id]['assigned_uavs'] = [best_uav]  # Replace, not append
                 new_contour = workload_balancer.compute_zone_contour(uavs[best_uav]['assigned_zones'], tasks)
                 uavs[best_uav]['contour_waypoints'] = new_contour
                 logger.info(f"Force assigned zone {zone_id} to {best_uav}")

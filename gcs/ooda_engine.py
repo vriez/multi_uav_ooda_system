@@ -66,6 +66,7 @@ class OODADecision:
     rationale: str
     metrics: Dict[str, float]
     execution_time_ms: float
+    phase_timings: Dict[str, float] = field(default_factory=dict)  # Phase-specific timing breakdown
 
 
 class OODAEngine:
