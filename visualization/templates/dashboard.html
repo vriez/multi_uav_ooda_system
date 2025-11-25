@@ -435,12 +435,20 @@
             cursor: pointer;
         }
         .uav-searching {
-            background: #17a2b8;  /* Cyan/Teal: actively searching/circling asset */
+            background: #17a2b8;  /* Cyan/Teal: actively searching/circling asset inside grid */
             border-color: #17a2b8;
             color: white;
         }
         body.dark-theme .uav-searching {
             box-shadow: 0 0 15px rgba(23, 162, 184, 0.5);
+        }
+        .uav-searching-outside {
+            background: #dc3545;  /* Red: searching asset outside grid */
+            border-color: #dc3545;
+            color: white;
+        }
+        body.dark-theme .uav-searching-outside {
+            box-shadow: 0 0 15px rgba(220, 53, 69, 0.5);
         }
         .uav-guardian {
             background: #6f42c1;  /* Purple: guardian protecting asset */
@@ -2878,6 +2886,10 @@
 
             // UAVs
             const uavSpeeds = {}; // Store speeds for each UAV
+            const uavCount = Object.keys(uavs).length;
+            if (uavCount > 0 && uavCount < 5) {
+                console.log(`Rendering ${uavCount} UAVs:`, Object.keys(uavs));
+            }
             Object.entries(uavs).forEach(([id, u]) => {
                 // Calculate speed from position change
                 let speed = 0;
@@ -2902,7 +2914,25 @@
                 if (u.state === 'crashed') statusClass = 'uav-failed';
                 // SAR-specific states
                 else if (u.guardian_of_asset) statusClass = 'uav-guardian';
-                else if (u.searching_asset || u.state === 'searching') statusClass = 'uav-searching';
+                else if (u.searching_asset || u.state === 'searching') {
+                    // Check if searching asset is outside grid
+                    if (u.searching_asset && tasks && tasks[u.searching_asset]) {
+                        const asset = tasks[u.searching_asset];
+                        const assetPos = asset.position || asset.last_known_position;
+                        if (assetPos) {
+                            const isOutside = Math.abs(assetPos[0]) > 60 || Math.abs(assetPos[1]) > 60;
+                            statusClass = isOutside ? 'uav-searching-outside' : 'uav-searching';
+                            // Debug logging
+                            if (isOutside) {
+                                console.log(`${id} searching ${u.searching_asset} OUTSIDE grid at [${assetPos[0].toFixed(1)}, ${assetPos[1].toFixed(1)}] - color: RED`);
+                            }
+                        } else {
+                            statusClass = 'uav-searching';
+                        }
+                    } else {
+                        statusClass = 'uav-searching';
+                    }
+                }
                 // Awaiting permission: orange for SAR (boundary), red blinking for delivery
                 else if ((u.state === 'awaiting_permission' || u.awaiting_permission) && scenario === 'search_rescue') statusClass = 'uav-awaiting-boundary';
                 else if ((u.state === 'awaiting_permission' || u.awaiting_permission)) statusClass = 'uav-awaiting-permission';
