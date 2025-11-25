@@ -37,12 +37,12 @@ Open browser: **http://localhost:8085**
 
 ## Features
 
-- 📋 **3 Mission Scenarios** with different fleet sizes and tasks
-- ▶️ **Playback Controls** - Start/Pause/Stop mission execution
-- ⚠️ **Failure Injection** - Battery, GPS, Comm, Motor failures
-- 🗺️ **Interactive Map** - Click UAVs to fail them
-- 📊 **Live Stats** - Fleet status, completion, OODA cycles
-- 📡 **Event Log** - Real-time OODA loop decisions
+- **3 Mission Scenarios** with different fleet sizes and tasks
+- **Playback Controls** - Start/Pause/Stop mission execution
+- **Failure Injection** - Battery, GPS, Comm, Motor failures
+- **Interactive Map** - Click UAVs to fail them
+- **Live Stats** - Fleet status, completion, OODA cycles
+- **Event Log** - Real-time OODA loop decisions
 
 ## Mission Scenarios
 
@@ -253,25 +253,25 @@ tasks:
 
 ## Features Implemented
 
-✅ **OODA Loop Engine**
+**OODA Loop Engine**
 - Observe: Fleet state aggregation
 - Orient: Mission impact analysis
 - Decide: Recovery strategy selection
 - Act: Task reallocation dispatch
 
-✅ **Multi-Modal Failure Detection**
+**Multi-Modal Failure Detection**
 - Communication timeout (1.5s)
 - Battery anomaly detection
 - Position discontinuity
 - Altitude violations
 
-✅ **Constraint-Aware Allocation**
+**Constraint-Aware Allocation**
 - Battery capacity verification
 - Payload constraint checking
 - Temporal deadline validation
 - Collision avoidance (15m buffer)
 
-✅ **UAV Simulation**
+**UAV Simulation**
 - Quaternion-based 6-DOF dynamics
 - Cascade PID control
 - Battery discharge modeling

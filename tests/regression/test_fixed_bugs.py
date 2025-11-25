@@ -131,7 +131,7 @@ class TestZoneAssignmentBugs:
         """
         BUG: Unbalanced zone assignments like uav_1→[1], uav_3→[6,7,8]
         FIX: Forced spatial contiguity for SAR missions (web_dashboard.py:688-703)
-        USER REPORT: "uav_1 → Zones [1] 🔴 PRIORITY..."
+        USER REPORT: "uav_1 → Zones [1] PRIORITY..."
         """
         # Expected balanced spatial assignment
         expected = {

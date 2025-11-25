@@ -930,7 +930,7 @@ class WorkloadBalancer:
                     if tasks and scenario_type == 'search_rescue':
                         has_priority = any(tasks.get(z, {}).get('priority', 1) > 1 for z in uav['assigned_zones'])
                         if has_priority:
-                            priority_info = " 🔴 PRIORITY"
+                            priority_info = "PRIORITY"
 
                     assignments.append(f"{uav_id} → Zones [{zone_str}]{priority_info}")
                 elif uav['state'] == 'recovered':
