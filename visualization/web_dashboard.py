@@ -1166,7 +1166,8 @@ def init_scenario(scenario, custom_home=None):
                 'status': 'pending',  # pending, assigned, picked_up, delivered
                 'assigned_uav': None,
                 'deadline': mission_start_time + deadline_offset,
-                'priority': random.uniform(0.5, 2.0)
+                'priority': random.uniform(0.5, 2.0),
+                'visible': True  # Package is visible on map (hidden when picked up)
             }
 
         mission_metrics['total_packages'] = num_packages
@@ -1190,6 +1191,7 @@ def init_scenario(scenario, custom_home=None):
             'contour_waypoints': [],
             'waypoint_idx': 0,
             'packages_delivered': 0,
+            'carrying_package': False,  # True when UAV has picked up a package
             'searching_asset': None,  # Asset ID being searched/circled
             'circle_waypoints': [],  # Waypoints for circling asset
             'circle_angle': 0.0,  # Current angle in circle (for smooth circling)
@@ -1998,12 +2000,14 @@ def simulation_loop():
                                 if task_id in tasks:
                                     task['status'] = 'pending'
                                     task['assigned_uav'] = None
+                                    task['visible'] = True  # Make package visible again for reassignment
                                     logger.error(f"{uid} CRASHED during delivery - {task_id} reset to pending for reassignment")
                                     emit_ooda('observe', f'{uid} CRASHED - package {task_id} will be reassigned', critical=True)
                                 else:
                                     logger.error(f"{uid} battery depleted during delivery - mission failed")
 
                                 uav['assigned_task'] = None
+                                uav['carrying_package'] = False  # UAV drops package when crashing
                                 uav['awaiting_permission'] = False
                                 uav['permission_granted_for_target'] = None
                                 uav['boundary_stop_position'] = None
@@ -2019,6 +2023,8 @@ def simulation_loop():
                             if task['status'] == 'assigned':
                                 # Picked up package
                                 task['status'] = 'picked_up'
+                                task['visible'] = False  # Hide package visual on map
+                                uav['carrying_package'] = True  # Mark UAV as carrying package
                                 logger.info(f"{uid} picked up package {task_id}")
                                 # Clear permission for pickup location - may need permission for dropoff
                                 uav['permission_granted_for_target'] = None
@@ -2027,6 +2033,8 @@ def simulation_loop():
                             elif task['status'] == 'picked_up':
                                 # Delivered package
                                 task['status'] = 'delivered'
+                                task['visible'] = True  # Show package at dropoff location (optional, can remove if not needed)
+                                uav['carrying_package'] = False  # UAV no longer carrying package
                                 mission_metrics['deliveries_completed'] += 1
                                 uav['packages_delivered'] += 1
 

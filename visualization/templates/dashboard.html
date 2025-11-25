@@ -466,6 +466,22 @@
             color: white;
             cursor: pointer;
         }
+        .uav-carrying-package {
+            background: #007bff;  /* Blue: carrying package */
+            border-color: #007bff;
+            color: white;
+        }
+        body.dark-theme .uav-carrying-package {
+            box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+        }
+        .uav-delivered {
+            background: #28a745;  /* Green: just completed dropoff */
+            border-color: #28a745;
+            color: white;
+        }
+        body.dark-theme .uav-delivered {
+            box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+        }
         @keyframes pulse {
             0%, 100% {
                 transform: scale(1);
@@ -2708,27 +2724,29 @@
                 } else if (t.type === 'delivery' && t.pickup) {
                     // Delivery Package: Show pickup and dropoff markers
                     if (t.status !== 'delivered') {
-                        // Pickup marker
-                        const pickup = document.createElement('div');
-                        pickup.style.position = 'absolute';
-                        pickup.style.left = (t.pickup[0] * 4 + w/2 - 8) + 'px';
-                        pickup.style.top = (h/2 - t.pickup[1] * 4 - 8) + 'px';
-                        pickup.style.width = '16px';
-                        pickup.style.height = '16px';
-                        pickup.style.background = t.status === 'pending' ? '#ffc107' : '#28a745';
-                        pickup.style.border = '2px solid var(--text-primary)';
-                        pickup.style.borderRadius = '50%';
-                        pickup.title = `Package ${id} (${t.status})`;
-                        pickup.style.cursor = 'grab';
+                        // Pickup marker - only show if package is visible (not being carried by UAV)
+                        if (t.visible !== false) {  // Default to true if not set
+                            const pickup = document.createElement('div');
+                            pickup.style.position = 'absolute';
+                            pickup.style.left = (t.pickup[0] * 4 + w/2 - 8) + 'px';
+                            pickup.style.top = (h/2 - t.pickup[1] * 4 - 8) + 'px';
+                            pickup.style.width = '16px';
+                            pickup.style.height = '16px';
+                            pickup.style.background = t.status === 'pending' ? '#ffc107' : '#28a745';
+                            pickup.style.border = '2px solid var(--text-primary)';
+                            pickup.style.borderRadius = '50%';
+                            pickup.title = `Package ${id} (${t.status})`;
+                            pickup.style.cursor = 'grab';
 
-                        // Highlight if being dragged
-                        if (draggingAsset && draggingAsset.id === id) {
-                            pickup.style.border = '4px solid #ffff00';
-                            pickup.style.boxShadow = `0 0 20px #ffff00`;
-                            pickup.style.cursor = 'grabbing';
+                            // Highlight if being dragged
+                            if (draggingAsset && draggingAsset.id === id) {
+                                pickup.style.border = '4px solid #ffff00';
+                                pickup.style.boxShadow = `0 0 20px #ffff00`;
+                                pickup.style.cursor = 'grabbing';
+                            }
+
+                            map.appendChild(pickup);
                         }
-
-                        map.appendChild(pickup);
 
                         // Dropoff marker
                         const dropoff = document.createElement('div');
@@ -2919,6 +2937,9 @@
 
                 let statusClass = 'uav-operational';
                 if (u.state === 'crashed') statusClass = 'uav-failed';
+                // Delivery-specific states: carrying package (blue) or just delivered (green)
+                else if (u.carrying_package) statusClass = 'uav-carrying-package';
+                else if (u.state === 'idle' && u.packages_delivered > 0 && scenario === 'delivery') statusClass = 'uav-delivered';
                 // SAR-specific states
                 else if (u.guardian_of_asset) statusClass = 'uav-guardian';
                 else if (u.searching_asset || u.state === 'searching') {
