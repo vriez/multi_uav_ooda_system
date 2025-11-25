@@ -1139,90 +1139,83 @@
                         <div class="stat-label" style="font-size: 11px;">Total Cycles</div>
                     </div>
                     <div class="stat-box" style="padding: 8px;">
-                        <div class="stat-value" id="ooda-avg-time" style="font-size: 20px;">0ms</div>
+                        <div class="stat-value" id="ooda-avg-time" style="font-size: 20px;">N/A</div>
                         <div class="stat-label" style="font-size: 11px;">Avg Cycle Time</div>
                     </div>
                 </div>
 
-                <!-- Circular OODA Diagram -->
-                <div style="position: relative; margin: 20px auto; width: 220px; height: 220px;" id="ooda-circle-container">
-                    <svg width="220" height="220" style="transform: rotate(-90deg);">
-                        <!-- Background circle -->
-                        <circle cx="110" cy="110" r="90" fill="none" stroke="var(--border-color)" stroke-width="2"/>
-
-                        <!-- Phase arcs (will be dynamically updated) -->
-                        <circle id="ooda-arc-observe" cx="110" cy="110" r="90" fill="none"
-                                stroke="var(--primary)" stroke-width="20"
-                                stroke-dasharray="141.37 565.49" stroke-dashoffset="0"
-                                opacity="0.3"/>
-                        <circle id="ooda-arc-orient" cx="110" cy="110" r="90" fill="none"
-                                stroke="var(--warning)" stroke-width="20"
-                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-141.37"
-                                opacity="0.3"/>
-                        <circle id="ooda-arc-decide" cx="110" cy="110" r="90" fill="none"
-                                stroke="var(--success)" stroke-width="20"
-                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-282.74"
-                                opacity="0.3"/>
-                        <circle id="ooda-arc-act" cx="110" cy="110" r="90" fill="none"
-                                stroke="var(--danger)" stroke-width="20"
-                                stroke-dasharray="141.37 565.49" stroke-dashoffset="-424.11"
-                                opacity="0.3"/>
-
-                        <!-- Center text -->
-                        <text x="110" y="115" text-anchor="middle" fill="var(--text-primary)"
-                              font-size="14" font-weight="600" transform="rotate(90 110 110)" id="ooda-center-text">
-                            IDLE
-                        </text>
-                    </svg>
-
-                    <!-- Phase labels -->
-                    <div style="position: absolute; top: -5px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--primary);">OBSERVE</div>
-                    <div style="position: absolute; right: -5px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: var(--warning);">ORIENT</div>
-                    <div style="position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); font-size: 11px; font-weight: 600; color: var(--success);">DECIDE</div>
-                    <div style="position: absolute; left: -5px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; color: var(--danger);">ACT</div>
-                </div>
-
-                <!-- Phase Details (Expandable) -->
-                <div style="margin-top: 15px;">
-                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('observe')" style="cursor: pointer;">
+                <!-- Sequential OODA Steps -->
+                <div id="ooda-steps-container" style="margin: 10px 0;">
+                    <!-- Step 1: OBSERVE -->
+                    <div class="ooda-step" id="ooda-step-observe" onclick="toggleOodaPhaseDetails('observe')" style="cursor: pointer; padding: 8px 10px; margin-bottom: 6px; border-left: 4px solid var(--primary); background: var(--bg-tertiary); border-radius: 4px; opacity: 0.5; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-weight: 600; color: var(--primary);">Observe</div>
-                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-observe-time">-</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white;">1</div>
+                                <div style="font-weight: 600; font-size: 12px; color: var(--primary);">OBSERVE</div>
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted);" id="ooda-observe-time">-</div>
                         </div>
-                        <div id="ooda-observe-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                        <div id="ooda-observe-details" style="font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); display: none;">
                             <div id="ooda-observe-content">Waiting for cycle...</div>
                         </div>
                     </div>
 
-                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('orient')" style="cursor: pointer; margin-top: 8px;">
+                    <!-- Connector -->
+                    <div class="ooda-connector" style="width: 2px; height: 8px; background: var(--border-color); margin-left: 19px;"></div>
+
+                    <!-- Step 2: ORIENT -->
+                    <div class="ooda-step" id="ooda-step-orient" onclick="toggleOodaPhaseDetails('orient')" style="cursor: pointer; padding: 8px 10px; margin-bottom: 6px; border-left: 4px solid var(--warning); background: var(--bg-tertiary); border-radius: 4px; opacity: 0.5; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-weight: 600; color: var(--warning);">Orient</div>
-                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-orient-time">-</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--warning); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white;">2</div>
+                                <div style="font-weight: 600; font-size: 12px; color: var(--warning);">ORIENT</div>
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted);" id="ooda-orient-time">-</div>
                         </div>
-                        <div id="ooda-orient-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                        <div id="ooda-orient-details" style="font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); display: none;">
                             <div id="ooda-orient-content">Waiting for cycle...</div>
                         </div>
                     </div>
 
-                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('decide')" style="cursor: pointer; margin-top: 8px;">
+                    <!-- Connector -->
+                    <div class="ooda-connector" style="width: 2px; height: 8px; background: var(--border-color); margin-left: 19px;"></div>
+
+                    <!-- Step 3: DECIDE -->
+                    <div class="ooda-step" id="ooda-step-decide" onclick="toggleOodaPhaseDetails('decide')" style="cursor: pointer; padding: 8px 10px; margin-bottom: 6px; border-left: 4px solid var(--success); background: var(--bg-tertiary); border-radius: 4px; opacity: 0.5; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-weight: 600; color: var(--success);">Decide</div>
-                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-decide-time">-</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--success); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white;">3</div>
+                                <div style="font-weight: 600; font-size: 12px; color: var(--success);">DECIDE</div>
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted);" id="ooda-decide-time">-</div>
                         </div>
-                        <div id="ooda-decide-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                        <div id="ooda-decide-details" style="font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); display: none;">
                             <div id="ooda-decide-content">Waiting for cycle...</div>
                         </div>
                     </div>
 
-                    <div class="ooda-phase" onclick="toggleOodaPhaseDetails('act')" style="cursor: pointer; margin-top: 8px;">
+                    <!-- Connector -->
+                    <div class="ooda-connector" style="width: 2px; height: 8px; background: var(--border-color); margin-left: 19px;"></div>
+
+                    <!-- Step 4: ACT -->
+                    <div class="ooda-step" id="ooda-step-act" onclick="toggleOodaPhaseDetails('act')" style="cursor: pointer; padding: 8px 10px; border-left: 4px solid var(--danger); background: var(--bg-tertiary); border-radius: 4px; opacity: 0.5; transition: all 0.3s ease;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div style="font-weight: 600; color: var(--danger);">Act</div>
-                            <div style="font-size: 11px; color: var(--text-muted);" id="ooda-act-time">-</div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div style="width: 20px; height: 20px; border-radius: 50%; background: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: white;">4</div>
+                                <div style="font-weight: 600; font-size: 12px; color: var(--danger);">ACT</div>
+                            </div>
+                            <div style="font-size: 10px; color: var(--text-muted);" id="ooda-act-time">-</div>
                         </div>
-                        <div id="ooda-act-details" style="font-size: 12px; color: var(--text-muted); margin-top: 5px; display: none;">
+                        <div id="ooda-act-details" style="font-size: 11px; color: var(--text-muted); margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border-color); display: none;">
                             <div id="ooda-act-content">Waiting for cycle...</div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Current Status -->
+                <div id="ooda-status-bar" style="margin-top: 10px; padding: 8px; background: var(--bg-secondary); border-radius: 4px; text-align: center;">
+                    <span style="font-size: 11px; color: var(--text-muted);">Status: </span>
+                    <span id="ooda-current-status" style="font-size: 11px; font-weight: 600; color: var(--text-primary);">IDLE</span>
                 </div>
 
                 <!-- Recent Events Log -->
@@ -1515,22 +1508,56 @@
         }
 
         function updateOodaCircle(phase) {
-            // Reset all arcs to dim
-            ['observe', 'orient', 'decide', 'act'].forEach(p => {
-                const arc = document.getElementById(`ooda-arc-${p}`);
-                if (arc) arc.setAttribute('opacity', '0.3');
+            const phases = ['observe', 'orient', 'decide', 'act'];
+            const phaseIndex = phases.indexOf(phase);
+
+            // Reset all steps to dim and update connectors
+            phases.forEach((p, idx) => {
+                const step = document.getElementById(`ooda-step-${p}`);
+                if (step) {
+                    // Dim by default
+                    step.style.opacity = '0.5';
+                    step.style.transform = 'scale(1)';
+                    step.style.boxShadow = 'none';
+
+                    // Highlight completed steps (before current)
+                    if (phaseIndex >= 0 && idx < phaseIndex) {
+                        step.style.opacity = '0.8';
+                    }
+
+                    // Highlight current active step
+                    if (p === phase) {
+                        step.style.opacity = '1';
+                        step.style.transform = 'scale(1.02)';
+                        step.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+                    }
+                }
             });
 
-            // Highlight active phase
-            if (phase !== 'idle') {
-                const arc = document.getElementById(`ooda-arc-${phase}`);
-                if (arc) arc.setAttribute('opacity', '1.0');
-            }
+            // Update connectors (highlight up to current phase)
+            const connectors = document.querySelectorAll('.ooda-connector');
+            connectors.forEach((conn, idx) => {
+                if (phaseIndex >= 0 && idx < phaseIndex) {
+                    conn.style.background = 'var(--primary)';
+                } else {
+                    conn.style.background = 'var(--border-color)';
+                }
+            });
 
-            // Update center text
-            const centerText = document.getElementById('ooda-center-text');
-            if (centerText) {
-                centerText.textContent = phase.toUpperCase();
+            // Update status bar
+            const statusEl = document.getElementById('ooda-current-status');
+            if (statusEl) {
+                statusEl.textContent = phase.toUpperCase();
+
+                // Color based on phase
+                const phaseColors = {
+                    idle: 'var(--text-muted)',
+                    observe: 'var(--primary)',
+                    orient: 'var(--warning)',
+                    decide: 'var(--success)',
+                    act: 'var(--danger)'
+                };
+                statusEl.style.color = phaseColors[phase] || 'var(--text-primary)';
             }
 
             oodaState.currentPhase = phase;
@@ -1538,21 +1565,32 @@
 
         function updateOodaMetrics() {
             // Update cycle count
-            document.getElementById('ooda-cycle-count').textContent = oodaState.cycleCount;
+            const cycleCountEl = document.getElementById('ooda-cycle-count');
+            if (cycleCountEl) {
+                cycleCountEl.textContent = oodaState.cycleCount || 0;
+            }
 
             // Calculate average cycle time
-            if (oodaState.cycleTimes.length > 0) {
-                const avg = oodaState.cycleTimes.reduce((a, b) => a + b, 0) / oodaState.cycleTimes.length;
-                document.getElementById('ooda-avg-time').textContent = avg.toFixed(1) + 'ms';
+            const avgTimeEl = document.getElementById('ooda-avg-time');
+            if (avgTimeEl) {
+                if (oodaState.cycleTimes.length > 0) {
+                    const avg = oodaState.cycleTimes.reduce((a, b) => a + b, 0) / oodaState.cycleTimes.length;
+                    avgTimeEl.textContent = avg.toFixed(1) + 'ms';
+                } else {
+                    avgTimeEl.textContent = 'N/A';
+                }
             }
 
             // Update phase times
             ['observe', 'orient', 'decide', 'act'].forEach(phase => {
                 const times = oodaState.phaseTimes[phase];
-                if (times.length > 0) {
-                    const avg = times.reduce((a, b) => a + b, 0) / times.length;
-                    const el = document.getElementById(`ooda-${phase}-time`);
-                    if (el) el.textContent = avg.toFixed(1) + 'ms';
+                const el = document.getElementById(`ooda-${phase}-time`);
+                if (el) {
+                    if (times && times.length > 0) {
+                        const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                        el.textContent = avg.toFixed(1) + 'ms';
+                    }
+                    // Keep showing '-' if no timing data yet
                 }
             });
         }
@@ -1645,7 +1683,9 @@
 
             updateOodaCircle('idle');
             document.getElementById('ooda-cycle-count').textContent = '0';
-            document.getElementById('ooda-avg-time').textContent = '0ms';
+            document.getElementById('ooda-avg-time').textContent = 'N/A';
+            document.getElementById('ooda-current-status').textContent = 'IDLE';
+            document.getElementById('ooda-current-status').style.color = 'var(--text-muted)';
 
             ['observe', 'orient', 'decide', 'act'].forEach(phase => {
                 document.getElementById(`ooda-${phase}-time`).textContent = '-';
@@ -2148,7 +2188,7 @@
             // Add to event log
             addOodaEvent(e);
 
-            // Update circular visualization if phase is specified
+            // Update visualization if phase is specified
             if (e.phase) {
                 updateOodaCircle(e.phase);
                 updateOodaPhaseDetails(e.phase, e);
@@ -2158,10 +2198,13 @@
                     oodaState.phaseTimes[e.phase].push(e.duration_ms);
                 }
 
-                // Track cycle completion (when Act phase completes)
-                if (e.phase === 'act' && e.duration_ms) {
-                    oodaState.cycleCount = e.cycle_num || oodaState.cycleCount + 1;
+                // Update cycle count from event
+                if (e.cycle_num && e.cycle_num > oodaState.cycleCount) {
+                    oodaState.cycleCount = e.cycle_num;
+                }
 
+                // Track cycle completion (when Act or Decide phase completes a cycle)
+                if ((e.phase === 'act' || e.phase === 'decide') && e.cycle_num) {
                     // Calculate total cycle time from all phases
                     const totalTime = ['observe', 'orient', 'decide', 'act'].reduce((sum, p) => {
                         const times = oodaState.phaseTimes[p];
@@ -2172,8 +2215,8 @@
                         oodaState.cycleTimes.push(totalTime);
                     }
 
-                    // Return to idle after act completes
-                    setTimeout(() => updateOodaCircle('idle'), 1000);
+                    // Return to idle after cycle completes
+                    setTimeout(() => updateOodaCircle('idle'), 1500);
                 }
 
                 updateOodaMetrics();

@@ -2268,7 +2268,7 @@ def safe_emit(event, data, broadcast=False):
     except Exception as e:
         logger.error(f"Failed to emit {event}: {e}")
 
-def emit_ooda(phase, message, critical=False):
+def emit_ooda(phase, message, critical=False, cycle_num=None):
     """
     Emit OODA event with explicit phase label.
 
@@ -2276,12 +2276,16 @@ def emit_ooda(phase, message, critical=False):
         phase: 'observe', 'orient', 'decide', or 'act'
         message: Event message string
         critical: Whether this is a critical event
+        cycle_num: Optional cycle number for tracking
     """
-    safe_emit('ooda_event', {
+    global ooda_count
+    event_data = {
         'phase': phase,
         'message': message,
-        'critical': critical
-    })
+        'critical': critical,
+        'cycle_num': cycle_num if cycle_num is not None else ooda_count
+    }
+    safe_emit('ooda_event', event_data)
 
 @socketio.on('connect')
 def handle_connect():
