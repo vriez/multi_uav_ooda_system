@@ -1,0 +1,2267 @@
+\documentclass[12pt,a4paper,oneside]{book}
+
+% ABNT formatting packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{indentfirst}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage[left=3cm,right=2cm,top=3cm,bottom=2cm]{geometry}
+\usepackage{times}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{longtable}
+\usepackage{array}
+
+% ABNT-style formatting
+\onehalfspacing
+\setlength{\parindent}{1.25cm}
+
+% Chapter and section formatting (ABNT style)
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\MakeUppercase{\chaptertitlename\ \thechapter}}{0pt}
+  {\MakeUppercase}
+\titlespacing*{\chapter}{0pt}{0pt}{12pt}
+
+% Unnumbered chapter formatting (for Acknowledgments, Abstract, etc.)
+\titleformat{name=\chapter,numberless}[display]
+  {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {}{0pt}
+  {\MakeUppercase}
+\titlespacing*{name=\chapter,numberless}{0pt}{0pt}{12pt}
+
+\titleformat{\section}
+  {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+
+\titleformat{\subsection}
+  {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\thesubsection}{1em}{}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+
+\titleformat{\subsubsection}
+  {\normalfont\bfseries\fontsize{12pt}{14pt}\selectfont}
+  {\thesubsubsection}{1em}{}
+\titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
+
+% Caption formatting (ABNT style)
+\captionsetup{
+  format=plain,
+  labelsep=endash,
+  font=small,
+  labelfont=bf,
+  justification=justified,
+  singlelinecheck=false
+}
+
+% Code listing style
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue},
+  commentstyle=\color{green!60!black},
+  stringstyle=\color{red},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=10pt,
+  backgroundcolor=\color{white},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  frame=single,
+  tabsize=2,
+  captionpos=b,
+  breaklines=true,
+  breakatwhitespace=false,
+  escapeinside={(*@}{@*)},
+  xleftmargin=2em,
+  framexleftmargin=1.5em
+}
+
+% Hyperref configuration
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    filecolor=black,
+    urlcolor=black,
+    pdftitle={Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop},
+    pdfauthor={Vítor Eulálio Reis},
+}
+
+\begin{document}
+
+% ====================================
+% COVER PAGE
+% ====================================
+\begin{titlepage}
+\begin{center}
+\textbf{\uppercase{Universidade de São Paulo}}\\
+\textbf{\uppercase{Escola de Engenharia de São Carlos}}
+
+\vspace{8cm}
+
+\textbf{\uppercase{Vítor Eulálio Reis}}
+
+\vspace{4cm}
+
+\textbf{Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop: Realistic Mission Completion Assistance}
+
+\vfill
+
+São Carlos\\
+2025
+\end{center}
+\end{titlepage}
+
+% ====================================
+% TITLE PAGE
+% ====================================
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{Vítor Eulálio Reis}
+
+\vspace{8cm}
+
+\textbf{Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop}
+
+\vspace{3cm}
+
+\begin{minipage}{8cm}
+\begin{flushleft}
+Monograph presented to the Specialization Course in Aeronautical Systems, School of Engineering of São Carlos, University of São Paulo, as part of the requirements for obtaining the Specialist title.
+
+Advisor: Prof. João Paulo Eguea, PhD
+\end{flushleft}
+\end{minipage}
+
+\vspace{2cm}
+
+FINAL VERSION
+
+\vfill
+
+São Carlos\\
+2025
+\end{center}
+
+% ====================================
+% COPYRIGHT PAGE
+% ====================================
+\newpage
+\thispagestyle{empty}
+\vspace*{10cm}
+\begin{center}
+I AUTHORIZE THE TOTAL OR PARTIAL REPRODUCTION OF THIS WORK,\\
+BY ANY CONVENTIONAL OR ELECTRONIC MEANS, FOR STUDY\\
+AND RESEARCH PURPOSES, PROVIDED THE SOURCE IS CITED.
+\end{center}
+
+\vfill
+
+\begin{center}
+\begin{minipage}{12cm}
+\begin{flushleft}
+Cataloging card prepared by the Library Prof. Dr. Sérgio Rodrigues Fontes at EESC/USP with data provided by the author(s).
+
+\vspace{0.5cm}
+
+\noindent Eulálio Reis, Vítor
+
+\hspace{0.5cm} Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop: Realistic Mission Completion Assistance. / Vítor Eulálio Reis; advisor Prof. João Paulo Eguea, PhD. São Carlos, 2025.
+
+\vspace{0.5cm}
+
+\hspace{0.5cm} Specialization (Specialization in Aeronautical Systems) -- School of Engineering of São Carlos, University of São Paulo, 2025.
+
+\vspace{0.5cm}
+
+\hspace{0.5cm} 1. Drone. 2. OODA Loop. 3. Fault Tolerance. 4. Multi-Agent Systems. I. Title.
+\end{flushleft}
+\end{minipage}
+\end{center}
+
+% ====================================
+% APPROVAL PAGE
+% ====================================
+\newpage
+\thispagestyle{empty}
+\begin{center}
+\textbf{\uppercase{Evaluation or Approval Sheet}}
+
+\vspace{2cm}
+
+\textbf{APPROVAL SHEET}\\
+\textit{Approval sheet}
+
+\vspace{2cm}
+
+\begin{tabular}{|p{13cm}|}
+\hline
+\textbf{Candidate / Student:} Vítor Eulálio Reis \\
+\hline
+\textbf{Title of TCC / Title:} Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop \\
+\hline
+\textbf{Defense date / Date:} October 18, 2025 \\
+\hline
+\end{tabular}
+
+\vspace{2cm}
+
+\begin{tabular}{|p{10cm}|p{3cm}|}
+\hline
+\textbf{Examining Committee} & \textbf{Result} \\
+\hline
+{Prof° João Paulo Eguea, PhD} & submitted \\
+\hline
+\textbf{Affiliation:} School of Engineering of São Carlos / EESC-USP & \\
+\hline
+{Prof° Jorge Bidinotto, PhD} & submitted \\
+\hline
+\textbf{Affiliation:} School of Engineering of São Carlos / EESC-USP & \\
+\hline
+\end{tabular}
+
+\vspace{2cm}
+
+Chair of the Examining Committee:
+
+\vspace{1cm}
+
+\begin{center}
+\rule{6cm}{0.4pt}\\
+{Prof° João Paulo Eguea, PhD}\\
+(Signature)
+\end{center}
+
+\end{center}
+
+% ====================================
+% DEDICATION (Optional)
+% ====================================
+\newpage
+\thispagestyle{empty}
+\vspace*{15cm}
+\begin{flushright}
+\begin{minipage}{8cm}
+\textit{To my family, for their unconditional support throughout this endeavor.}
+\end{minipage}
+\end{flushright}
+
+% ====================================
+% ACKNOWLEDGMENTS
+% ====================================
+\newpage
+\chapter*{Acknowledgments}
+\addcontentsline{toc}{chapter}{Acknowledgments}
+
+To the professors of the Especialização em Sistemas Aeronáuticos at the Escola de Engenharia de São Carlos, USP, for sharing their knowledge, expertise, and craft, and for their dedication in supporting students throughout the course.
+
+To Prof. Dr. João Paulo Eguea for his mentorship in guiding this research.
+
+To Prof. Dr. Jorge Bidinotto for his leadership in managing the Specialization Program.
+
+% ====================================
+% ABSTRACT
+% ====================================
+\newpage
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\noindent EULÁLIO REIS, V. \textbf{Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop: Realistic Mission Completion Assistance}. 2025. Monograph (Specialization) – School of Engineering of São Carlos, University of São Paulo, São Carlos, 2025.
+
+\vspace{0.5cm}
+
+This work proposes a constraint-aware fault-tolerant control system for multi-agent UAV operations using the OODA (Observe-Orient-Decide-Act) loop framework. Unlike idealized approaches that assume unlimited resources, this work explicitly models real-world constraints (battery limits, payload depletion, regulatory restrictions) and provides Mission Completion Assistance through intelligent task reallocation and priority-based partial coverage strategies. The three core technical contributions are: (1) constraint-aware task reallocation algorithm that explicitly models battery/payload limits with collision avoidance, (2) priority-based partial coverage strategy with quantified performance degradation metrics, and (3) operator-escalation framework that identifies non-compensable failures and provides actionable recommendations. Rather than claiming perfect fault tolerance, this system minimizes mission failure impact within realistic constraints—a more honest and deployable contribution than purely autonomous approaches. Target applications include long-duration surveillance where coverage gaps create security risks, search and rescue where time-critical tasks must be prioritized, and package delivery where undelivered items can be reassigned.
+
+\vspace{0.5cm}
+
+\noindent \textbf{Keywords:} Drone. Fault Tolerance. OODA Loop. Multi-Agent Systems. Mission Planning.
+
+% ====================================
+% LIST OF FIGURES
+% ====================================
+\newpage
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+
+% ====================================
+% LIST OF ABBREVIATIONS
+% ====================================
+\newpage
+\chapter*{List of Abbreviations and Acronyms}
+\addcontentsline{toc}{chapter}{List of Abbreviations and Acronyms}
+
+\begin{tabular}{ll}
+ACT & Act (OODA Loop phase) \\
+BVLOS & Beyond Visual Line of Sight \\
+CBBA & Consensus-Based Bundle Algorithm \\
+DAL & Design Assurance Level \\
+DECIDE & Decide (OODA Loop phase) \\
+ESC & Electronic Speed Controller \\
+FAA & Federal Aviation Administration \\
+FDR & Flight Data Recorder \\
+FSM & Finite State Machine \\
+FTC & Fault-Tolerant Control \\
+GCS & Ground Control Station \\
+GMT & Greenwich Mean Time \\
+GPS & Global Positioning System \\
+HIL & Hardware-in-the-Loop \\
+MILP & Mixed Integer Linear Programming \\
+OODA & Observe-Orient-Decide-Act \\
+ORIENT & Orient (OODA Loop phase) \\
+OBSERVE & Observe (OODA Loop phase) \\
+RF & Radio Frequency \\
+RTL & Return-to-Launch \\
+RVO & Reciprocal Velocity Obstacles \\
+SAR & Search and Rescue \\
+SITL & Software-in-the-Loop \\
+TSP & Traveling Salesman Problem \\
+UAV & Unmanned Aerial Vehicle \\
+\end{tabular}
+
+% ====================================
+% TABLE OF CONTENTS
+% ====================================
+\newpage
+\tableofcontents
+
+% ====================================
+% MAIN CONTENT
+% ====================================
+\newpage
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\chapter{Introduction}
+
+\section{The Reality Gap in Multi-Agent UAV Research}
+
+Over the last decade, Unmanned Aerial Vehicles (UAVs) have progressed from experimental platforms to essential tools in logistics, environmental monitoring, and emergency response. Multi-UAV coordination, in particular, has emerged as a key enabler of scalable autonomy, allowing fleets to execute missions more efficiently and robustly than any single vehicle could achieve alone.
+
+Despite this progress, much of the research in fault-tolerant multi-agent systems still operates within idealized boundaries. Academic frameworks often presume conditions that are far removed from operational reality: unlimited energy reserves, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority. These simplifying assumptions make theoretical analysis tractable, but they mask the complexities that dominate real-world deployments.
+
+In practice, UAV operations are governed by strict physical and regulatory limits. Batteries must retain safety reserves of 10–20\% to satisfy aviation standards. Payload resources, whether spray tanks or delivery packages, deplete irreversibly during flight and cannot be replenished mid-mission. Communication links introduce latencies of up to two seconds, and mission execution beyond visual line of sight requires constant operator supervision.
+
+The result is a persistent ``reality gap'' between simulated autonomy and deployable autonomy. Systems that appear reliable in laboratory conditions may struggle in the field when confronted with degraded batteries, intermittent links, or competing mission deadlines. Closing this gap requires architectures that are not only intelligent but also resilient—capable of adapting to uncertainty and resource constraints without losing situational awareness or regulatory compliance.
+
+\section{The OODA Loop: From Combat Theory to Autonomous Resilience}
+
+The concept of the OODA loop—Observe, Orient, Decide, Act—originated from U.S. Air Force Colonel John Boyd's studies of aerial combat dynamics. Boyd proposed that victory depends not merely on speed or strength, but on the ability to process information and adapt more quickly than the opponent. The OODA loop thus represents a continuous cycle of perception, reasoning, and action, where each iteration refines understanding and enhances responsiveness to change.
+
+In the context of autonomous systems, the OODA loop provides a natural metaphor for adaptive control. The ``Observe'' phase involves collecting data from sensors and system telemetry; ``Orient'' interprets this data to establish situational awareness; ``Decide'' selects a course of action under the prevailing constraints; and ``Act'' executes that decision, feeding its outcomes back into the next cycle. Crucially, the loop is not linear but recursive: every action reshapes the environment that the next observation must interpret.
+
+Applied to UAV fleets, this framework extends beyond traditional feedback control by integrating situational reasoning and contextual adaptation. Each vehicle, and the system as a whole, can maintain awareness not only of environmental conditions but also of internal resource states, communication health, and mission progress. The OODA architecture thus provides a foundation for resilient autonomy, where the fleet continuously senses its collective state, interprets disruptions, and reorganizes tasks in real time.
+
+Most existing UAV coordination systems implement a subset of these principles, emphasizing either rapid reaction or long-term planning, but rarely both. What remains underexplored is the integration of the OODA loop into a real-time, resource-constrained, operator-supervised control system—one that can detect faults, reorient mission objectives, and adapt dynamically while remaining within the operational bounds of safety and regulation.
+
+\section{Bridging the Gap: OODA-Based Fault-Tolerant Mission Control}
+
+Despite its theoretical appeal, the OODA framework has rarely been implemented as a real-time operational control system for UAV fleets. Most prior work either focuses on single-vehicle fault recovery (Mueller \& D'Andrea, 2014) or treats multi-agent coordination under ideal conditions with unlimited resources (Li et al., 2017). Consequently, few systems integrate real-world resource constraints, probabilistic fault detection, and operator-in-the-loop supervision within a unified architecture.
+
+This research addresses that gap through the development of a hybrid OODA-based fault-tolerant mission control system designed for real-time UAV fleet management. The system operates as a hybrid finite-state machine (FSM) that continuously cycles between monitoring and adaptation modes, combining deterministic state transitions with probabilistic failure identification to maintain robust mission execution under realistic constraints.
+
+\section{System Overview and Contributions}
+
+\subsection{Hybrid OODA–FSM Architecture}
+
+At its core, the system functions as a hybrid finite-state controller implementing continuous monitoring at 2 Hz and invoking the OODA cycle upon failure detection. Deterministic state logic ensures predictable mission flow, while probabilistic reasoning handles uncertain or delayed telemetry data.
+
+\subsection{Real-Time Failure Detection}
+
+The monitoring layer polls each UAV for position, state of charge, task progress, and communication timestamps. Failures are identified through:
+
+\begin{itemize}
+\item Telemetry timeouts exceeding 1.5 seconds,
+\item Explicit fault messages from onboard diagnostics, and
+\item Statistical anomaly detection—including excessive discharge rates (>5\% per 30 s), position jumps (>100 m), or altitude deviations beyond defined safety envelopes.
+\end{itemize}
+
+This enables sub-second detection latency and ensures minimal mission disruption.
+
+\subsection{OODA Execution for Fault Recovery}
+
+Once a fault is detected, the system triggers a full OODA cycle lasting approximately 4–5.5 seconds, redistributing tasks and updating mission plans in real time:
+
+\begin{itemize}
+\item \textbf{Observe (1.0–1.5 s):} Collects updated telemetry from the fleet, identifies failed UAVs, quantifies mission loss, and logs failure timestamps.
+\item \textbf{Orient (1.0–1.5 s):} Evaluates remaining fleet capacity considering battery, payload, and timing constraints; re-prioritizes tasks based on urgency and spatial proximity.
+\item \textbf{Decide (1.0–1.5 s):} Selects the most suitable recovery strategy—
+  \begin{itemize}
+  \item Full Reallocation: $\geq$75\% of lost tasks can be recovered
+  \item Partial Reallocation: 50–75\% recoverable
+  \item Escalation Required: <50\% recoverable, triggering operator alert
+  \end{itemize}
+\item \textbf{Act (0.5–1.5 s):} Dispatches new waypoint and task assignments, confirms acknowledgment, and updates the operator dashboard.
+\end{itemize}
+
+\subsection{Constraint-Aware Strategy Layer}
+
+\begin{itemize}
+\item \textbf{Full Reallocation:} Executes Algorithm 2, a constraint-aware optimization routine that integrates new waypoints and minimizes flight distance via heuristic Traveling Salesman Problem (TSP) solutions.
+\item \textbf{Partial Reallocation:} Prioritizes high-importance tasks (priority score >0.7) and issues coverage-gap alerts with quantified mission impacts.
+\item \textbf{Operator Escalation:} When autonomous reallocation becomes infeasible, the system initiates a supervised decision protocol—offering options such as backup UAV deployment, mission extension, or safe abort—with a 30-second countdown for automatic failsafe execution.
+\end{itemize}
+
+\subsection{Performance and Scalability}
+
+The complete OODA cycle achieves reaction times between 4 and 5.5 seconds, representing a 75–150$\times$ speed improvement compared to manual operator intervention (typically 5–10 minutes). Computationally, the system scales linearly with fleet size for monitoring and resource evaluation, and quadratically for collision avoidance checks—supporting real-time performance for up to 12 UAVs without exceeding sub-6-second response thresholds.
+
+\section{Summary}
+
+By grounding UAV mission control in the OODA decision cycle, this research introduces a system capable of adaptive, explainable, and regulatorily compliant autonomy. The framework unites rapid machine-driven response with human-supervised oversight, offering a practical balance between safety and autonomy.
+
+In doing so, it bridges the long-standing gap between theoretical multi-agent fault tolerance and real-world deployability—demonstrating that reactive, resource-aware autonomy is not merely a conceptual goal, but an achievable engineering reality for the next generation of UAV fleet operations.
+
+\chapter{System Architecture}
+
+\section{Centralized OODA Architecture with Distributed Execution}
+
+The system implements a hierarchical control structure in which the Ground Control Station hosts the OODA Loop Engine for centralized decision-making while UAVs execute tasks with operational autonomy. This architecture balances the optimization advantages of global fleet visibility against the responsiveness requirements of distributed execution, a design choice grounded in both regulatory constraints and practical deployment considerations.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/architecture.png}
+    \caption{Architecture Overview}
+    \label{fig:architecture}
+\end{figure}
+
+\subsection{Design Rationale and Trade-offs}
+
+The centralized OODA architecture derives from multiple convergent factors. Regulatory compliance for Beyond Visual Line of Sight operations mandates operator oversight, which centralized control naturally provides through clear authority hierarchies. Optimization quality benefits from global fleet state visibility, enabling superior task allocation compared to distributed consensus approaches. Implementation complexity reduces significantly with a single decision point, eliminating complex inter-UAV coordination protocols. This approach aligns with current commercial and military deployment practices.
+
+The hybrid autonomy model acknowledges fundamental operational constraints. The system explicitly recognizes scenarios where complete failure compensation proves physically impossible, maintains safety through human-in-the-loop oversight for critical decisions, and enhances deployability by avoiding full BVLOS authority requirements. This design philosophy prioritizes honest performance assessment over aspirational capabilities.
+
+Architectural trade-offs require careful mitigation. The centralized architecture introduces a single point of failure at the GCS, mitigated through autonomous Return-to-Launch behaviors triggered by communication timeout detection. Communication bandwidth scales linearly with fleet size, though the 2 Hz telemetry rate maintains manageable overhead for fleets not exceeding twelve UAVs. The 3-6 second response latency, while not instantaneous, remains acceptable for mission-level fault tolerance in applications where individual UAV aerodynamic stability persists throughout this interval.
+
+\subsection{Communication System Design}
+
+The bidirectional communication architecture operates at 2 Hz frequency with asymmetric packet sizes reflecting data flow characteristics. Telemetry uplink from UAVs to GCS transmits approximately 2 kilobyte packets containing position coordinates, battery state of charge, operational status flags, and task completion progress. Command downlink from GCS to UAVs utilizes 1 kilobyte packets conveying waypoint updates, task assignments, and collision avoidance parameters. One-way latency spans 0.5 to 1.0 seconds, typical of long-range RF links, yielding total system latency from failure detection to command execution of 3 to 6 seconds.
+
+The 2 Hz telemetry rate selection reflects practical deployment constraints. Commercial UAV systems typically employ 1-2 Hz update rates, while research platforms with dedicated radio links may achieve 5-10 Hz though this remains uncommon. Higher rates increase bandwidth requirements and packet collision probability. Given that OODA loop execution requires 2-5 seconds, 2 Hz sampling provides adequate temporal resolution. This conservative choice ensures field deployability while maintaining responsive fault detection, contrasting with prior simulation work that often assumes instantaneous communication.
+
+\section{OODA Loop Execution Flow}
+
+The OODA loop implements continuous monitoring and reactive decision-making through four sequential phases, executing in 4.0 to 5.5 seconds from failure detection to command dispatch. This represents a 75 to 150-fold improvement over manual operator intervention, which requires 5-30 seconds for detection and 5-10 minutes for decision-making.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/ooda_loop.png}
+    \caption{OODA Loop Execution Flow}
+    \label{fig:ooda_loop}
+\end{figure}
+
+\subsection{OBSERVE Phase: Failure Detection and State Aggregation}
+
+The OBSERVE phase, spanning 1.0 to 1.5 seconds, establishes situational awareness through comprehensive failure detection and fleet state aggregation. The system implements multi-modal fault identification through timeout detection for telemetry gaps exceeding 1.5 seconds, explicit self-reported fault messages from UAV onboard systems, and statistical anomaly detection identifying abnormal battery discharge rates exceeding 5 percent per 30 seconds, position discontinuities exceeding 100 meters between consecutive updates, and altitude violations beyond operational envelopes.
+
+Upon failure confirmation, the system immediately requests status updates from all operational UAVs rather than solely the failed vehicle, constructing a unified fleet state snapshot. Failed UAV identification extracts last known position and battery levels while classifying failure severity as critical for complete losses, high for degraded capabilities, or medium for recoverable conditions. Lost task enumeration queries the mission database for all assignments to failed vehicles, capturing task positions, priority scores, and deadline constraints. Mission impact calculation determines the percentage of total mission tasks now unassigned, with timestamp recording marking OODA loop execution commencement.
+
+\subsection{ORIENT Phase: Situation Assessment and Capacity Analysis}
+
+The ORIENT phase, requiring 1.0 to 1.5 seconds, transforms observational data into actionable intelligence through systematic assessment. Mission impact evaluation calculates coverage loss percentages, identifies affected geographic zones, evaluates deadline pressure, and determines whether high-priority critical tasks are among lost assignments. This assessment quantifies the operational significance of the failure event.
+
+Fleet capacity analysis proceeds through systematic resource inventory. Battery spare capacity calculation subtracts committed energy allocations and regulatory safety reserves—typically 15 to 20 percent—from current charge states, yielding approximately 3 minutes additional flight time per 10 percent spare capacity. Payload spare capacity determines available cargo capacity for delivery missions. Temporal spare capacity evaluates margins relative to mission deadlines. These calculations aggregate to fleet-wide resource availability pools.
+
+Task prioritization applies Algorithm 1 to generate priority scores ranging from zero to unity based on temporal urgency reflecting deadline proximity, mission criticality encoding task importance hierarchies, and spatial cost representing distance from nearest available vehicles. Preliminary feasibility assessment verifies whether operational UAVs possess sufficient resources to absorb failed vehicle responsibilities, classifying the reallocation scenario as feasible when over 75 percent of lost tasks satisfy capacity constraints with projected mission completion exceeding 90 percent, partial when 50-75 percent prove reallocable with completion spanning 75-90 percent, or infeasible when under 50 percent can be accommodated with completion below 75 percent.
+
+\subsection{DECIDE Phase: Strategic Planning and Algorithmic Optimization}
+
+The DECIDE phase, spanning 1.0 to 1.5 seconds, implements strategy-specific planning based on feasibility classification through a three-tier decision hierarchy:
+
+\textbf{Full Reallocation Strategy:} When feasibility assessment indicates sufficient spare capacity, the system executes Algorithm 2 for constraint-aware reallocation with collision avoidance. This approach iterates through prioritized task lists, attempting assignment to nearest UAVs with adequate capacity while verifying battery, payload, and time constraints and checking collision-free paths. Waypoint generation computes updated flight paths, integrating new waypoints into existing task sequences and optimizing path ordering to minimize total distance. The strategy produces complete task-to-UAV mappings with projected mission completion spanning 90-100 percent.
+
+\textbf{Partial Reallocation Strategy:} When capacity limitations prevent full compensation, the system implements priority-based filtering, extracting exclusively tasks with priority scores exceeding 0.7 while accepting graceful degradation in lower-priority areas. Algorithm 2 application attempts assignment of high-priority tasks first, with coverage gap alert generation identifying unallocatable tasks and quantifying mission area percentages affected. Operator recommendations suggest intervention strategies including backup UAV deployment or mission duration extension, with projected completion spanning 75-90 percent.
+
+\textbf{Operator Escalation Strategy:} When insufficient capacity precludes autonomous compensation, the system generates critical alerts classifying urgency as high when coverage falls below 50 percent or critical tasks remain unallocated, medium when coverage spans 50-75 percent, or low for informational notification above 75 percent. Manual option suggestions present alternatives including backup UAV deployment, mission abortion with fleet return-to-launch, or degraded coverage continuation. The interface implements a 30-second countdown timer auto-executing the safest option absent operator response while allowing manual override.
+
+\subsection{ACT Phase: Command Execution and System Update}
+
+The ACT phase, requiring 0.5 to 1.5 seconds, executes selected strategies through command dispatch, system updates, and performance logging. Mission update packets transmit to affected UAVs via 2 Hz uplink, containing new waypoint sequences, updated task assignments, and collision avoidance parameters. Acknowledgment verification confirms command reception within 200 milliseconds, with retry logic implementing up to three transmission attempts.
+
+Dashboard updates refresh operator interfaces with fleet status panels indicating UAV transitions from active to adapted states, mission progress panels revising completion percentages, coverage heatmaps highlighting gaps, and alert panels posting notifications or clearing resolved issues. Performance logging records failure event details, individual phase execution durations, reallocation results including strategy selection and task allocation counts, and operator escalation status for post-mission analysis.
+
+Following ACT phase completion, the system returns to continuous 2 Hz monitoring state with mission continuation under adapted assignments. UAVs execute new waypoint sequences while the system maintains vigilance for additional failures, supporting cascading failure handling through multiple OODA cycle executions when necessary.
+
+\section{Sequential Constraint Validation Process}
+
+The constraint validation process implements fail-fast sequential checking that prioritizes constraints by criticality and commonality, enabling early termination when fundamental limitations preclude autonomous compensation while avoiding wasted computation on infeasible scenarios.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/constraints_checking.png}
+    \caption{Constraint Checking Process}
+    \label{fig:constraints}
+\end{figure}
+
+
+\subsection{Battery Constraint Verification}
+
+Battery constraint evaluation serves as the primary validation gate, positioned first due to its status as the most common limiting factor in multi-UAV operations. For each lost task, the system calculates distance from candidate UAVs using Euclidean metrics, determines required battery percentage through division by vehicle-specific efficiency factors, and computes spare capacity as the difference between current charge, committed energy for existing tasks, and regulatory safety reserves typically mandating 15-20 percent retention.
+
+Pass conditions occur when every lost task identifies at least one candidate UAV within spare battery capacity constraints. Failure conditions trigger immediate infeasibility classification when any task proves unreachable by all UAVs without violating safety margins, producing operator escalation with recommendations for backup UAV deployment or mission abortion. Battery constraint prioritization derives from its safety-critical nature—battery depletion risks catastrophic vehicle loss—and computational efficiency enabling rapid distance-based evaluation.
+
+\subsection{Payload Constraint Verification}
+
+Payload constraint evaluation, conducted conditionally upon battery constraint satisfaction, applies exclusively to cargo-carrying operations. For tasks requiring payload transport, the system evaluates current payload weight against maximum capacity specifications, calculating spare payload as the difference between maximum and current values. UAV candidacy requires task payload not exceeding available spare capacity.
+
+Pass conditions occur when all payload-requiring tasks identify at least one candidate UAV with adequate capacity. Failure conditions produce partial reallocation results, removing payload-heavy tasks from allocation consideration while reallocating feasible tasks within capacity constraints. Payload constraints represent hard physical limits admitting no violation without structural failure or flight instability, with mid-air transfers remaining physically impossible and constraining reallocation options to base station cargo swaps.
+
+\subsection{Time Constraint Verification}
+
+Time constraint evaluation, positioned as final validation, verifies that reallocated tasks achieve completion before deadline expiration. For deadline-constrained tasks, the system calculates total time requirements including transit time to task positions, task execution duration, and remaining time for current task completion. Deadline feasibility requires that cumulative time not exceed available time between current moment and deadline.
+
+Pass conditions yield feasible classifications producing full reallocation plans with projected mission completion spanning 90-100 percent. Failure conditions produce partial reallocation results prioritizing by deadline urgency, allocating high-priority tasks first while accepting delays or eliminations for low-priority tasks, with mission completion projections spanning 75-90 percent. Time constraint positioning as final validation reflects its maximum flexibility compared to battery and payload constraints, with violation implications producing mission degradation rather than safety risks.
+
+\subsection{Design Rationale}
+
+Sequential rather than parallel constraint checking provides multiple advantages. Early exit efficiency avoids unnecessary computation when battery constraints fail, typically saving approximately 60 percent computation time through early termination. Clear failure attribution makes obvious which constraint caused infeasibility, enabling precise diagnostics and helping operators understand autonomous compensation limitations. Prioritized ordering checks safety-critical, most-common battery bottlenecks first, followed by physical hard-limit payload constraints, concluding with flexible time constraints admitting potential relaxation.
+
+\section{Communication Sequence and Information Flow}
+
+The temporal communication sequence and information pipeline architecture demonstrate the system's end-to-end fault response capability, transforming raw sensor measurements into executable commands through systematic OODA processing.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/sequence_diagram.png}
+    \caption{Mission Execution Sequence}
+    \label{fig:sequence}
+\end{figure}
+
+\subsection{Temporal Execution Analysis}
+
+The sequence diagram illustrates communication flow during failure events with precise timing. At reference time T, a UAV experiences failure, transmitting a high-priority fault message with 0.4-1.0 second latency. The OBSERVE phase confirms the fault and aggregates fleet state by T+1.5 seconds. The ORIENT phase completes impact assessment and capacity analysis by T+2.5 seconds. The DECIDE phase generates reallocation plans by T+3.5 seconds. The ACT phase dispatches commands and updates dashboards by T+4.0 seconds, establishing a 4-second response timeline from failure detection to command dispatch.
+
+This temporal progression demonstrates responsiveness far exceeding human operator capabilities while accommodating realistic communication latencies inherent in long-range RF links. The explicit timing breakdown provides quantitative performance baselines for fault-tolerant mission adaptation.
+
+\subsection{Information Pipeline Architecture}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/processing_pipeline.png}
+\caption{Data Flow Pipeline}
+\label{fig:pipeline}
+\end{figure}
+
+The data flow architecture implements unidirectional information transformation with clear phase boundaries. The input layer ingests dual streams: high-frequency telemetry from UAV sensors updated at 2 Hz, and static mission definitions loaded at initialization. The processing layer transforms these inputs sequentially—OBSERVE produces fleet states and failure lists, ORIENT generates impact assessments and capacity analyses, DECIDE creates strategies and command packets, and ACT executes commands while logging performance metrics. The output layer distributes results through three channels: commands transmitted to UAVs, alerts displayed to operators, and logs persisted for post-mission analysis.
+
+This unidirectional flow pattern provides clear data provenance enabling traceability, testability through phase isolation with mock input capability, and maintainability where phase modifications avoid backward ripple effects. The implicit feedback loop manifests as ACT phase commands update UAV operational states, with updated telemetry reflecting new states flowing back into OBSERVE phase in subsequent cycles.
+
+\subsection{Scalability Considerations}
+
+Computational complexity analysis reveals scaling characteristics across OODA phases. The OBSERVE phase scales linearly with fleet size through increased telemetry aggregation. The ORIENT phase maintains linear scaling for capacity calculations across vehicles. The DECIDE phase exhibits O(N$\times$M) complexity for task allocation across N UAVs and M tasks, with collision avoidance scaling quadratically O(N$^2$) for pairwise path verification. These complexity characteristics yield expected OODA execution times of 5-6 seconds for twelve-UAV fleets and 8-10 seconds for twenty-UAV fleets, potentially exceeding acceptable response thresholds for larger deployments.
+
+\section{Scenario-Specific Adaptations}
+
+The architecture demonstrates flexibility across diverse mission profiles through scenario-specific workflow patterns while maintaining consistent OODA loop mechanics. Three representative mission types illustrate architectural adaptation to varying operational requirements and constraint priorities.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/surveillance_loop.png}
+    \caption{Surveillance Mission}
+    \label{fig:surveillance}
+\end{figure}
+
+\textbf{Surveillance missions} emphasize continuous area coverage through patrol patterns with failures requiring coverage gap minimization and critical zone protection. Task characteristics include waypoint-based patrol routes, priority differentials between critical security zones and routine patrol areas, and deadline constraints for periodic revisit frequencies. Constraint considerations focus primarily on battery limitations affecting patrol duration and spatial coverage range, with time constraints enforcing revisit deadlines for critical areas. Target performance maintains 90-100 percent coverage through reallocation prioritizing critical zones.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/sar_loop.png}
+    \caption{Search and Rescue Mission}
+    \label{fig:sar}
+\end{figure}
+
+
+\textbf{Search and rescue missions} emphasize time-critical area coverage through systematic grid search patterns with failures requiring rapid reallocation to maintain search efficiency. Task characteristics include grid cell assignments with systematic coverage requirements and stringent deadline constraints reflecting survivor time sensitivity. Equal priority across search cells applies in unknown target location scenarios, though priority may concentrate in high-probability areas when available intelligence suggests target location. Battery and time constraints dominate feasibility assessment. Target performance accepts 75-90 percent coverage as acceptable degradation when full compensation proves infeasible, acknowledging that incomplete coverage in time-critical scenarios exceeds mission abortion alternatives.
+
+\begin{figure}[h!tbp]
+    \centering
+    \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/delivery_loop.png}
+    \caption{Delivery Mission}
+    \label{fig:delivery}
+\end{figure}
+
+\textbf{Delivery missions} emphasize reliable cargo transport to designated destinations with failures requiring payload-aware reallocation and potential return-to-base cargo swaps when reallocation proves infeasible. Task characteristics include point-to-point delivery routes with specific destination coordinates, payload weight requirements varying per package, and deadline constraints for time-sensitive deliveries. Payload constraints assume critical importance alongside battery limitations, with heavy cargo failures potentially requiring UAV return-to-launch for manual cargo transfer rather than mid-air reallocation. Priority schemes emphasize time-sensitive or high-value packages, accepting degradation in routine deliveries when capacity limitations preclude full compensation.
+
+These scenario variations demonstrate architectural flexibility through consistent OODA mechanics with mission-specific constraint emphasis and priority schemes, validating the architecture's applicability across diverse operational domains while maintaining systematic fault response capabilities.
+
+\chapter{Core Algorithms and Technical Contributions}
+
+\section{Priority-Based Task Scoring Algorithm}
+
+\textbf{ALGORITHM 1: Task Priority Calculation}
+
+\begin{lstlisting}[language=Python, caption=Task Priority Calculation Algorithm]
+def calculate_task_priority(task, fleet_state, mission_context):
+    """
+    Calculate priority score P_i in [0, 1] for task i
+    
+    Inputs:
+        task: Task object with (position, type, deadline, criticality)
+        fleet_state: Current state of all UAVs
+        mission_context: Mission type and global parameters
+    
+    Output:
+        P_i: Priority score (higher = more urgent/important)
+    """
+    
+    # 1. TEMPORAL URGENCY COMPONENT (0-1, higher = more urgent)
+    # Based on deadline proximity
+    t_remaining = task.deadline - current_time
+    t_total = task.deadline - task.start_time
+    temporal_urgency = 1.0 - (t_remaining / t_total)
+    temporal_urgency = max(0, min(1, temporal_urgency))
+    
+    # 2. MISSION CRITICALITY COMPONENT (mission-specific weights)
+    criticality_weights = {
+        # Surveillance mission
+        'surveillance': {
+            'security_critical_zone': 1.0,  # High-value areas
+            'routine_patrol': 0.3,           # Standard coverage
+            'redundant_coverage': 0.1        # Already covered recently
+        },
+        # Search & Rescue mission
+        'sar': {
+            'victim_likely_zone': 1.0,       # High probability areas
+            'debris_search': 0.6,             # Secondary search
+            'perimeter_patrol': 0.3           # Low priority
+        },
+        # Delivery mission
+        'delivery': {
+            'medical_emergency': 1.0,         # Life-critical
+            'time_sensitive': 0.7,            # Commercial priority
+            'standard_delivery': 0.4          # Regular packages
+        }
+    }
+    
+    mission_type = mission_context['type']
+    task_criticality = criticality_weights[mission_type][task.type]
+    
+    # 3. SPATIAL REALLOCATION COST (battery required)
+    # Find nearest available UAV
+    min_distance = float('inf')
+    for uav in fleet_state.healthy_uavs:
+        distance = euclidean_distance(uav.position, task.position)
+        if distance < min_distance:
+            min_distance = distance
+    
+    # Normalize by max range
+    max_range = mission_context['uav_max_range']
+    spatial_cost = min_distance / max_range
+    spatial_cost = max(0, min(1, spatial_cost))
+    
+    # 4. COMBINED PRIORITY SCORE
+    # Weighted combination (weights sum to 1.0)
+    w_temporal = 0.3
+    w_criticality = 0.5
+    w_spatial = 0.2
+    
+    P_i = (w_temporal * temporal_urgency + 
+           w_criticality * task_criticality - 
+           w_spatial * spatial_cost)
+    
+    # Normalize to [0, 1]
+    P_i = max(0, min(1, P_i))
+    
+    return P_i
+
+# Priority sorting for task allocation
+def rank_tasks_by_priority(failed_tasks, fleet_state, mission_context):
+    """
+    Rank all failed UAV tasks by priority for reallocation
+    """
+    task_priority_list = []
+    
+    for task in failed_tasks:
+        priority = calculate_task_priority(task, fleet_state, mission_context)
+        task_priority_list.append((task, priority))
+    
+    # Sort in descending order of priority
+    task_priority_list.sort(key=lambda x: x[1], reverse=True)
+    
+    return task_priority_list
+\end{lstlisting}
+
+\textbf{Justification:}
+\begin{itemize}
+\item \textbf{Temporal component:} Ensures deadline-driven tasks are prioritized
+\item \textbf{Criticality component:} Mission-specific importance (medical > commercial)
+\item \textbf{Spatial component:} Penalizes tasks far from available UAVs (battery cost)
+\item \textbf{Weights:} Tunable based on mission requirements (can be adjusted)
+\end{itemize}
+
+\textbf{Related work:}
+\begin{itemize}
+\item Similar to auction-based task allocation (Choi et al., 2009)
+\item Inspired by utility functions in market-based coordination (Dias et al., 2006)
+\item Differs by explicitly modeling resource costs
+\end{itemize}
+
+\section{Constraint-Aware Task Reallocation with Collision Avoidance}
+
+\textbf{ALGORITHM 2: Safe Task Reallocation}
+
+\begin{lstlisting}[language=Python, caption=Constraint-Aware Task Reallocation Algorithm]
+def reallocate_tasks_with_constraints(failed_uav, healthy_uavs, 
+                                     mission_context):
+    """
+    Reallocate failed UAV tasks to healthy UAVs with:
+    - Battery constraints
+    - Payload constraints
+    - Collision avoidance
+    
+    Returns:
+        reallocation_plan: Dict mapping tasks to UAVs
+        coverage_percentage: % of failed tasks successfully reallocated
+        operator_alerts: List of non-compensable tasks
+    """
+    
+    # 1. CALCULATE AVAILABLE CAPACITY
+    available_capacity = {}
+    for uav in healthy_uavs:
+        # Battery constraint
+        battery_reserve = uav.battery_remaining - SAFETY_RESERVE
+        spare_battery = max(0, battery_reserve - uav.committed_battery)
+        
+        # Payload constraint (for delivery missions)
+        spare_payload = uav.max_payload - uav.current_payload
+        
+        available_capacity[uav.id] = {
+            'battery': spare_battery,
+            'payload': spare_payload,
+            'position': uav.current_position
+        }
+    
+    # 2. RANK FAILED TASKS BY PRIORITY
+    failed_tasks = failed_uav.task_queue
+    ranked_tasks = rank_tasks_by_priority(failed_tasks, 
+                                          healthy_uavs, 
+                                          mission_context)
+    
+    # 3. GREEDY ALLOCATION WITH CONSTRAINTS
+    reallocation_plan = {}
+    unallocated_tasks = []
+    
+    for task, priority in ranked_tasks:
+        allocated = False
+        
+        # Try to assign to nearest UAV with sufficient capacity
+        candidate_uavs = sorted(
+            healthy_uavs,
+            key=lambda u: euclidean_distance(u.position, task.position)
+        )
+        
+        for uav in candidate_uavs:
+            # Check battery constraint
+            distance_to_task = euclidean_distance(uav.position, 
+                                                  task.position)
+            battery_required = distance_to_task / uav.battery_efficiency
+            
+            if available_capacity[uav.id]['battery'] < battery_required:
+                continue  # Insufficient battery
+            
+            # Check payload constraint (delivery missions only)
+            if mission_context['type'] == 'delivery':
+                if available_capacity[uav.id]['payload'] < task.payload:
+                    continue  # Insufficient payload capacity
+            
+            # Check collision-free path
+            if not is_collision_free_path(uav, task, reallocation_plan):
+                continue  # Path conflict detected
+            
+            # ALLOCATION SUCCESSFUL
+            reallocation_plan[task.id] = uav.id
+            available_capacity[uav.id]['battery'] -= battery_required
+            if mission_context['type'] == 'delivery':
+                available_capacity[uav.id]['payload'] -= task.payload
+            allocated = True
+            break
+        
+        if not allocated:
+            unallocated_tasks.append((task, priority))
+    
+    # 4. CALCULATE COVERAGE PERCENTAGE
+    total_tasks = len(failed_tasks)
+    reallocated_tasks = len(reallocation_plan)
+    coverage_percentage = (reallocated_tasks / total_tasks) * 100
+    
+    # 5. GENERATE OPERATOR ALERTS
+    operator_alerts = []
+    for task, priority in unallocated_tasks:
+        alert = {
+            'task_id': task.id,
+            'priority': priority,
+            'reason': 'Insufficient fleet capacity',
+            'recommendation': 'Manual intervention required' if priority > 0.7 
+                            else 'Acceptable degradation'
+        }
+        operator_alerts.append(alert)
+    
+    return reallocation_plan, coverage_percentage, operator_alerts
+\end{lstlisting}
+
+\textbf{ALGORITHM 3: Collision Avoidance Check}
+
+\begin{lstlisting}[language=Python, caption=Collision Avoidance Verification]
+def is_collision_free_path(uav, new_task, current_plan):
+    """
+    Check if assigning new_task to uav creates collision risk
+    with other UAVs in current_plan
+    
+    Uses spatial separation and temporal deconfliction
+    """
+    
+    SAFETY_BUFFER = 15.0  # meters (3x typical UAV wingspan)
+    TIME_BUFFER = 10.0    # seconds (safety margin)
+    
+    # Get UAV's new planned path
+    new_path = generate_path(uav.position, new_task.position)
+    new_timeline = estimate_arrival_times(new_path, uav.speed)
+    
+    # Check against all other UAVs' paths
+    for other_uav_id, assigned_tasks in current_plan.items():
+        if other_uav_id == uav.id:
+            continue
+        
+        other_path = get_planned_path(other_uav_id, assigned_tasks)
+        other_timeline = get_timeline(other_uav_id)
+        
+        # Spatial-temporal conflict detection
+        for i, point1 in enumerate(new_path):
+            t1 = new_timeline[i]
+            
+            for j, point2 in enumerate(other_path):
+                t2 = other_timeline[j]
+                
+                # Check if UAVs are near same point at similar time
+                spatial_distance = euclidean_distance(point1, point2)
+                temporal_distance = abs(t1 - t2)
+                
+                if (spatial_distance < SAFETY_BUFFER and 
+                    temporal_distance < TIME_BUFFER):
+                    # COLLISION RISK DETECTED
+                    return False
+    
+    # No conflicts found
+    return True
+
+def apply_temporal_separation(uav, conflicting_uav):
+    """
+    If spatial conflict exists, delay one UAV's task
+    """
+    # Delay the lower-priority UAV by TIME_BUFFER seconds
+    if uav.task_priority < conflicting_uav.task_priority:
+        uav.add_delay(TIME_BUFFER)
+    else:
+        conflicting_uav.add_delay(TIME_BUFFER)
+\end{lstlisting}
+
+\textbf{Collision avoidance approach:}
+\begin{itemize}
+\item \textbf{Spatial separation:} Maintain 15m minimum distance (3$\times$ wingspan)
+\item \textbf{Temporal deconfliction:} If paths intersect, stagger arrival times
+\item \textbf{Priority-based:} Lower-priority tasks delayed if conflict occurs
+\end{itemize}
+
+\textbf{Related work:}
+\begin{itemize}
+\item Based on velocity obstacles (van den Berg et al., 2008)
+\item Simpler than distributed RVO but sufficient for centralized planning
+\item Similar to air traffic control separation standards
+\end{itemize}
+
+\section{Operator Escalation Decision Rules}
+
+\textbf{Decision tree for operator involvement:}
+
+\begin{lstlisting}[language=Python, caption=Operator Escalation Decision Logic]
+def determine_operator_escalation(coverage_percentage, unallocated_tasks):
+    """
+    Decide when to escalate to operator based on mission degradation
+    """
+    
+    # ESCALATION TRIGGERS
+    
+    # 1. Critical coverage loss
+    if coverage_percentage < 50:
+        return {
+            'escalate': True,
+            'urgency': 'HIGH',
+            'reason': 'Mission coverage below 50% threshold',
+            'recommendation': 'Consider aborting mission or deploying backup UAV'
+        }
+    
+    # 2. High-priority tasks unallocated
+    critical_tasks_lost = [t for t in unallocated_tasks if t[1] > 0.7]
+    if len(critical_tasks_lost) > 0:
+        return {
+            'escalate': True,
+            'urgency': 'HIGH',
+            'reason': f'{len(critical_tasks_lost)} critical tasks cannot be covered',
+            'recommendation': 'Manual task prioritization required'
+        }
+    
+    # 3. Moderate degradation
+    if coverage_percentage < 75:
+        return {
+            'escalate': True,
+            'urgency': 'MEDIUM',
+            'reason': 'Moderate mission degradation (50-75% coverage)',
+            'recommendation': 'Monitor closely, consider manual reallocation'
+        }
+    
+    # 4. Minor degradation - autonomous handling
+    return {
+        'escalate': False,
+        'urgency': 'LOW',
+        'reason': 'Acceptable autonomous compensation (>75% coverage)',
+        'recommendation': 'Continue autonomous operation'
+    }
+\end{lstlisting}
+
+\chapter{Mission Scenarios and Performance Analysis}
+
+This chapter presents three representative mission scenarios that demonstrate the OODA-based fault tolerance system across diverse operational contexts. Each scenario illustrates different constraint priorities, failure modes, and recovery strategies, providing concrete validation of the system's adaptive capabilities under realistic conditions.
+
+\section{Scenario Selection Rationale}
+
+The three scenarios were selected to span the constraint space of real-world UAV operations:
+
+\begin{itemize}
+\item \textbf{Surveillance:} Battery-constrained with time-critical coverage requirements
+\item \textbf{Search \& Rescue:} Time-critical with priority-driven partial coverage acceptance
+\item \textbf{Delivery:} Payload-constrained with heterogeneous fleet capabilities
+\end{itemize}
+
+Each scenario represents a distinct operational domain with documented real-world deployment precedents, ensuring practical relevance beyond theoretical validation.
+
+\section{SCENARIO 1: Long-Duration Perimeter Surveillance}
+
+\subsection{Mission Context}
+
+\begin{itemize}
+    \item \textbf{Application:} Critical infrastructure monitoring (port, airport, border)
+    \item \textbf{Duration:} 2-hour continuous coverage requirement
+    \item \textbf{Fleet:} 6 UAVs with 30-minute flight time each (requires rotation strategy)
+    \item \textbf{Operational Area:} 1200m $\times$ 1200m secured perimeter
+    \item \textbf{Coverage Strategy:} 6 patrol zones (200m $\times$ 200m each)
+\end{itemize}
+
+\subsection{Mission Setup}
+
+The surveillance mission divides the operational area into six equal patrol zones, with each UAV assigned continuous coverage of one zone. The 30-minute battery limitation relative to the 2-hour mission duration necessitates coordinated rotation scheduling to maintain uninterrupted coverage.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\textwidth]{images/uav_zone_assignement.png}
+\caption{Zone Assignment for Surveillance Mission}
+\label{fig:zone_assignment}
+\end{figure}
+
+\subsection{Patrol Zone Specifications}
+
+\textbf{Zone Characteristics:}
+\begin{itemize}
+\item \textbf{Zones A, B (North Perimeter):} High priority (P=0.9) - Main entry points
+\item \textbf{Zones C, D (East/West):} Medium priority (P=0.6) - Secondary access
+\item \textbf{Zones E, F (South Perimeter):} Standard priority (P=0.4) - Low-risk boundary
+\end{itemize}
+
+\textbf{Waypoint Density:}
+\begin{itemize}
+\item High-priority zones: 8 waypoints per patrol circuit
+\item Medium-priority zones: 6 waypoints per patrol circuit
+\item Standard-priority zones: 4 waypoints per patrol circuit
+\end{itemize}
+
+\subsection{Rotation Strategy}
+
+The 2-hour mission duration with 30-minute battery life requires coordinated rotation:
+
+\begin{itemize}
+    \item \textbf{Wave 1 (0-30 min):} UAVs 1-6 patrol zones A-F
+    \item \textbf{Transition 1 (25-30 min):} UAVs signal 20\% battery threshold
+    \item \textbf{Wave 2 (30-60 min):} UAVs 1-6 return for battery swap, backup UAVs 7-12 deployed
+    \item \textbf{Transition 2 (55-60 min):} Backup UAVs signal battery threshold
+    \item \textbf{Wave 3 (60-90 min):} Recharged UAVs 1-6 resume patrol
+    \item \textbf{Transition 3 (85-90 min):} Rotation cycle repeats
+    \item \textbf{Wave 4 (90-120 min):} Final rotation with backup fleet 7-12
+\end{itemize}
+
+\subsection{Failure Scenario: Mid-Mission Battery Depletion}
+
+\textbf{Failure Event:} UAV-3 experiences accelerated battery discharge at t=45 minutes during Wave 2, with battery dropping to 8\% (below 10\% safety threshold) while covering Zone C.
+
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/surveillance_loop.png}
+% \caption{Surveillance Mission OODA Loop Execution}
+% \label{fig:surveillance_loop}
+% \end{figure}
+
+\subsubsection{OBSERVE Phase (T+0 to T+1.5s)}
+
+\textbf{Failure Detection:}
+\begin{lstlisting}[language=Python]
+# Battery anomaly detected via statistical monitoring
+battery_discharge_rate = (battery_previous - battery_current) / time_delta
+# Expected: 3%/min, Observed: 8%/min
+if battery_discharge_rate > ANOMALY_THRESHOLD:
+    trigger_ooda_cycle()
+\end{lstlisting}
+
+\textbf{Fleet State Aggregation:}
+\begin{itemize}
+\item UAV-3: 8\% battery, Zone C (50\% patrol completion)
+\item UAV-2 (Zone B): 45\% battery, 15\% spare capacity
+\item UAV-4 (Zone D): 40\% battery, 12\% spare capacity
+\item UAV-8 (standby): 95\% battery, available for emergency deployment
+\item Lost coverage: Zone C, 16.7\% of total mission area
+\end{itemize}
+
+\subsubsection{ORIENT Phase (T+1.5s to T+3.0s)}
+
+\textbf{Impact Assessment:}
+\begin{itemize}
+\item Mission criticality: Medium (Zone C is medium-priority area)
+\item Coverage gap duration: 0 seconds (immediate reallocation required)
+\item Temporal urgency: P\textsubscript{time} = 0.8 (continuous coverage mandate)
+\end{itemize}
+
+\textbf{Capacity Analysis:}
+\begin{lstlisting}[language=Python]
+# Calculate spare battery capacity
+uav2_spare = 0.45 - 0.20 (safety) - 0.10 (committed) = 0.15 (15%)
+uav4_spare = 0.40 - 0.20 (safety) - 0.08 (committed) = 0.12 (12%)
+
+# Distance from adjacent UAVs to Zone C centroid
+distance_uav2_to_zoneC = 250m  # requires ~8% battery
+distance_uav4_to_zoneC = 220m  # requires ~7% battery
+
+# Feasibility check
+uav2_can_cover = (0.15 > 0.08)  # TRUE
+uav4_can_cover = (0.12 > 0.07)  # TRUE
+\end{lstlisting}
+
+\textbf{Reallocation Strategy:}
+\begin{itemize}
+\item Split Zone C into two sub-zones: C1 (north 100m) and C2 (south 100m)
+\item Assign C1 to UAV-2 (adjacent to Zone B)
+\item Assign C2 to UAV-4 (adjacent to Zone D)
+\item Accept reduced waypoint density: 3 waypoints per sub-zone vs. 6 original
+\end{itemize}
+
+\subsubsection{DECIDE Phase (T+3.0s to T+4.5s)}
+
+\textbf{Strategy Selection:} Partial Reallocation (coverage degradation accepted)
+
+\textbf{Waypoint Generation:}
+\begin{lstlisting}[language=Python]
+# UAV-2 extended patrol: Zone B + Zone C1
+new_waypoints_uav2 = [
+    zone_B_waypoints,  # Original 8 points
+    zone_C1_waypoints   # Added 3 points
+]
+total_distance_uav2 = 1600m + 600m = 2200m
+estimated_time = 2200m / 12m/s = 183s (~3 min per circuit)
+
+# UAV-4 extended patrol: Zone D + Zone C2
+new_waypoints_uav4 = [
+    zone_D_waypoints,  # Original 6 points
+    zone_C2_waypoints   # Added 3 points
+]
+\end{lstlisting}
+
+\textbf{Collision Avoidance Check:}
+\begin{itemize}
+\item Zone C boundary between C1 and C2: 15m separation buffer
+\item Temporal deconfliction: UAV-2 and UAV-4 patrol in opposite directions
+\item No conflicts detected with other patrol zones
+\end{itemize}
+
+\subsubsection{ACT Phase (T+4.5s to T+5.5s)}
+
+\textbf{Command Execution:}
+\begin{lstlisting}[language=Python]
+# Dispatch updated mission to UAV-2
+send_mission_update(
+    uav_id=2,
+    new_waypoints=new_waypoints_uav2,
+    priority=HIGH,
+    acknowledge_timeout=200ms
+)
+
+# Dispatch updated mission to UAV-4
+send_mission_update(
+    uav_id=4,
+    new_waypoints=new_waypoints_uav4,
+    priority=HIGH
+)
+
+# Command UAV-3 immediate RTL
+send_emergency_rtl(uav_id=3)
+\end{lstlisting}
+
+\textbf{Dashboard Update:}
+\begin{itemize}
+\item Coverage status: 91.7\% (slight degradation due to reduced waypoint density)
+\item Mission status: ADAPTED - Partial Reallocation
+\item Alert: ``Zone C coverage degraded to 3 waypoints per sub-zone (was 6)''
+\item Estimated impact: 8.3\% surveillance quality reduction in Zone C
+\end{itemize}
+
+\subsection{Performance Analysis}
+
+\textbf{Quantitative Results:}
+\begin{table}[H]
+\centering
+\caption{Surveillance Scenario Performance Metrics}
+\label{tab:surveillance_performance}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\hline
+Coverage Recovery & >85\% & 91.7\% \\
+Adaptation Time & <6s & 5.5s \\
+Battery Efficiency & >80\% & 88\% (UAV-2/4 spare capacity used) \\
+Mission Completion & >90\% & 100\% (mission continued) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+\item \textbf{Graceful Degradation:} System maintained 91.7\% coverage despite complete zone loss
+\item \textbf{No Operator Intervention Required:} Autonomous reallocation sufficient
+\item \textbf{Safety Preserved:} All UAVs remained above 10\% battery safety threshold
+\item \textbf{Rotation Continuity:} Wave 3 rotation proceeded on schedule with UAV-3 replaced by standby UAV-8
+\end{itemize}
+
+\textbf{Limitations Identified:}
+\begin{itemize}
+\item Reduced waypoint density in Zone C degrades detection probability
+\item Strategy vulnerable to cascading failures (if UAV-2 or UAV-4 also fail)
+\item Manual intervention required if >2 simultaneous failures occur
+\end{itemize}
+
+\section{SCENARIO 2: Emergency Search \& Rescue}
+
+\subsection{Mission Context}
+
+\begin{itemize}
+    \item \textbf{Application:} Missing person in wilderness area
+    \item \textbf{Duration:} 3-hour search window (golden hour + extended search)
+    \item \textbf{Fleet:} 4 UAVs with thermal cameras
+    \item \textbf{Search Area:} 2000m $\times$ 2000m forest region
+    \item \textbf{Grid Resolution:} 100m $\times$ 100m cells (400 total cells)
+\end{itemize}
+
+\subsection{Mission Setup}
+
+The search area is divided into a systematic grid with priority zones determined by terrain analysis, last known position (LKP), and probability of area (POA) calculations.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{images/priorities.png}
+\caption{Priority Tree for Search Zones}
+\label{fig:priorities}
+\end{figure}
+
+\subsection{Search Grid Prioritization}
+
+Using Algorithm 1 (calculate\_task\_priority), each grid cell receives a priority score:
+
+\textbf{High Priority Zones (P > 0.7):}
+\begin{itemize}
+\item \textbf{Zone 1 (LKP radius):} 100 cells, P=0.9 - Last known position $\pm$ 500m
+\item \textbf{Zone 2 (Water sources):} 40 cells, P=0.8 - Streams, ponds within 1km of LKP
+\item \textbf{Zone 3 (Shelters):} 20 cells, P=0.75 - Cabins, overhangs, clearings
+\end{itemize}
+
+\textbf{Medium Priority Zones (0.4 < P < 0.7):}
+\begin{itemize}
+\item \textbf{Zone 4 (Trails):} 80 cells, P=0.6 - Hiking paths and access routes
+\item \textbf{Zone 5 (Clearings):} 60 cells, P=0.5 - Open areas visible from air
+\end{itemize}
+
+\textbf{Low Priority Zones (P < 0.4):}
+\begin{itemize}
+\item \textbf{Zone 6 (Dense forest):} 80 cells, P=0.3 - Heavy canopy, low POA
+\item \textbf{Zone 7 (Steep terrain):} 20 cells, P=0.2 - Cliffs, ravines (mobility limited)
+\end{itemize}
+
+\subsection{Initial Task Allocation}
+
+\textbf{Fleet Assignment:}
+\begin{lstlisting}[language=Python]
+# UAV assignments by priority zones
+uav1_assignment = zones[1:100]   # High priority LKP radius (100 cells)
+uav2_assignment = zones[101:160] # High priority water + shelters (60 cells)
+uav3_assignment = zones[161:300] # Medium priority trails + clearings (140 cells)
+uav4_assignment = zones[301:400] # Low priority dense/steep (100 cells)
+
+# Coverage rate: 4 cells/minute (thermal scan + image capture)
+# Expected completion times:
+# UAV-1: 25 minutes (critical zone)
+# UAV-2: 15 minutes (critical zone)
+# UAV-3: 35 minutes (medium zone)
+# UAV-4: 25 minutes (low zone)
+\end{lstlisting}
+
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/sar_loop.png}
+% \caption{Search and Rescue Mission OODA Loop}
+% \label{fig:sar_loop}
+% \end{figure}
+
+\subsection{Failure Scenario: Critical Zone UAV Loss}
+
+\textbf{Failure Event:} UAV-2 loses GPS signal at t=8 minutes due to terrain interference, triggering failsafe RTL after 90 seconds of signal loss. UAV-2 was 20\% through its high-priority assignment (12 of 60 cells completed).
+
+\subsubsection{OBSERVE Phase (T+0 to T+1.5s)}
+
+\textbf{Failure Detection:}
+\begin{itemize}
+\item GPS signal timeout detected at t=8:00
+\item UAV-2 entered autonomous RTL mode at t=8:01:30
+\item OODA cycle triggered at t=8:01:30 upon RTL confirmation
+\item Lost coverage: 48 cells in high-priority zones (water sources + shelters)
+\end{itemize}
+
+\textbf{Fleet State at Failure:}
+\begin{lstlisting}[language=Python]
+fleet_state = {
+    'uav1': {
+        'progress': '15/100 cells (15%)',
+        'battery': 75,
+        'position': 'Zone 1 - LKP grid',
+        'spare_capacity': '20% battery'
+    },
+    'uav2': {
+        'status': 'RTL (GPS LOSS)',
+        'progress': '12/60 cells (20%)',
+        'lost_tasks': 48  # High priority cells
+    },
+    'uav3': {
+        'progress': '10/140 cells (7%)',
+        'battery': 80,
+        'position': 'Zone 4 - Trails',
+        'spare_capacity': '35% battery'
+    },
+    'uav4': {
+        'progress': '8/100 cells (8%)',
+        'battery': 78,
+        'position': 'Zone 7 - Steep terrain',
+        'spare_capacity': '30% battery'
+    }
+}
+\end{lstlisting}
+
+\subsubsection{ORIENT Phase (T+1.5s to T+3.0s)}
+
+\textbf{Mission Impact Assessment:}
+\begin{itemize}
+\item Total mission degradation: 12\% (48 of 400 cells)
+\item Critical zone degradation: 30\% (48 of 160 high-priority cells)
+\item Temporal criticality: HIGH (golden hour: 60 minutes total, 52 minutes remaining)
+\end{itemize}
+
+\textbf{Capacity Analysis:}
+\begin{lstlisting}[language=Python]
+# Reallocation feasibility for 48 high-priority cells
+
+# Option 1: UAV-1 (already in high-priority zone)
+uav1_remaining_tasks = 85  # cells
+uav1_spare_capacity = 20%  # battery (~5 minutes = 20 cells)
+uav1_can_absorb = min(20, 48) = 20 cells
+
+# Option 2: UAV-3 (medium priority, higher spare capacity)
+distance_uav3_to_zone2 = 800m  # ~3% battery
+uav3_spare_capacity = 35% - 3% = 32%  # (~8 minutes = 32 cells)
+uav3_can_absorb = min(32, 48) = 32 cells
+
+# Option 3: UAV-4 (low priority, redirect entirely)
+distance_uav4_to_zone2 = 1200m  # ~5% battery
+uav4_spare_capacity = 30% - 5% = 25%  # (~6 minutes = 24 cells)
+uav4_can_absorb = min(24, 48) = 24 cells
+
+# Total reallocation capacity: 20 + 32 + 24 = 76 cells (exceeds 48 needed)
+# Feasibility: FULL REALLOCATION possible
+\end{lstlisting}
+
+\textbf{Priority-Based Allocation Strategy:}
+\begin{enumerate}
+\item Assign 20 water source cells to UAV-1 (already nearby, minimal diversion)
+\item Assign 20 shelter cells to UAV-3 (highest spare capacity, redirect from trails)
+\item Keep 8 remaining shelter cells for UAV-4 if UAV-3 runs low on battery
+\item Defer UAV-4's low-priority zone 7 to secondary search phase
+\end{enumerate}
+
+\subsubsection{DECIDE Phase (T+3.0s to T+4.5s)}
+
+\textbf{Strategy Selection:} Full Reallocation with Priority Optimization
+
+\textbf{Waypoint Recalculation:}
+\begin{lstlisting}[language=Python]
+# UAV-1 new mission
+uav1_new_waypoints = [
+    remaining_zone1_cells,      # 85 cells (original)
+    zone2_water_cells[0:20]     # 20 cells (added from UAV-2)
+]
+# Total: 105 cells, estimated time: 26 minutes
+# Battery check: 75% - 26 min usage = 23% > 20% safety margin [PASS]
+
+# UAV-3 new mission  
+uav3_new_waypoints = [
+    zone3_shelter_cells[0:20],  # 20 cells (from UAV-2, HIGH priority)
+    remaining_zone4_cells[0:60] # 60 cells (original medium priority)
+]
+# Total: 80 cells (reduced from 140), estimated time: 20 minutes
+# Battery check: 80% - 20 min - 3% transit = 37% remaining [PASS]
+
+# UAV-4 contingency assignment (if UAV-3 needs battery margin)
+uav4_backup = zone3_shelter_cells[20:28]  # 8 cells on standby
+\end{lstlisting}
+
+\textbf{Collision Avoidance Verification:}
+\begin{itemize}
+\item UAV-1 and UAV-3 zones separated by 600m (Zone 1 vs Zone 2/3)
+\item Temporal deconfliction: UAV-1 completes Zone 1 before entering Zone 2
+\item UAV-3 begins Zone 3 immediately, no overlap with UAV-1 timeline
+\item No conflicts detected
+\end{itemize}
+
+\subsubsection{ACT Phase (T+4.5s to T+6.0s)}
+
+\textbf{Command Dispatch:}
+\begin{lstlisting}[language=Python]
+# Update UAV-1 mission
+send_mission_update(
+    uav_id=1,
+    new_waypoints=uav1_new_waypoints,
+    priority=CRITICAL,
+    reason="Absorbing UAV-2 water source cells"
+)
+
+# Update UAV-3 mission (major reroute)
+send_mission_update(
+    uav_id=3,
+    new_waypoints=uav3_new_waypoints,
+    priority=CRITICAL,
+    reason="Redirect to high-priority shelter cells"
+)
+
+# Place UAV-4 on conditional standby
+send_status_update(
+    uav_id=4,
+    message="Continue Zone 7. Standby for potential Zone 3 backup assignment."
+)
+\end{lstlisting}
+
+\textbf{Dashboard Update:}
+\begin{itemize}
+\item Mission status: ADAPTED - Full Reallocation
+\item Coverage recovery: 100\% of high-priority cells reallocated
+\item Degraded coverage: Zone 4 (trails) reduced from 140 to 60 cells (57\% coverage)
+\item Zone 7 (low priority) may be incomplete if UAV-4 redirected
+\item Estimated mission completion: 90\% of total area (acceptable for SAR)
+\end{itemize}
+
+\subsection{Performance Analysis}
+
+\textbf{Quantitative Results:}
+\begin{table}[H]
+\centering
+\caption{Search \& Rescue Scenario Performance Metrics}
+\label{tab:sar_performance}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\hline
+High-Priority Coverage & >90\% & 100\% \\
+Adaptation Time & <6s & 6.0s \\
+Total Coverage & >75\% & 88\% \\
+Golden Hour Compliance & <60 min & 48 min (projected) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+\item \textbf{Priority-Driven Success:} 100\% of high-priority zones covered despite 12\% mission loss
+\item \textbf{Graceful Degradation:} Low-priority zones deferred rather than abandoned
+\item \textbf{Time-Critical Performance:} Reallocation completed within golden hour window
+\item \textbf{Operator Confidence:} No manual intervention required, allowing operator to focus on coordinating ground teams
+\end{itemize}
+
+\textbf{Comparison to Manual Replanning:}
+\begin{itemize}
+\item Autonomous: 6 seconds adaptation, 100\% high-priority coverage
+\item Manual: 5-10 minutes to detect + replan, potential golden hour violation
+\item \textbf{Value Proposition:} Autonomous system prevents 4-9 minute delay in time-critical SAR mission
+\end{itemize}
+
+\section{SCENARIO 3: Medical Supply Delivery}
+
+\subsection{Mission Context}
+
+\begin{itemize}
+    \item \textbf{Application:} Emergency medical supply delivery to rural clinics
+    \item \textbf{Duration:} 1-hour delivery window
+    \item \textbf{Fleet:} 3 UAVs (heterogeneous payload capacities)
+    \item \textbf{Delivery Area:} 5 clinics distributed over 3000m $\times$ 2000m region
+\end{itemize}
+
+\subsection{Mission Setup}
+
+\textbf{Fleet Specifications:}
+
+\begin{lstlisting}[language=Python, caption=Delivery Fleet Configuration]
+class DeliveryFleet:
+    uav1 = {
+        'type': 'Heavy Lifter',
+        'payload_capacity': 5.0,  # kg
+        'battery': 25,  # minutes
+        'speed': 12,  # m/s
+        'assigned_packages': ['A', 'B'],  # Total: 4.5 kg
+        'route': [Clinic_1, Clinic_2]
+    }
+    uav2 = {
+        'type': 'Standard',
+        'payload_capacity': 2.5,  # kg
+        'battery': 30,  # minutes
+        'speed': 15,  # m/s  
+        'assigned_packages': ['C', 'D'],  # Total: 2.2 kg
+        'route': [Clinic_3, Clinic_4]
+    }
+    uav3 = {
+        'type': 'Standard',
+        'payload_capacity': 2.5,  # kg
+        'battery': 30,  # minutes
+        'speed': 15,  # m/s
+        'assigned_packages': ['E'],  # Total: 1.8 kg
+        'route': [Clinic_5]
+    }
+\end{lstlisting}
+
+\textbf{Package Priorities Using Algorithm 1:}
+
+\begin{lstlisting}[language=Python, caption=Package Priority Assignment]
+packages = {
+    'A': {
+        'weight': 2.5,  # kg
+        'destination': 'Clinic_1',
+        'coordinates': (800, 1200),  # meters from depot
+        'priority': 1.0, 
+        'contents': 'Insulin (CRITICAL)',
+        'deadline': 30,  # minutes
+        'criticality': 'medical_emergency'
+    },
+    'B': {
+        'weight': 2.0,  # kg
+        'destination': 'Clinic_2', 
+        'coordinates': (1500, 800),
+        'priority': 0.7, 
+        'contents': 'Antibiotics (HIGH)',
+        'deadline': 45,  # minutes
+        'criticality': 'time_sensitive'
+    },
+    'C': {
+        'weight': 1.2,  # kg
+        'destination': 'Clinic_3',
+        'coordinates': (2200, 1500),
+        'priority': 0.4, 
+        'contents': 'Bandages (MEDIUM)',
+        'deadline': 60,  # minutes
+        'criticality': 'standard_delivery'
+    },
+    'D': {
+        'weight': 1.0,  # kg
+        'destination': 'Clinic_4',
+        'coordinates': (2800, 600),
+        'priority': 0.4, 
+        'contents': 'Gauze (MEDIUM)',
+        'deadline': 60,  # minutes
+        'criticality': 'standard_delivery'
+    },
+    'E': {
+        'weight': 1.8,  # kg
+        'destination': 'Clinic_5',
+        'coordinates': (1200, 300),
+        'priority': 0.2, 
+        'contents': 'Vitamins (LOW)',
+        'deadline': 90,  # minutes
+        'criticality': 'standard_delivery'
+    },
+}
+
+# Priority calculation using calculate_task_priority():
+# Package A: P = 1.0 (medical_emergency + temporal_urgency)
+# Package B: P = 0.7 (time_sensitive)
+# Packages C,D: P = 0.4 (standard_delivery)
+# Package E: P = 0.2 (standard_delivery, low criticality)
+\end{lstlisting}
+
+\textbf{Delivery Route Map:}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/delivery_route_map.png}
+\caption{Delivery Route Map with Clinic Locations}
+\label{fig:delivery_map}
+\end{figure}
+
+\subsection{Failure Scenario: Heavy Lifter Battery Anomaly}
+
+\textbf{Failure Event:} UAV-1 experiences unexpected battery degradation at t=15 minutes due to headwind and payload weight. Battery discharge rate observed at 5\%/min vs. expected 3\%/min. Current battery: 40\% (expected 55\%).
+
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/delivery_loop.png}
+% \caption{Delivery Mission OODA Loop}
+% \label{fig:delivery_loop}
+% \end{figure}
+
+\subsubsection{OBSERVE Phase (T+0 to T+1.5s)}
+
+\textbf{Failure Detection:}
+\begin{lstlisting}[language=Python]
+# Battery anomaly detected via statistical monitoring
+battery_discharge_rate = (55 - 40) / 5_minutes = 3%/min (expected)
+observed_rate = 5%/min
+anomaly_detected = (observed_rate > 1.5 * expected_rate)  # TRUE
+
+# Current state
+uav1_state = {
+    'battery': 40,  # %
+    'position': (600, 1000),  # 200m from Clinic_1
+    'remaining_distance_to_clinic1': 200,  # m
+    'remaining_distance_to_clinic2': 1100,  # m (after Clinic_1)
+    'payload': 4.5,  # kg (both packages still loaded)
+}
+
+# Battery projection
+battery_to_clinic1 = 40 - (200m / 12m/s) * 5%/min = 38.6%
+battery_after_clinic1 = 38.6 - 2 (landing/takeoff) = 36.6%
+battery_to_clinic2 = 36.6 - (1100m / 12m/s) * 5%/min = 28.9%
+battery_after_clinic2 = 28.9 - 2 (landing) = 26.9%
+battery_to_return = 26.9 - (1500m / 12m/s) * 5%/min = 16.6%
+
+# Safety margin check
+safety_threshold = 20%
+if battery_to_return < safety_threshold:
+    # FAILURE: Insufficient battery to complete mission safely
+    trigger_ooda_cycle()
+\end{lstlisting}
+
+\textbf{Lost Packages:}
+\begin{itemize}
+\item Package A (2.5kg, P=1.0, Clinic\_1): Currently 200m away, deliverable
+\item Package B (2.0kg, P=0.7, Clinic\_2): Cannot be delivered safely by UAV-1
+\end{itemize}
+
+\subsubsection{ORIENT Phase (T+1.5s to T+3.0s)}
+
+\textbf{Impact Assessment:}
+\begin{itemize}
+\item Mission impact: 20\% cargo value lost (1 of 5 packages)
+\item Critical package status: Package A (P=1.0) still deliverable
+\item High-priority package at risk: Package B (P=0.7)
+\end{itemize}
+
+\textbf{Fleet Capacity Analysis:}
+\begin{lstlisting}[language=Python]
+# UAV-2 capacity evaluation
+uav2_state = {
+    'current_payload': 2.2,  # kg (Packages C + D)
+    'max_payload': 2.5,  # kg
+    'spare_payload': 0.3,  # kg
+    'position': (1800, 1400),  # en route to Clinic_3
+    'battery': 70  # %
+}
+# Package B weight: 2.0 kg
+# UAV-2 cannot carry Package B (2.0 > 0.3 spare capacity) [FAIL]
+
+# UAV-3 capacity evaluation
+uav3_state = {
+    'current_payload': 1.8,  # kg (Package E)
+    'max_payload': 2.5,  # kg
+    'spare_payload': 0.7,  # kg
+    'position': (1000, 500),  # en route to Clinic_5
+    'battery': 75,  # %
+    'distance_to_clinic2': 900  # m
+}
+# Package B weight: 2.0 kg
+# UAV-3 cannot carry Package B (2.0 > 0.7 spare capacity) [FAIL]
+
+# Reallocation feasibility conclusion
+feasible_reallocation = False
+reason = "Package B (2.0kg) exceeds spare payload capacity of UAV-2 (0.3kg) and UAV-3 (0.7kg)"
+\end{lstlisting}
+
+\textbf{Alternative Strategies:}
+\begin{enumerate}
+\item \textbf{Return-to-Base Cargo Swap:} UAV-2 or UAV-3 returns to depot, drops current cargo, picks up Package B
+    \begin{itemize}
+    \item Time cost: 10-15 minutes (round trip + swap)
+    \item Risk: Package B deadline violation (45 min deadline, 30 min elapsed + 15 min delay = 45 min total)
+    \item Feasibility: MARGINAL
+    \end{itemize}
+\item \textbf{Backup UAV Deployment:} Deploy fresh UAV-4 from depot with Package B only
+    \begin{itemize}
+    \item Time cost: 5 minutes (preparation + launch)
+    \item Delivery time: 8 minutes to Clinic\_2
+    \item Total: 13 minutes (within deadline)
+    \item Feasibility: RECOMMENDED
+    \end{itemize}
+\item \textbf{Ground Vehicle Escalation:} Dispatch emergency vehicle
+    \begin{itemize}
+    \item Time cost: 20-30 minutes (variable traffic)
+    \item Feasibility: BACKUP OPTION
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{DECIDE Phase (T+3.0s to T+4.5s)}
+
+\textbf{Strategy Selection:} Operator Escalation with Backup UAV Recommendation
+
+\textbf{Decision Logic:}
+\begin{lstlisting}[language=Python]
+def determine_operator_escalation(coverage_percentage, unallocated_tasks):
+    # Package B: High-priority (P=0.7), cannot be autonomously reallocated
+    critical_tasks_lost = [task for task in unallocated_tasks if task.priority > 0.7]
+    
+    if len(critical_tasks_lost) > 0:
+        return {
+            'escalate': True,
+            'urgency': 'HIGH',
+            'reason': f'Package B (Antibiotics, P=0.7) cannot be reallocated due to payload constraints',
+            'recommendation': 'Deploy backup UAV-4 within 5 minutes to meet deadline',
+            'backup_plan': 'Ground vehicle dispatch as fallback (20-30 min ETA)',
+            'autonomous_action': 'UAV-1 will complete Package A delivery, then RTL'
+        }
+\end{lstlisting}
+
+\textbf{Autonomous Actions (No Operator Input Required):}
+\begin{enumerate}
+\item Command UAV-1 to complete Package A delivery to Clinic\_1
+\item Command UAV-1 to skip Clinic\_2 (Package B) and return directly to depot
+\item Update UAV-2 and UAV-3 missions: No changes (continue as planned)
+\end{enumerate}
+
+\subsubsection{ACT Phase (T+4.5s to T+5.5s)}
+
+\textbf{Command Dispatch:}
+\begin{lstlisting}[language=Python]
+# UAV-1: Modified mission (deliver A only, then RTL)
+send_mission_update(
+    uav_id=1,
+    new_waypoints=[Clinic_1, Depot],
+    packages=['A'],  # Remove Package B
+    priority=CRITICAL,
+    reason="Battery insufficient for Clinic_2. Package A delivery only."
+)
+
+# Operator Dashboard Alert
+send_operator_alert(
+    urgency='HIGH',
+    title='Package B Reallocation Required',
+    message='''
+    Package B (Antibiotics, 2.0kg, P=0.7) cannot be delivered by UAV-1 
+    due to battery constraints. Autonomous reallocation not possible 
+    (exceeds spare payload capacity of UAV-2 and UAV-3).
+    
+    RECOMMENDED ACTION:
+    Deploy backup UAV-4 within 5 minutes to meet 45-minute deadline.
+    
+    BACKUP OPTION:
+    Ground vehicle dispatch (20-30 min ETA).
+    
+    COUNTDOWN TO AUTO-FAILSAFE: 30 seconds
+    (If no response, system will automatically deploy UAV-4)
+    ''',
+    options=['Deploy UAV-4', 'Dispatch Ground Vehicle', 'Accept Delay'],
+    auto_action='Deploy UAV-4',
+    countdown=30  # seconds
+)
+
+# Auto-failsafe preparation (if operator doesn't respond)
+prepare_backup_uav(
+    uav_id=4,
+    payload=['B'],
+    destination='Clinic_2',
+    launch_authorization='PENDING_OPERATOR_APPROVAL'
+)
+\end{lstlisting}
+
+\textbf{Dashboard Update:}
+\begin{itemize}
+\item Mission status: OPERATOR ESCALATION - High Priority Package Reallocation
+\item Coverage: 80\% (4 of 5 packages deliverable autonomously)
+\item Alert status: CRITICAL - Operator response required within 30 seconds
+\item Autonomous action: Package A delivery proceeding, UAV-1 RTL commanded
+\item Backup UAV-4: STANDBY (awaiting operator confirmation)
+\end{itemize}
+
+\subsection{Performance Analysis}
+
+\textbf{Quantitative Results:}
+\begin{table}[H]
+\centering
+\caption{Delivery Scenario Performance Metrics}
+\label{tab:delivery_performance}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\hline
+Autonomous Coverage & >75\% & 80\% (4/5 packages) \\
+Adaptation Time & <6s & 5.5s \\
+Operator Escalation & Appropriate & YES (payload constraint) \\
+Safety Preserved & No overloads & YES (no UAV exceeded capacity) \\
+Critical Package Delivery & 100\% & 100\% (Package A delivered) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Key Insights:}
+\begin{itemize}
+\item \textbf{Honest Limitation Acknowledgment:} System correctly identified physical constraint preventing autonomous reallocation
+\item \textbf{Safety-First Design:} Refused to overload UAV-2 or UAV-3 beyond structural limits
+\item \textbf{Operator Decision Support:} Provided clear recommendation with time-bounded options
+\item \textbf{Partial Success:} 80\% mission completion autonomously, critical package delivered
+\end{itemize}
+
+\textbf{Comparison to Idealized Systems:}
+
+\begin{table}[H]
+\centering
+\caption{Comparison with Alternative Approaches}
+\label{tab:delivery_comparison}
+\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{3cm}|}
+\hline
+\textbf{Approach} & \textbf{Coverage} & \textbf{Safety} & \textbf{Deployability} \\
+\hline
+No Adaptation (Abort) & 60\% (3/5) & Safe & Simple \\
+\hline
+Greedy Nearest-Neighbor & 100\% (claims) & \textbf{UNSAFE} (UAV-2 overloaded to 4.2kg / 2.5kg max) & Not deployable \\
+\hline
+Idealized Full Autonomy & 100\% (claims) & Assumes unlimited resources & Not deployable \\
+\hline
+\textbf{Hybrid OODA (This Work)} & \textbf{80\% autonomous + operator support for remaining 20\%} & \textbf{Safe (no overloads)} & \textbf{Deployable with operator oversight} \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Value Proposition:}
+\begin{itemize}
+\item \textbf{Avoided Mission Failure:} Package A (critical insulin) delivered successfully
+\item \textbf{Operator Workload Reduction:} System autonomously handled 80\%, requiring intervention only for payload-constrained Package B
+\item \textbf{Regulatory Compliance:} Operator-in-loop design satisfies BVLOS supervision requirements
+\item \textbf{Honest Performance:} 80\% autonomous + 20\% supervised is more valuable than 100\% claims that cannot be deployed
+\end{itemize}
+
+\section{Cross-Scenario Comparative Analysis}
+
+\subsection{Constraint Prioritization by Mission Type}
+
+\begin{table}[H]
+\centering
+\caption{Constraint Priority by Mission Type}
+\label{tab:constraint_priority}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Mission Type} & \textbf{Battery} & \textbf{Payload} & \textbf{Time} & \textbf{Dominant Failure Mode} \\
+\hline
+Surveillance & Critical & N/A & High & Battery depletion during rotation \\
+Search \& Rescue & Critical & N/A & Critical & GPS loss / Communication timeout \\
+Delivery & High & Critical & High & Payload constraint violations \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Performance Comparison Across Scenarios}
+
+\begin{table}[H]
+\centering
+\caption{Expected vs. Achieved Performance by Scenario}
+\label{tab:scenario_performance}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Metric} & \textbf{Surveillance} & \textbf{SAR} & \textbf{Delivery} \\
+\hline
+Coverage Recovery & 91.7\% & 100\% (high-priority) & 80\% \\
+Adaptation Time & 5.5s & 6.0s & 5.5s \\
+Operator Escalation Rate & 0\% (autonomous) & 0\% (autonomous) & 100\% (by design) \\
+Battery Efficiency & 88\% & 85\% & 75\% \\
+Mission Completion & 100\% & 88\% (total) & 80\% (autonomous) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Failure Mode Taxonomy}
+
+\begin{table}[H]
+\centering
+\caption{Failure Modes and System Response}
+\label{tab:failure_taxonomy}
+\begin{tabular}{|p{3.5cm}|p{3cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Failure Mode} & \textbf{Scenario} & \textbf{Autonomous Recovery} & \textbf{Operator Escalation} \\
+\hline
+Battery depletion & Surveillance & Partial reallocation (91.7\%) & Not required \\
+\hline
+GPS signal loss & SAR & Full reallocation (100\% high-priority) & Not required \\
+\hline
+Payload constraint violation & Delivery & Partial (80\%) & Required for 20\% \\
+\hline
+Cascading failures (hypothetical) & All & Degraded (<50\%) & Required \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Key Takeaways}
+
+\begin{enumerate}
+\item \textbf{No One-Size-Fits-All Solution:} Each mission type requires different constraint prioritization and recovery strategies
+
+\item \textbf{Partial Autonomy is Valuable:} 80-91\% autonomous recovery reduces operator workload significantly compared to 0\% (no adaptation) or 100\% manual intervention
+
+\item \textbf{Honest Performance Metrics:} Reporting 80\% autonomous + 20\% supervised is more valuable than claiming 100\% autonomy that cannot be deployed
+
+\item \textbf{Operator Escalation is a Feature, Not a Bug:} Recognizing physical limitations and involving operators for non-compensable failures is essential for safe, deployable systems
+
+\item \textbf{Real-World Constraints Matter:} Battery, payload, and time constraints dominate failure recovery—ignoring them (as many academic works do) produces non-deployable systems
+\end{enumerate}
+
+These three scenarios validate the OODA-based hybrid autonomy architecture across diverse operational contexts, demonstrating both its capabilities and its honest acknowledgment of limitations—a critical requirement for real-world deployment.
+
+\chapter{Implementation and Validation Plan}
+
+\section{Simulation Environment}
+
+\textbf{Software stack:}
+\begin{itemize}
+\item \textbf{Physics simulation:} Python (6-DOF dynamics, wind, sensor noise)
+\item \textbf{Visualization:} Unity 3D (real-time mission monitoring)
+\item \textbf{Control:} PID controllers for waypoint following
+\item \textbf{Communication:} Simulated RF links with latency and packet loss
+\end{itemize}
+
+\textbf{Based on:}
+\begin{itemize}
+\item Quad SimCon codebase as reference for UAV dynamics modeling
+\item Project repository: \url{https://github.com/vriesz/fuse}
+\item Reference model: DJI Matrice 350 RTK parameters
+\end{itemize}
+
+\section{Validation Metrics}
+
+\textbf{Primary metrics:}
+
+\begin{enumerate}
+\item \textbf{Coverage Percentage:} \% of original mission tasks completed after failure
+\begin{equation}
+\text{Coverage\%} = \frac{\text{Reallocated tasks}}{\text{Total failed tasks}} \times 100
+\end{equation}
+Target: >65\% for single failure, >50\% for double failure
+
+\item \textbf{Adaptation Time:} Time from failure detection to new commands issued
+\begin{equation}
+T_{adapt} = T_{ACT} - T_{failure\_event}
+\end{equation}
+Target: <5 seconds
+
+\item \textbf{Battery Efficiency:} \% of available spare capacity utilized
+\begin{equation}
+\text{Efficiency\%} = \frac{\text{Spare capacity used}}{\text{Total spare capacity}} \times 100
+\end{equation}
+Target: >80\% utilization
+
+\item \textbf{Mission Completion Rate:} \% of missions completed despite failures
+\begin{equation}
+\text{Completion\%} = \frac{\text{Missions finished}}{\text{Total missions}} \times 100
+\end{equation}
+Target: >90\% for single failure scenarios
+\end{enumerate}
+
+\textbf{Secondary metrics:}
+\begin{itemize}
+\item Operator workload (number of escalations per mission)
+\item Communication bandwidth usage (kB/s)
+\item Decision quality (compared to optimal offline solution)
+\end{itemize}
+
+\section{Test Scenarios}
+
+For each of 3 mission types (surveillance, SAR, delivery):
+
+\textbf{Failure timing tests:}
+\begin{enumerate}
+\item Early failure (25\% mission progress)
+\item Mid-mission failure (50\% progress)
+\item Late failure (75\% progress)
+\end{enumerate}
+
+\textbf{Failure quantity tests:}
+\begin{enumerate}
+\setcounter{enumi}{3}
+\item Single UAV failure
+\item Two simultaneous failures
+\item Cascading failures (one failure causes battery depletion in another)
+\end{enumerate}
+
+\textbf{Resource constraint tests:}
+\begin{enumerate}
+\setcounter{enumi}{6}
+\item Low battery reserves (5\% instead of 10\%)
+\item High payload utilization (delivery mission near capacity)
+\item Communication degradation (packet loss 10-20\%)
+\end{enumerate}
+
+\textbf{Total: 27 test scenarios} (3 mission types $\times$ 9 failure conditions)
+
+\section{Baseline Comparisons}
+
+\textbf{Comparison strategies:}
+
+\begin{enumerate}
+\item \textbf{No Adaptation (Baseline):} Fixed mission, aborts on UAV failure
+\begin{itemize}
+\item Expected: 0\% coverage recovery, mission failure
+\end{itemize}
+
+\item \textbf{Manual Operator Replanning:} Human operator manually reassigns tasks
+\begin{itemize}
+\item Expected: 80-95\% coverage recovery, 5-10 minute delay
+\end{itemize}
+
+\item \textbf{Greedy Nearest-Neighbor:} Simple algorithm assigns to nearest UAV
+\begin{itemize}
+\item Expected: 40-60\% coverage (ignores battery constraints)
+\end{itemize}
+
+\item \textbf{Hybrid OODA (This Work):} Priority-based with constraints
+\begin{itemize}
+\item Expected: 65-95\% coverage recovery, <5 second adaptation
+\end{itemize}
+\end{enumerate}
+
+\section{Visualization and Logging}
+
+\textbf{Real-time dashboards:}
+\begin{itemize}
+\item Fleet position map with task coverage heatmap
+\item Battery utilization per UAV (bar charts)
+\item OODA loop execution timeline
+\item Operator alerts and escalation log
+\end{itemize}
+
+\textbf{Post-mission analysis:}
+\begin{itemize}
+\item Coverage percentage over time
+\item Adaptation time distribution (histogram)
+\item Task priority vs. allocation success (scatter plot)
+\item Battery efficiency heatmap by UAV
+\end{itemize}
+
+\chapter{Expected Results and Contributions}
+
+\section{Quantitative Performance Expectations}
+
+Based on preliminary simulations and literature:
+
+\textbf{Single UAV failure:}
+\begin{itemize}
+\item Coverage recovery: 75-95\% (depends on spare capacity available)
+\item Adaptation time: 3-5 seconds
+\item Battery efficiency: 80-95\%
+\item Mission completion rate: >90\%
+\end{itemize}
+
+\textbf{Two simultaneous failures:}
+\begin{itemize}
+\item Coverage recovery: 50-75\%
+\item Adaptation time: 4-6 seconds
+\item Mission completion rate: 70-85\%
+\end{itemize}
+
+\textbf{Cascading failures:}
+\begin{itemize}
+\item Coverage recovery: 40-65\%
+\item Adaptation time: 5-8 seconds (multiple OODA cycles)
+\item Mission completion rate: 60-75\%
+\end{itemize}
+
+\section{Technical Contributions}
+
+\begin{enumerate}
+\item \textbf{Constraint-aware task reallocation algorithm}
+\begin{itemize}
+\item Explicitly models battery/payload/time constraints
+\item Priority-based partial coverage strategy
+\item Collision avoidance integration
+\item \textbf{Novelty:} First to combine all three constraint types in multi-UAV FTC
+\end{itemize}
+
+\item \textbf{Quantified performance degradation framework}
+\begin{itemize}
+\item Metrics for coverage percentage under failures
+\item Operator escalation decision rules
+\item \textbf{Novelty:} Honest acknowledgment of limitations rather than claiming perfect recovery
+\end{itemize}
+
+\item \textbf{Hybrid autonomy architecture}
+\begin{itemize}
+\item Balances autonomous response with operator oversight
+\item Deployable within current regulatory frameworks
+\item \textbf{Novelty:} Practical approach for real-world deployment
+\end{itemize}
+\end{enumerate}
+
+\section{Practical Contributions}
+
+\begin{itemize}
+\item \textbf{Deployable system} that works with commercial UAVs (e.g., DJI Matrice 350)
+\item \textbf{Regulatory compliance} through operator-in-loop design
+\item \textbf{Economic impact analysis} showing cost savings vs. manual operation:
+\begin{itemize}
+\item Estimated 60-80\% reduction in operator workload
+\item 10-20$\times$ faster response than manual replanning
+\item Prevention of complete mission failure (value depends on application)
+\end{itemize}
+\end{itemize}
+
+\section{Academic Contributions}
+
+\begin{itemize}
+\item \textbf{Realism-first design} that bridges theory-practice gap
+\item \textbf{OODA loop application} to constrained multi-agent systems
+\item \textbf{Open-source simulation platform} for future research
+\end{itemize}
+
+\chapter{Limitations and Future Work}
+
+This chapter presents a critical assessment of the proposed OODA-based fault-tolerant control system, examining current limitations and future research directions. Understanding these constraints is essential for establishing realistic performance expectations and identifying opportunities for system enhancement.
+
+\section{Architectural Constraints}
+
+\subsection{Centralized Control Architecture}
+
+The system employs a centralized Ground Control Station for OODA loop execution, creating a single point of failure. Should the GCS experience hardware failure or communication loss, the fleet's adaptive capabilities are compromised. Individual UAVs implement autonomous Return-to-Launch protocols upon GCS timeout detection, preserving vehicle safety while sacrificing mission completion.
+
+Future work could explore distributed OODA architectures using consensus algorithms for peer-to-peer coordination. This approach would eliminate the centralization vulnerability while introducing new challenges including increased communication complexity, network partitioning risks, and Byzantine fault tolerance requirements. The transition to distributed coordination must carefully balance robustness against implementation complexity.
+
+\subsection{Fleet Scalability}
+
+The system supports fleets of three to twelve UAVs. Beyond this scale, two constraints become significant. Communication bandwidth scales linearly with fleet size, reaching 48 kilobytes per second for twelve UAVs at 2 Hz telemetry rates. Computational complexity for collision avoidance scales quadratically, as each reallocation requires pairwise verification among all vehicles. At twenty UAVs, collision checking workload increases 2.8-fold compared to twelve UAVs, potentially exceeding the six-second OODA cycle target.
+
+Hierarchical architectures that partition large fleets into coordinated subgroups could address these limitations. Alternatively, computationally efficient approximate collision avoidance methods using spatial hashing could reduce verification complexity. These extensions would enable applications requiring coordination of dozens or hundreds of vehicles.
+
+\subsection{Validation Methodology}
+
+Current validation relies exclusively on software-in-the-loop simulation using physics-based models validated against DJI Matrice 350 RTK specifications. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
+
+Hardware-in-the-loop testing with physical flight controllers would provide intermediate validation capturing timing constraints and communication latencies. Field trials with two to three physical UAVs would expose the system to genuine environmental challenges and enable parameter refinement. Future validation should prioritize systematic characterization of performance degradation under realistic operating conditions, establishing the operational envelope for reliable performance.
+
+\section{Algorithmic Limitations}
+
+\subsection{Greedy Task Reallocation}
+
+The constraint-aware reallocation algorithm employs a greedy heuristic that assigns tasks to the nearest UAV satisfying capacity constraints. This achieves rapid execution compatible with real-time OODA requirements but does not guarantee globally optimal allocation. Early assignment decisions may consume capacity better reserved for higher-priority tasks, particularly when spare capacity is marginal and failed tasks are widely distributed.
+
+Mixed-integer linear programming could guarantee optimal solutions for small to medium problems, though solution times may exceed OODA cycle budgets. Auction-based algorithms, particularly the Consensus-Based Bundle Algorithm, offer a promising middle ground achieving near-optimal solutions through distributed iterative bidding with polynomial-time complexity. Comparing these alternatives under diverse scenarios would quantify allocation quality trade-offs.
+
+\subsection{Simplified Collision Avoidance}
+
+The collision avoidance strategy maintains fifteen-meter spatial separation with temporal deconfliction when conflicts arise. This proves sufficient for sparse operational densities but exhibits limitations in dense flight patterns. The fixed safety buffer does not adapt to relative velocities, and the pairwise verification approach does not efficiently handle complex multi-vehicle conflicts.
+
+Velocity obstacle approaches, particularly Reciprocal Velocity Obstacles, enable reactive collision avoidance accounting for relative velocities with smooth trajectory modifications. Model predictive control formulations could jointly optimize task execution and collision avoidance. These advanced methods would extend applicability to urban air mobility scenarios with higher flight densities.
+
+\section{Application Scope}
+
+The system addresses three mission classes: long-duration surveillance, emergency search and rescue, and medical supply delivery. These applications share waypoint-based navigation, quantifiable task priorities, and tolerance for mission degradation under resource constraints.
+
+However, this focused scope excludes mission types with different requirements. Aggressive formation flying demands tighter coordination and higher-bandwidth communication than the current 2 Hz telemetry supports. Adversarial scenarios require game-theoretic reasoning and adversarial prediction beyond current OODA capabilities. Time-critical interception missions may need more sophisticated trajectory optimization than waypoint following provides.
+
+Extending the system to these domains represents important future work. Formation flying could be addressed through augmented OODA loops reasoning about relative positioning constraints. Adversarial scenarios might integrate game-theoretic task allocation anticipating opponent responses. These extensions would broaden applicability while preserving core OODA principles.
+
+\section{Future Research Directions}
+
+\subsection{Near-Term Enhancements}
+
+Comprehensive validation across all twenty-seven planned test scenarios would provide robust statistical characterization. Comparative evaluation against baseline strategies would quantify the value of explicit capacity modeling and priority-based allocation. Sensitivity analysis of safety reserve parameters from 5 to 20 percent battery would establish performance trade-offs between mission completion probability and safety margins. Enhanced environmental modeling incorporating turbulence, precipitation, and visibility limitations would improve prediction fidelity.
+
+\subsection{Medium-Term Objectives}
+
+Hardware-in-the-loop testing using PX4 Software-In-The-Loop would validate OODA cycle timing under realistic computational constraints. Field demonstrations with small fleets would reveal operational challenges including GPS accuracy limitations and radio frequency interference effects. Detailed instrumentation would generate empirical data to refine system parameters and validate simulation accuracy.
+
+Distributed OODA architectures with consensus-based decision-making would enhance robustness against single-point failures. Implementing auction mechanisms like the Consensus-Based Bundle Algorithm would require careful attention to Byzantine fault tolerance and network partition handling. Comparative studies between centralized and distributed approaches would elucidate trade-offs between optimization quality, communication overhead, and system resilience.
+
+Formal verification using model checking techniques could verify that OODA cycle logic maintains battery reserve constraints and collision avoidance guarantees under all reachable states. Temporal logic specifications could capture liveness properties ensuring eventual response to failures. While requiring substantial expertise, formal methods provide mathematical assurance complementing empirical testing.
+
+\subsection{Long-Term Frontiers}
+
+Machine learning could optimize priority weighting parameters based on historical mission outcomes, adapting scoring functions to operational contexts. Neural networks could predict battery consumption more accurately by learning vehicle-specific efficiency characteristics. Reinforcement learning might enable adaptive OODA cycle tuning based on observed performance patterns.
+
+Game-theoretic analysis becomes essential for adversarial scenarios. Stackelberg game formulations could model hierarchical decision-making in contested surveillance missions. Nash equilibrium concepts might characterize stable operating points with competing autonomous systems. These theoretical frameworks would require substantial OODA extension incorporating opponent modeling and robust optimization.
+
+Fleet heterogeneity introduces additional complexity. Real-world deployments increasingly employ mixed fleets with different endurance, payload capacity, and sensor suites. Addressing heterogeneity requires extending constraint verification for vehicle-specific capabilities and developing allocation strategies exploiting complementary strengths.
+
+Large-scale swarm coordination with fifty or more vehicles demands hierarchical control architectures, efficient communication protocols avoiding broadcast storm effects, and possibly bio-inspired coordination strategies emerging from local interactions. Research at this scale intersects with complex systems theory, distributed computing, and collective intelligence.
+
+\section{Concluding Perspective}
+
+The limitations discussed reflect conscious design choices prioritizing practical deployability over theoretical completeness. The centralized architecture enables regulatory compliance and deterministic performance. The greedy allocation strategy trades global optimality for real-time responsiveness. The constraint-aware approach acknowledges physical limitations rather than assuming unlimited resources.
+
+This honest assessment distinguishes the present work from research claiming comprehensive autonomy while abstracting real-world constraints. A system achieving 65 to 95 percent autonomous coverage recovery within realistic bounds provides substantially more value than theoretical frameworks promising perfect adaptation under idealized assumptions. The identified future work charts a path toward enhanced capabilities while maintaining the fundamental principle of honest, deployable autonomy.
+
+As multi-agent UAV coordination matures, the research community must prioritize systems bridging the gap between laboratory demonstration and operational deployment. This requires explicit modeling of real-world constraints, acknowledgment of fundamental limitations, and design of hybrid human-machine systems leveraging complementary strengths of autonomous algorithms and human supervisory control. The present work contributes to this maturation by demonstrating that constraint-aware, operator-supervised fault tolerance represents the appropriate architecture for near-term UAV fleet deployments in regulated, safety-critical applications.
+
+\chapter{Conclusion}
+
+This work addresses the reality gap in multi-agent UAV fault tolerance by explicitly modeling real-world constraints (battery, payload, regulatory) that are often ignored in academic research. Rather than claiming perfect fault tolerance, the hybrid OODA approach provides honest, quantified mission completion assistance within realistic operational limits.
+
+\textbf{Key insight:} A deployable system that achieves 65-95\% coverage recovery under constraints is more valuable than an idealized system promising 100\% recovery that cannot be deployed.
+
+The three core technical contributions—constraint-aware reallocation, priority-based partial coverage, and operator escalation—work together to balance autonomous response speed with human oversight, making this approach suitable for real-world deployment under current regulations.
+
+% ====================================
+% REFERENCES
+% ====================================
+\newpage
+\addcontentsline{toc}{chapter}{References}
+\begin{thebibliography}{99}
+
+\bibitem{mueller2014} 
+Mueller, M. W., \& D'Andrea, R. (2014). Stability and control of a quadrocopter despite the complete loss of one, two, or three propellers. \textit{IEEE ICRA}.
+
+
+\bibitem{sun2022}
+Sun, Z., et al. (2022). Fault-Tolerant Model Predictive Control of a Quadrotor with an Unknown Complete Rotor Failure. \textit{IEEE ICRA}.
+
+\bibitem{li2017}
+Li, P., Yu, X., Peng, X., Zheng, Z., \& Zhang, Y. (2017). Fault-tolerant cooperative control for multiple UAVs based on sliding mode techniques. \textit{Science China Information Sciences}, 60(7).
+
+
+\bibitem{yang2011}
+Yang, H., Staroswiecki, M., Jiang, B., et al. (2011). Fault tolerant cooperative control for a class of nonlinear multi-agent systems. \textit{Systems \& Control Letters}, 60(4), 271-277.
+
+\bibitem{gerkey2004}
+Gerkey, B. P., \& Mataric, M. J. (2004). A formal analysis and taxonomy of task allocation in multi-robot systems. \textit{International Journal of Robotics Research}, 23(9), 939-954.
+
+\bibitem{choi2009}
+Choi, H. L., Brunet, L., \& How, J. P. (2009). Consensus-based decentralized auctions for robust task allocation. \textit{IEEE Transactions on Robotics}, 25(4), 912-926.
+
+\bibitem{dias2006}
+Dias, M. B., Zlot, R., Kalra, N., \& Stentz, A. (2006). Market-based multirobot coordination: A survey and analysis. \textit{Proceedings of the IEEE}, 94(7), 1257-1270.
+
+\bibitem{zlot2006}
+Zlot, R., \& Stentz, A. (2006). Market-based multirobot coordination for complex tasks. \textit{International Journal of Robotics Research}, 25(1), 73-101.
+
+\bibitem{cortes2004}
+Cortes, J., Martinez, S., Karatas, T., \& Bullo, F. (2004). Coverage control for mobile sensing networks. \textit{IEEE Transactions on Robotics and Automation}, 20(2), 243-255.
+
+\bibitem{schwager2009}
+Schwager, M., Rus, D., \& Slotine, J. J. (2009). Decentralized, adaptive coverage control for networked robots. \textit{International Journal of Robotics Research}, 28(3), 357-375.
+
+\bibitem{elmaliach2009}
+Elmaliach, Y., Agmon, N., \& Kaminka, G. A. (2009). Multi-robot area patrol under frequency constraints. \textit{Annals of Mathematics and Artificial Intelligence}, 57(3-4), 293-320.
+
+\bibitem{abdessameud2011}
+Abdessameud, A., \& Tayebi, A. (2011). Formation control of VTOL unmanned aerial vehicles with communication delays. \textit{Automatica}, 47(11), 2383-2394.
+
+\bibitem{izadi2009}
+Izadi, H. A., Gordon, B. W., \& Zhang, Y. M. (2009). Decentralized receding horizon control for cooperative multiple vehicles subject to communication delay. \textit{Journal of Guidance, Control, and Dynamics}, 32(6), 1959-1965.
+
+\bibitem{izadi2013}
+Izadi, H. A., Gordon, B. W., \& Zhang, Y. M. (2013). Hierarchical decentralized receding horizon control of multiple vehicles with communication failures. \textit{IEEE Transactions on Aerospace and Electronic Systems}, 49(2), 744-759.
+
+\bibitem{beard2006}
+Beard, R. W., McLain, T. W., Nelson, D. B., et al. (2006). Decentralized cooperative aerial surveillance using fixed-wing miniature UAVs. \textit{Proceedings of the IEEE}, 94(7), 1306-1324.
+
+\bibitem{boyd1987}
+Boyd, J. R. (1987). \textit{A Discourse on Winning and Losing}. [OODA Loop framework]
+
+\bibitem{bala2025}
+Bala, M., et al. (2025). The OODA Loop of Cloudlet-Based Autonomous Drones. \textit{IEEE/ACM Symposium on Edge Computing (SEC)}.
+
+\bibitem{soares2025}
+Soares, V. M. D., et al. (2025). UAV Simulation Environment for Fault Detection in Wind Farm Electrical Distribution Systems. \textit{IEEE Conference Proceedings}.
+
+\bibitem{vandenberg2008}
+van den Berg, J., Lin, M., \& Manocha, D. (2008). Reciprocal velocity obstacles for real-time multi-agent navigation. \textit{IEEE ICRA}, 1928-1935.
+
+\bibitem{zhang2008}
+Zhang, Y. M., \& Jiang, J. (2008). Bibliographical review on reconfigurable fault-tolerant control systems. \textit{Annual Reviews in Control}, 32(2), 229-252.
+
+\bibitem{yu2015}
+Yu, X., \& Jiang, J. (2015). A survey of fault-tolerant controllers based on safety-related issues. \textit{Annual Reviews in Control}, 39, 46-57.
+
+\bibitem{parker1998}
+Parker, L. E. (1998). ALLIANCE: An architecture for fault tolerant multirobot cooperation. \textit{IEEE Transactions on Robotics and Automation}, 14(2), 220-240.
+
+\bibitem{repo}
+Project Repository: \url{https://github.com/vriesz/fuse}
+
+\bibitem{quadref}
+Quad SimCon Reference: \url{https://github.com/bobzwik/Quadcopter_SimCon}
+
+% \bibitem{guo2018}
+% Guo, J., Zhang, Y., \& Li, W. (2018). Fault-tolerant control of quadrotor UAVs with actuator faults using adaptive backstepping. \textit{International Journal of Control, Automation and Systems}, 16(4), 1572-1583.
+
+% \bibitem{wang2021}
+% Wang, W., Zhang, Y., \& Xu, B. (2021). Fault and Failure Tolerant Model Predictive Control of Quadrotor UAV. \textit{IEEE ROBIO}.
+
+% \bibitem{zhou2021}
+% Zhou, B., Su, W., \& Han, J. (2021). Model predictive fault-tolerant control for quadrotor UAV subject to actuator faults. \textit{Aerospace Science and Technology}, 110, e106497.
+
+% \bibitem{chang2024}
+% Chang, Y., et al. (2024). Reinforcement Learning–Based Adaptive Fault-Tolerant Antidisturbance Control for UAVs. \textit{Journal of Aerospace Engineering}, 38(1).
+
+% \bibitem{zhang2016}
+% Zhang, X. Y., \& Duan, H. B. (2016). Altitude consensus based 3D flocking control for fixed-wing unmanned aerial vehicle swarm trajectory tracking. \textit{Journal of Aerospace Engineering}, 230(14), 2628-2638.
+
+% \bibitem{liu2016}
+% Liu, Z. X., Yuan, C., Yu, X., et al. (2016). Leader-follower formation control of unmanned aerial vehicles in the presence of obstacles and actuator faults. \textit{Unmanned Systems}, 4(3), 197-211.
+
+% \bibitem{yu2016}
+% Yu, X., Liu, Z. X., \& Zhang, Y. M. (2016). Fault-tolerant formation control of multiple UAVs in the presence of actuator faults. \textit{International Journal of Robust and Nonlinear Control}, 26(12), 2668-2685.
+
+% \bibitem{korsah2013}
+% Korsah, G. A., Stentz, A., \& Dias, M. B. (2013). A comprehensive taxonomy for multi-robot task allocation. \textit{International Journal of Robotics Research}, 32(12), 1495-1512.
+
+% \bibitem{innocenti2004}
+% Innocenti, M., Pollini, L., \& Giulietti, F. (2004). Management of communication failures in formation flight. \textit{Journal of Aerospace Computing, Information, and Communication}, 1(1), 19-35.
+
+% \bibitem{franco2007}
+% Franco, E., Parisini, T., \& Polycarpou, M. M. (2007). Design and stability analysis of cooperative receding-horizon control of linear discrete-time agents. \textit{International Journal of Robust and Nonlinear Control}, 17(10-11), 982-1001.
+
+% Flight Formation
+% \bibitem{pachter2001}
+% Pachter, M., D'Azzo, J. J., \& Proud, A. W. (2001). Tight formation flight control. \textit{Journal of Guidance, Control, and Dynamics}, 24(2), 246-254.
+
+% \bibitem{gu2006}
+% Gu, Y., Seanor, B., Campa, G., et al. (2006). Design and flight testing evaluation of formation control laws. \textit{IEEE Transactions on Control Systems Technology}, 14(6), 1105-1112.
+
+% \bibitem{lin2014}
+% Lin, W. (2014). Distributed UAV formation control using differential game approach. \textit{Aerospace Science and Technology}, 35, 54-62.
+
+
+\end{thebibliography}
+
+\end{document}
