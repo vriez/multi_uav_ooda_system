@@ -286,6 +286,127 @@ class ExperimentRunner:
             key_findings=findings
         )
 
+    def run_r6_sar_out_of_grid(self) -> ExperimentSummary:
+        """Run R6: SAR with out-of-grid asset - permission granted"""
+        print("\n" + "=" * 70)
+        print("EXPERIMENT R6: SAR OUT-OF-GRID (PERMISSION GRANTED)")
+        print("=" * 70)
+
+        db = MockMissionDatabase()
+        current_time = time.time()
+        golden_hour_deadline = current_time + 3600
+
+        # Grid bounds: 0-1000 x, 0-1000 y for this experiment
+        # Zone 3 is 10m outside the grid at (1010, 500)
+        zones = [
+            (200, 200, 90),      # Zone 1 - inside grid, high priority
+            (500, 200, 85),      # Zone 2 - inside grid
+            (1010, 500, 95),     # Zone 3 - 10m OUTSIDE grid, HIGHEST priority (lost task)
+            (200, 800, 75),      # Zone 4 - inside grid
+            (500, 800, 60),      # Zone 5 - inside grid
+            (800, 500, 70),      # Zone 6 - inside grid
+        ]
+
+        for i, (x, y, priority) in enumerate(zones, 1):
+            db.add_task(
+                position=np.array([float(x), float(y), 50.0]),
+                priority=priority, zone_id=i, task_type="search",
+                deadline=golden_hour_deadline, duration_sec=300.0
+            )
+
+        # UAV-2 had zone 3 (out-of-grid) and fails
+        db.assign_task(1, 1)
+        db.assign_task(2, 1)
+        db.assign_task(3, 2)  # Zone 3 (out-of-grid) assigned to UAV-2
+        db.assign_task(4, 3)
+        db.assign_task(5, 3)
+        db.assign_task(6, 4)
+
+        fleet_state = FleetState(
+            timestamp=current_time,
+            operational_uavs=[1, 3, 4],
+            failed_uavs=[2],
+            uav_positions={
+                1: np.array([200.0, 200.0, 50.0]),
+                2: np.array([900.0, 500.0, 50.0]),  # UAV-2 was near edge, heading to out-of-grid
+                3: np.array([350.0, 800.0, 50.0]),
+                4: np.array([800.0, 500.0, 50.0]),  # UAV-4 is closest to out-of-grid zone
+            },
+            uav_battery={1: 75.0, 2: 30.0, 3: 80.0, 4: 85.0},
+            uav_payloads={},
+            lost_tasks=[3],  # Zone 3 needs reallocation
+            uav_permissions={
+                # UAV-4 has out-of-grid permission (e.g., operator granted it)
+                1: {'out_of_grid': False},
+                3: {'out_of_grid': False},
+                4: {'out_of_grid': True},  # PERMISSION GRANTED
+            }
+        )
+
+        # Configure smaller grid bounds for this experiment
+        config_with_grid = self.gcs_config.copy()
+        config_with_grid['grid_bounds'] = {
+            'x_min': 0, 'x_max': 1000,
+            'y_min': 0, 'y_max': 1000
+        }
+
+        constraint_validator = ConstraintValidator(config_with_grid)
+        ooda_engine = OODAEngine(config_with_grid)
+        ooda_engine.set_mission_context(MissionContext.for_search_rescue(golden_hour_sec=3600))
+
+        lost_tasks = [db.get_task(3)]  # Zone 3 (out-of-grid)
+
+        strategies = {
+            "No Adaptation": NoAdaptationStrategy(),
+            "Greedy Nearest": GreedyNearestStrategy(),
+            "Manual Operator": ManualOperatorStrategy(detection_delay_sec=45.0, decision_delay_sec=420.0),
+            "OODA": OODAStrategy(ooda_engine),
+        }
+
+        strategy_results = {}
+        for name, strategy in strategies.items():
+            result = strategy.reallocate(fleet_state, lost_tasks, db, constraint_validator)
+            strategy_results[name] = {
+                'coverage': result.coverage_percentage,
+                'time_sec': result.adaptation_time_sec,
+                'safe': len(result.safety_violations) == 0,
+                'violations': result.constraint_violations,
+                'reallocated': result.tasks_reallocated,
+                'golden_hour_impact_pct': result.adaptation_time_sec / 3600 * 100
+            }
+            print(f"{name}: Coverage={result.coverage_percentage:.1f}%, "
+                  f"Time={format_time(result.adaptation_time_sec)}, "
+                  f"Golden Hour Impact={result.adaptation_time_sec/60:.1f}min")
+
+        ooda = strategy_results["OODA"]
+        greedy = strategy_results["Greedy Nearest"]
+        manual = strategy_results["Manual Operator"]
+
+        time_saved_min = (manual['time_sec'] - ooda['time_sec']) / 60
+
+        claims = {
+            "OODA reallocates with permission": ooda['coverage'] == 100.0 and ooda['safe'],
+            "OODA assigns to permitted UAV": ooda['reallocated'] == 1,
+            "OODA preserves golden hour": ooda['golden_hour_impact_pct'] < 1.0
+        }
+
+        findings = [
+            f"Zone 3 at (1010, 500) is 10m outside grid bounds [0-1000, 0-1000]",
+            f"UAV-4 has out-of-grid permission granted by operator",
+            f"OODA successfully reallocates to UAV-4 (permitted)",
+            f"Time saved vs manual: {time_saved_min:.1f} minutes",
+            "Permission system enables safe out-of-grid operations when authorized"
+        ]
+
+        return ExperimentSummary(
+            experiment_name="R6_SAR_OutOfGrid",
+            mission_type="SEARCH_RESCUE",
+            timestamp=datetime.now().isoformat(),
+            strategy_results=strategy_results,
+            thesis_claims_validated=claims,
+            key_findings=findings
+        )
+
     def run_d6_delivery(self) -> ExperimentSummary:
         """Run D6: Delivery baseline comparison"""
         print("\n" + "=" * 70)
@@ -384,6 +505,119 @@ class ExperimentRunner:
             key_findings=findings
         )
 
+    def run_d7_out_of_grid(self) -> ExperimentSummary:
+        """Run D7: Out-of-Grid Delivery - tests grid boundary enforcement"""
+        print("\n" + "=" * 70)
+        print("EXPERIMENT D7: OUT-OF-GRID DELIVERY")
+        print("=" * 70)
+
+        db = MockMissionDatabase()
+        current_time = time.time()
+
+        # Grid bounds: 0-3000 x, 0-2000 y (default)
+        # Package C is OUTSIDE the grid at (3500, 2500)
+        packages = [
+            (800, 1200, 100, 1.0, 30),      # Package A - inside grid, normal
+            (1500, 800, 70, 0.8, 45),       # Package B - inside grid, normal
+            (3500, 2500, 90, 0.5, 60),      # Package C - OUTSIDE GRID (lost task)
+            (2800, 600, 40, 1.0, 60),       # Package D - inside grid, normal
+            (1200, 300, 20, 0.6, 90),       # Package E - inside grid, normal
+        ]
+
+        for i, (x, y, priority, payload, deadline_min) in enumerate(packages, 1):
+            db.add_task(
+                position=np.array([float(x), float(y), 0.0]),
+                priority=priority, payload_kg=payload,
+                deadline=current_time + deadline_min * 60,
+                task_type="delivery", duration_sec=120.0
+            )
+
+        # UAV-1 had Package C (out-of-grid) and fails
+        db.assign_task(1, 1)
+        db.assign_task(2, 1)
+        db.assign_task(3, 1)  # Package C assigned to UAV-1
+        db.assign_task(4, 2)
+        db.assign_task(5, 3)
+
+        fleet_state = FleetState(
+            timestamp=current_time,
+            operational_uavs=[2, 3],
+            failed_uavs=[1],
+            uav_positions={
+                1: np.array([2500.0, 1800.0, 50.0]),  # UAV-1 was heading to out-of-grid
+                2: np.array([1800.0, 1400.0, 50.0]),
+                3: np.array([1000.0, 500.0, 50.0]),
+            },
+            uav_battery={1: 30.0, 2: 80.0, 3: 85.0},
+            uav_payloads={1: 0.5, 2: 1.5, 3: 1.5},  # Plenty of payload capacity
+            lost_tasks=[3],  # Package C needs reallocation
+            uav_permissions={
+                # No UAV has out-of-grid permission
+                2: {'out_of_grid': False},
+                3: {'out_of_grid': False},
+            }
+        )
+
+        # Configure grid bounds explicitly
+        config_with_grid = self.gcs_config.copy()
+        config_with_grid['grid_bounds'] = {
+            'x_min': 0, 'x_max': 3000,
+            'y_min': 0, 'y_max': 2000
+        }
+
+        constraint_validator = ConstraintValidator(config_with_grid)
+        ooda_engine = OODAEngine(config_with_grid)
+        ooda_engine.set_mission_context(MissionContext.for_delivery())
+
+        lost_tasks = [db.get_task(3)]  # Package C
+
+        strategies = {
+            "No Adaptation": NoAdaptationStrategy(),
+            "Greedy Nearest": GreedyNearestStrategy(),
+            "Manual Operator": ManualOperatorStrategy(detection_delay_sec=45.0, decision_delay_sec=420.0),
+            "OODA": OODAStrategy(ooda_engine),
+        }
+
+        strategy_results = {}
+        for name, strategy in strategies.items():
+            result = strategy.reallocate(fleet_state, lost_tasks, db, constraint_validator)
+            strategy_results[name] = {
+                'coverage': result.coverage_percentage,
+                'time_sec': result.adaptation_time_sec,
+                'safe': len(result.safety_violations) == 0,
+                'violations': result.constraint_violations,
+                'reallocated': result.tasks_reallocated
+            }
+            safe_str = "Safe" if len(result.safety_violations) == 0 else "UNSAFE"
+            print(f"{name}: Coverage={result.coverage_percentage:.1f}%, "
+                  f"Time={format_time(result.adaptation_time_sec)}, "
+                  f"Violations={result.constraint_violations}, Safety={safe_str}")
+
+        ooda = strategy_results["OODA"]
+        greedy = strategy_results["Greedy Nearest"]
+
+        claims = {
+            "OODA respects grid boundaries": ooda['safe'],
+            "Greedy ignores grid (UNSAFE)": greedy['violations'] > 0,
+            "OODA escalates for out-of-grid": ooda['reallocated'] == 0
+        }
+
+        findings = [
+            f"Package C destination (3500, 2500) is outside grid bounds [0-3000, 0-2000]",
+            f"No UAV has out-of-grid permission",
+            f"Greedy would send UAV outside safe zone ({greedy['violations']} violations)",
+            "OODA correctly escalates - operator must grant permission or use ground vehicle"
+        ]
+
+        return ExperimentSummary(
+            experiment_name="D7_OutOfGrid",
+            mission_type="DELIVERY",
+            timestamp=datetime.now().isoformat(),
+            strategy_results=strategy_results,
+            thesis_claims_validated=claims,
+            key_findings=findings
+        )
+
     def run_all(self) -> List[ExperimentSummary]:
         """Run all experiments"""
         print("\n" + "#" * 70)
@@ -394,7 +628,9 @@ class ExperimentRunner:
         self.results = [
             self.run_s5_surveillance(),
             self.run_r5_sar(),
-            self.run_d6_delivery()
+            self.run_r6_sar_out_of_grid(),
+            self.run_d6_delivery(),
+            self.run_d7_out_of_grid()
         ]
 
         return self.results
@@ -408,30 +644,68 @@ class ExperimentRunner:
             "",
             "## Executive Summary",
             "",
-            "This report validates the core thesis claims through three baseline",
-            "comparison experiments (S5, R5, D6).",
+            "This report validates the core thesis claims through five baseline",
+            "comparison experiments (S5, R5, R6, D6, D7).",
             "",
         ]
 
-        # Summary table
+        # Comparison summary table - all strategies across all experiments
         lines.extend([
-            "### Key Results",
+            "### Strategy Comparison Summary",
             "",
-            "| Experiment | Mission | OODA Coverage | OODA Time | Safety | Claims Validated |",
-            "|------------|---------|---------------|-----------|--------|------------------|",
+            "| Experiment | Strategy | Coverage | Time | Safe | Violations |",
+            "|------------|----------|----------|------|------|------------|",
         ])
 
         all_claims_valid = True
         for result in self.results:
-            ooda = result.strategy_results.get("OODA", {})
             claims_valid = all(result.thesis_claims_validated.values())
             all_claims_valid = all_claims_valid and claims_valid
 
+            for strategy_name, data in result.strategy_results.items():
+                safe_str = "Yes" if data.get('safe', False) else "**NO**"
+                lines.append(
+                    f"| {result.experiment_name} | {strategy_name} | "
+                    f"{data.get('coverage', 0):.1f}% | {format_time(data.get('time_sec', 0))} | "
+                    f"{safe_str} | {data.get('violations', 0)} |"
+                )
+
+        lines.extend([
+            "",
+            "### OODA vs Baselines",
+            "",
+            "| Experiment | Mission | OODA | OODA Action | No Adapt | Greedy | Manual | Valid |",
+            "|------------|---------|------|-------------|----------|--------|--------|-------|",
+        ])
+
+        for result in self.results:
+            ooda = result.strategy_results.get("OODA", {})
+            no_adapt = result.strategy_results.get("No Adaptation", {})
+            greedy = result.strategy_results.get("Greedy Nearest", {})
+            manual = result.strategy_results.get("Manual Operator", {})
+            claims_valid = all(result.thesis_claims_validated.values())
+
+            # Format: coverage (safe/unsafe)
+            def fmt(d):
+                cov = f"{d.get('coverage', 0):.0f}%"
+                if not d.get('safe', True):
+                    return f"{cov} ⚠️"
+                return cov
+
+            # Determine OODA action based on coverage and safety
+            ooda_coverage = ooda.get('coverage', 0)
+            ooda_safe = ooda.get('safe', True)
+            if ooda_coverage > 0:
+                ooda_action = "✅ Reallocated"
+            elif ooda_safe:
+                ooda_action = "↗️ Escalated"
+            else:
+                ooda_action = "❌ Failed"
+
             lines.append(
                 f"| {result.experiment_name} | {result.mission_type} | "
-                f"{ooda.get('coverage', 0):.1f}% | {format_time(ooda.get('time_sec', 0))} | "
-                f"{'Safe' if ooda.get('safe', False) else 'UNSAFE'} | "
-                f"{'YES' if claims_valid else 'NO'} |"
+                f"{fmt(ooda)} | {ooda_action} | {fmt(no_adapt)} | {fmt(greedy)} | {fmt(manual)} | "
+                f"{'✅' if claims_valid else '❌'} |"
             )
 
         lines.extend(["", ""])
@@ -490,10 +764,16 @@ class ExperimentRunner:
                 "",
                 "The OODA-based fault-tolerant system demonstrates:",
                 "",
-                "1. **Speed Advantage:** 75-150x faster than manual operator",
-                "2. **Safety:** Always respects constraints (unlike greedy approaches)",
-                "3. **Appropriate Escalation:** Correctly identifies when autonomous",
-                "   reallocation is impossible and escalates to operator",
+                "1. **Speed Advantage:** ~500,000x faster than manual operator (sub-millisecond vs ~8 minutes)",
+                "2. **Safety:** Always respects constraints (unlike greedy approaches that achieve 100% coverage unsafely)",
+                "3. **Intelligent Escalation:** The OODA loop runs all 4 phases (Observe, Orient, Decide, Act) and",
+                "   correctly identifies when autonomous reallocation is impossible due to:",
+                "   - Payload constraints (D6: package too heavy for available UAVs)",
+                "   - Grid boundary constraints (D7: destination outside operational area)",
+                "",
+                "**Key Insight:** OODA's 0% reallocation in D6/D7 is not a failure - it is the OODA loop",
+                "successfully determining that escalation to operator is the correct action. The alternative",
+                "(Greedy) achieves 100% coverage but violates safety constraints.",
                 "",
                 "These results support the thesis that constraint-aware, OODA-based",
                 "fault tolerance provides a practical, deployable solution for",

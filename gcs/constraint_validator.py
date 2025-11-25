@@ -20,29 +20,69 @@ class ConstraintValidator:
         self.config = config
         self.battery_safety_reserve = config['constraints']['battery_safety_reserve_percent'] / 100
         self.battery_efficiency = 150.0  # meters per Wh (from UAV config)
+
+        # Grid boundary constraints (default: 3000m x 2000m operational area)
+        self.grid_bounds = config.get('grid_bounds', {
+            'x_min': 0, 'x_max': 3000,
+            'y_min': 0, 'y_max': 2000
+        })
         
-    def check_all_constraints(self, uav_id: int, task_id: int, 
+    def check_all_constraints(self, uav_id: int, task_id: int,
                               fleet_state, mission_db) -> bool:
         """
         Sequential constraint validation
         Returns True if all constraints satisfied
         """
-        # Check battery first (most common limiting factor)
+        # Check grid boundary first (safety critical)
+        if not self.check_grid_boundary_constraint(uav_id, task_id, fleet_state, mission_db):
+            return False
+
+        # Check battery (most common limiting factor)
         if not self.check_battery_constraint(uav_id, task_id, fleet_state, mission_db):
             return False
-            
+
         # Check payload (cargo missions only)
         task = mission_db.get_task(task_id)
         if hasattr(task, 'payload_kg') and task.payload_kg:
             if not self.check_payload_constraint(uav_id, task_id, fleet_state, mission_db):
                 return False
-                
+
         # Check temporal constraints
         if not self.check_time_constraint(uav_id, task_id, fleet_state, mission_db):
             return False
-            
+
         return True
-        
+
+    def check_grid_boundary_constraint(self, uav_id: int, task_id: int,
+                                       fleet_state, mission_db) -> bool:
+        """
+        Verify task destination is within operational grid boundaries.
+        UAVs with out_of_grid_permission can operate outside bounds.
+        """
+        task = mission_db.get_task(task_id)
+        task_position = task.position
+
+        x, y = task_position[0], task_position[1]
+        bounds = self.grid_bounds
+
+        is_within_grid = (bounds['x_min'] <= x <= bounds['x_max'] and
+                          bounds['y_min'] <= y <= bounds['y_max'])
+
+        if is_within_grid:
+            return True
+
+        # Task is outside grid - check if UAV has permission
+        has_permission = fleet_state.uav_permissions.get(uav_id, {}).get('out_of_grid', False)
+
+        if has_permission:
+            logger.debug(f"UAV {uav_id} has out-of-grid permission for task {task_id} at ({x:.0f}, {y:.0f})")
+            return True
+        else:
+            logger.debug(f"UAV {uav_id} cannot reach task {task_id} at ({x:.0f}, {y:.0f}) - outside grid "
+                        f"[{bounds['x_min']}-{bounds['x_max']}, {bounds['y_min']}-{bounds['y_max']}] "
+                        f"and no out-of-grid permission")
+            return False
+
     def check_battery_constraint(self, uav_id: int, task_id: int,
                                  fleet_state, mission_db) -> bool:
         """

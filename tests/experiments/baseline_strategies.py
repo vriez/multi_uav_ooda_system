@@ -158,6 +158,12 @@ class GreedyNearestStrategy(BaselineStrategy):
                     constraint_violations += 1
 
                     # Identify specific violation
+                    if not constraint_validator.check_grid_boundary_constraint(
+                        best_uav, task.id, fleet_state, mission_db
+                    ):
+                        safety_violations.append(
+                            f"UAV {best_uav}: Out-of-grid destination for task {task.id}"
+                        )
                     if not constraint_validator.check_battery_constraint(
                         best_uav, task.id, fleet_state, mission_db
                     ):

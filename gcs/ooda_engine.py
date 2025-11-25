@@ -44,6 +44,11 @@ class FleetState:
     uav_battery: Dict[int, float]
     uav_payloads: Dict[int, float]
     lost_tasks: List[int]
+    uav_permissions: Dict[int, Dict[str, bool]] = None  # e.g., {1: {'out_of_grid': True}}
+
+    def __post_init__(self):
+        if self.uav_permissions is None:
+            self.uav_permissions = {}
     
 
 @dataclass
@@ -94,6 +99,12 @@ class OODAEngine:
         self.cycle_count = 0
         self.phase_times = {phase: [] for phase in OODAPhase}
 
+        # Aggregate metrics tracking
+        self.total_tasks_recovered = 0
+        self.total_tasks_lost = 0
+        self.recovery_rates = []
+        self.objective_scores = []
+
     def set_mission_context(self, context: MissionContext):
         """Update mission context (resets optimizer)"""
         self.mission_context = context
@@ -120,47 +131,74 @@ class OODAEngine:
 
         return self._objective_fn, self._optimizer
         
-    def trigger_ooda_cycle(self, fleet_state: FleetState, mission_db, 
+    def trigger_ooda_cycle(self, fleet_state: FleetState, mission_db,
                            constraint_validator) -> OODADecision:
         """
         Execute complete OODA cycle upon failure detection
-        
+
         Args:
             fleet_state: Current state of all UAVs
             mission_db: Mission database with tasks and assignments
             constraint_validator: Constraint checking system
-            
+
         Returns:
             OODADecision with recovery strategy and reallocation plan
         """
         self.cycle_start_time = time.time()
         self.cycle_count += 1
-        
+
+        # Track phase timings for this cycle
+        phase_timings = {}
+
         logger.info(f"OODA Cycle #{self.cycle_count} triggered - "
                    f"{len(fleet_state.failed_uavs)} UAV(s) failed")
-        
+
         try:
             # Phase 1: OBSERVE
+            phase_start = time.time()
             observed_state = self._observe_phase(fleet_state, mission_db)
-            
+            phase_timings['observe_ms'] = (time.time() - phase_start) * 1000
+
             # Phase 2: ORIENT
+            phase_start = time.time()
             impact = self._orient_phase(observed_state, mission_db)
-            
+            phase_timings['orient_ms'] = (time.time() - phase_start) * 1000
+
             # Phase 3: DECIDE
-            decision = self._decide_phase(impact, observed_state, 
+            phase_start = time.time()
+            decision = self._decide_phase(impact, observed_state,
                                          mission_db, constraint_validator)
-            
+            phase_timings['decide_ms'] = (time.time() - phase_start) * 1000
+
             # Phase 4: ACT
+            phase_start = time.time()
             self._act_phase(decision, mission_db)
-            
-            # Record execution time
+            phase_timings['act_ms'] = (time.time() - phase_start) * 1000
+
+            # Record execution time and phase breakdown
             decision.execution_time_ms = (time.time() - self.cycle_start_time) * 1000
-            
+            decision.phase_timings = phase_timings
+
+            # Update aggregate statistics
+            self.total_tasks_lost += len(fleet_state.lost_tasks)
+            tasks_recovered = len([t for ts in decision.reallocation_plan.values() for t in ts])
+            self.total_tasks_recovered += tasks_recovered
+
+            recovery_rate = decision.metrics.get('recovery_rate', 0)
+            self.recovery_rates.append(recovery_rate)
+
+            if 'objective_score' in decision.metrics:
+                self.objective_scores.append(decision.metrics['objective_score'])
+
             logger.info(f"OODA Cycle completed: {decision.strategy.value} "
-                       f"in {decision.execution_time_ms:.1f}ms")
-            
+                       f"in {decision.execution_time_ms:.1f}ms "
+                       f"(O:{phase_timings['observe_ms']:.1f} "
+                       f"O:{phase_timings['orient_ms']:.1f} "
+                       f"D:{phase_timings['decide_ms']:.1f} "
+                       f"A:{phase_timings['act_ms']:.1f})")
+
             return decision
-            
+
         except Exception as e:
             logger.error(f"OODA cycle failed: {e}", exc_info=True)
             return OODADecision(
@@ -168,7 +206,8 @@ class OODAEngine:
                 reallocation_plan={},
                 rationale=f"OODA cycle exception: {str(e)}",
                 metrics={},
-                execution_time_ms=(time.time() - self.cycle_start_time) * 1000
+                execution_time_ms=(time.time() - self.cycle_start_time) * 1000,
+                phase_timings={}
             )
     
     def _observe_phase(self, fleet_state: FleetState, mission_db) -> FleetState:
@@ -328,17 +367,33 @@ class OODAEngine:
                 f"Optimization: {opt_result.optimization_time_ms:.1f}ms ({opt_result.iterations} iterations)"
             )
 
-            # Extended metrics including optimization details
+            # Extended metrics including optimization details and mission impact
             metrics = {
+                # Decision Quality Metrics
                 'recovery_rate': coverage,
                 'coverage_loss': impact.coverage_loss_percent,
+                'tasks_recovered': len([t for ts in reallocation_plan.values() for t in ts]),
+                'tasks_lost': len(fleet_state.lost_tasks),
+                'unallocated_count': len(opt_result.unallocated_tasks),
+
+                # Fleet Capacity Metrics
                 'battery_spare': impact.fleet_capacity_battery,
+                'payload_spare': impact.fleet_capacity_payload,
+                'operational_uavs': len(fleet_state.operational_uavs),
+                'failed_uavs': len(fleet_state.failed_uavs),
+
+                # Temporal Metrics
                 'temporal_margin': impact.temporal_margin_sec,
+                'recoverable_tasks': impact.recoverable_tasks,
+
+                # Optimization Metrics
                 'objective_score': objective_score,
                 'optimization_time_ms': opt_result.optimization_time_ms,
                 'optimization_iterations': opt_result.iterations,
                 'optimality_gap_estimate': opt_result.optimality_gap_estimate,
-                'unallocated_count': len(opt_result.unallocated_tasks)
+
+                # Mission Impact Metrics
+                'affected_zones': len(impact.affected_zones),
             }
         else:
             # No tasks to reallocate or no operational UAVs
@@ -346,10 +401,31 @@ class OODAEngine:
             reallocation_plan = {}
             rationale = "No tasks to reallocate or no operational UAVs available."
             metrics = {
+                # Decision Quality Metrics
                 'recovery_rate': 0,
                 'coverage_loss': impact.coverage_loss_percent,
+                'tasks_recovered': 0,
+                'tasks_lost': len(fleet_state.lost_tasks),
+                'unallocated_count': len(fleet_state.lost_tasks),
+
+                # Fleet Capacity Metrics
                 'battery_spare': impact.fleet_capacity_battery,
-                'temporal_margin': impact.temporal_margin_sec
+                'payload_spare': impact.fleet_capacity_payload,
+                'operational_uavs': len(fleet_state.operational_uavs),
+                'failed_uavs': len(fleet_state.failed_uavs),
+
+                # Temporal Metrics
+                'temporal_margin': impact.temporal_margin_sec,
+                'recoverable_tasks': impact.recoverable_tasks,
+
+                # Optimization Metrics
+                'objective_score': 0,
+                'optimization_time_ms': 0,
+                'optimization_iterations': 0,
+                'optimality_gap_estimate': 0,
+
+                # Mission Impact Metrics
+                'affected_zones': len(impact.affected_zones),
             }
 
         decision = OODADecision(
@@ -516,15 +592,69 @@ class OODAEngine:
         return reallocation
     
     def get_performance_stats(self) -> Dict[str, float]:
-        """Get OODA cycle performance statistics"""
+        """
+        Get comprehensive OODA cycle performance statistics
+
+        Returns:
+            Dictionary containing:
+            - Cycle counts and timing statistics
+            - Phase-specific timing (avg, max, min, std)
+            - Decision quality metrics (recovery rates, objective scores)
+            - Aggregate mission impact
+        """
         stats = {
+            # Cycle Statistics
             'total_cycles': self.cycle_count,
-            'avg_cycle_time_ms': 0
+            'total_tasks_lost': self.total_tasks_lost,
+            'total_tasks_recovered': self.total_tasks_recovered,
         }
-        
+
+        # Overall recovery rate
+        if self.total_tasks_lost > 0:
+            stats['overall_recovery_rate'] = (self.total_tasks_recovered / self.total_tasks_lost) * 100
+        else:
+            stats['overall_recovery_rate'] = 0
+
+        # Phase timing statistics
+        all_phase_times = []
         for phase, times in self.phase_times.items():
-            if times:
-                stats[f'avg_{phase.value}_ms'] = np.mean(times) * 1000
-                stats[f'max_{phase.value}_ms'] = np.max(times) * 1000
-                
+            if times and phase != OODAPhase.IDLE:
+                times_ms = np.array(times) * 1000
+                stats[f'avg_{phase.value}_ms'] = np.mean(times_ms)
+                stats[f'max_{phase.value}_ms'] = np.max(times_ms)
+                stats[f'min_{phase.value}_ms'] = np.min(times_ms)
+                stats[f'std_{phase.value}_ms'] = np.std(times_ms)
+                all_phase_times.extend(times)
+
+        # Total cycle time statistics
+        if all_phase_times:
+            cycle_times_ms = []
+            # Reconstruct total cycle times from phase times
+            for i in range(len(self.phase_times[OODAPhase.OBSERVE])):
+                cycle_time = 0
+                for phase in [OODAPhase.OBSERVE, OODAPhase.ORIENT, OODAPhase.DECIDE, OODAPhase.ACT]:
+                    if i < len(self.phase_times[phase]):
+                        cycle_time += self.phase_times[phase][i]
+                cycle_times_ms.append(cycle_time * 1000)
+
+            if cycle_times_ms:
+                stats['avg_cycle_time_ms'] = np.mean(cycle_times_ms)
+                stats['max_cycle_time_ms'] = np.max(cycle_times_ms)
+                stats['min_cycle_time_ms'] = np.min(cycle_times_ms)
+                stats['std_cycle_time_ms'] = np.std(cycle_times_ms)
+
+        # Decision quality statistics
+        if self.recovery_rates:
+            stats['avg_recovery_rate'] = np.mean(self.recovery_rates)
+            stats['max_recovery_rate'] = np.max(self.recovery_rates)
+            stats['min_recovery_rate'] = np.min(self.recovery_rates)
+            stats['std_recovery_rate'] = np.std(self.recovery_rates)
+
+        # Objective score statistics
+        if self.objective_scores:
+            stats['avg_objective_score'] = np.mean(self.objective_scores)
+            stats['max_objective_score'] = np.max(self.objective_scores)
+            stats['min_objective_score'] = np.min(self.objective_scores)
+            stats['std_objective_score'] = np.std(self.objective_scores)
+
         return stats
