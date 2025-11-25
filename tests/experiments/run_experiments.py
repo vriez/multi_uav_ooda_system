@@ -689,23 +689,23 @@ class ExperimentRunner:
             def fmt(d):
                 cov = f"{d.get('coverage', 0):.0f}%"
                 if not d.get('safe', True):
-                    return f"{cov} ⚠️"
+                    return f"{cov} UNSAFE"
                 return cov
 
             # Determine OODA action based on coverage and safety
             ooda_coverage = ooda.get('coverage', 0)
             ooda_safe = ooda.get('safe', True)
             if ooda_coverage > 0:
-                ooda_action = "✅ Reallocated"
+                ooda_action = "Reallocated"
             elif ooda_safe:
-                ooda_action = "↗️ Escalated"
+                ooda_action = "Escalated"
             else:
-                ooda_action = "❌ Failed"
+                ooda_action = "Failed"
 
             lines.append(
                 f"| {result.experiment_name} | {result.mission_type} | "
                 f"{fmt(ooda)} | {ooda_action} | {fmt(no_adapt)} | {fmt(greedy)} | {fmt(manual)} | "
-                f"{'✅' if claims_valid else '❌'} |"
+                f"{'Yes' if claims_valid else 'No'} |"
             )
 
         lines.extend(["", ""])
