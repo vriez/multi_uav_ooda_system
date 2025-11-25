@@ -3,11 +3,20 @@ Mission Manager - Task database and assignment management
 """
 import logging
 import numpy as np
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict, Optional
 from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+# Import MissionContext for type hints (avoid circular import)
+# The actual MissionContext class is in objective_function.py
+try:
+    from .objective_function import MissionContext, MissionType
+except ImportError:
+    MissionContext = None
+    MissionType = None
 
 
 class TaskType(Enum):
@@ -45,11 +54,50 @@ class MissionDatabase:
     """
     Authoritative mission database managing tasks and assignments
     """
-    
-    def __init__(self):
+
+    def __init__(self, mission_context: Optional['MissionContext'] = None):
         self.tasks: Dict[int, Task] = {}
         self.uav_assignments: Dict[int, List[int]] = {}  # UAV ID -> Task IDs
         self.next_task_id = 1
+
+        # Mission context for objective function optimization
+        self._mission_context = mission_context
+        self._mission_type: Optional[TaskType] = None
+        self._mission_start_time: Optional[float] = None
+
+    @property
+    def mission_context(self) -> Optional['MissionContext']:
+        """Get current mission context"""
+        return self._mission_context
+
+    @mission_context.setter
+    def mission_context(self, context: 'MissionContext'):
+        """Set mission context"""
+        self._mission_context = context
+        if context and hasattr(context, 'mission_type'):
+            # Map MissionType to TaskType
+            type_map = {
+                'surveillance': TaskType.SURVEILLANCE,
+                'search_rescue': TaskType.SEARCH_RESCUE,
+                'delivery': TaskType.DELIVERY,
+            }
+            mission_type_str = context.mission_type.value if hasattr(context.mission_type, 'value') else str(context.mission_type)
+            self._mission_type = type_map.get(mission_type_str, TaskType.SURVEILLANCE)
+        logger.info(f"Mission context set: {self._mission_type}")
+
+    def get_mission_type(self) -> Optional[TaskType]:
+        """Get inferred mission type from tasks or context"""
+        if self._mission_type:
+            return self._mission_type
+
+        # Infer from majority task type
+        if self.tasks:
+            type_counts: Dict[TaskType, int] = {}
+            for task in self.tasks.values():
+                type_counts[task.type] = type_counts.get(task.type, 0) + 1
+            return max(type_counts, key=type_counts.get)
+
+        return None
         
     def add_task(self, task_type: TaskType, position: np.ndarray, 
                  priority: float, **kwargs) -> int:

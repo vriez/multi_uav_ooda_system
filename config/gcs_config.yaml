@@ -7,6 +7,40 @@ ooda_engine:
     decide: 1.5
     act: 1.0
 
+# Mission context configuration for objective function optimization
+# Overrides default values in objective_function.py
+mission_context:
+  # Mission type: surveillance, search_rescue, delivery
+  mission_type: "surveillance"
+
+  # Priority weights for task scoring (Algorithm 1)
+  # Must sum to ~1.0 for normalized scoring
+  priority_weights:
+    temporal: 0.3      # Deadline urgency weight
+    criticality: 0.5   # Task importance weight
+    spatial: 0.2       # Distance penalty weight
+
+  # Objective function parameters (Equation 1 in TCC)
+  objective_params:
+    lambda_unallocated: 0.3  # Penalty per unallocated task
+    gamma_coverage_gap: 0.2  # Coverage gap weight (surveillance)
+    beta_golden_hour: 0.5    # Golden hour bonus (SAR)
+
+  # Optimization settings
+  optimization:
+    budget_ms: 1200              # Time budget for DECIDE phase
+    local_search_enabled: true   # Enable Stage 2 refinement
+    max_iterations: 50           # Max local search iterations
+
+  # Mission-specific parameters
+  surveillance:
+    uav_max_range: 2000.0  # meters
+  search_rescue:
+    golden_hour_sec: 3600.0  # 1 hour default
+    uav_max_range: 3000.0
+  delivery:
+    uav_max_range: 5000.0
+
 constraints:
   battery_safety_reserve_percent: 20.0
   anomaly_thresholds:

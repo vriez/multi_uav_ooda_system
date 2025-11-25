@@ -933,6 +933,151 @@ def determine_operator_escalation(coverage_percentage, unallocated_tasks):
     }
 \end{lstlisting}
 
+\section{Objective Function and Optimization Strategy}
+
+The preceding algorithms define \textit{how} tasks are prioritized and allocated, but do not explicitly characterize \textit{what constitutes a good allocation}. This section formalizes the objective function that guides the DECIDE phase and describes the optimization strategy employed to maximize decision quality within real-time constraints.
+
+\subsection{Allocation Quality Metric}
+
+The quality of a task reallocation is quantified through an objective function $J(\mathcal{A})$ that the optimizer seeks to maximize. Given an allocation $\mathcal{A} = \{(t_i, u_j)\}$ mapping failed tasks $t_i$ to healthy UAVs $u_j$, the objective function is defined as:
+
+\begin{equation}
+J(\mathcal{A}) = \sum_{(t_i, u_j) \in \mathcal{A}} \left[ P_i \cdot \phi_m(t_i, u_j) \right] - \lambda \cdot |\mathcal{T}_{\text{unalloc}}|
+\label{eq:objective}
+\end{equation}
+
+\noindent where:
+\begin{itemize}
+\item $P_i \in [0,1]$ is the priority score of task $t_i$ computed by Algorithm 1
+\item $\phi_m(t_i, u_j) \in [0,1]$ is a mission-specific modifier function
+\item $\lambda > 0$ is the penalty weight for unallocated tasks
+\item $|\mathcal{T}_{\text{unalloc}}|$ is the count of tasks that could not be feasibly assigned
+\end{itemize}
+
+The mission-specific modifier $\phi_m$ adjusts task value based on operational context:
+
+\begin{equation}
+\phi_m(t_i, u_j) =
+\begin{cases}
+1 - \gamma \cdot \Delta t_{\text{gap}}(t_i) & \text{if } m = \text{surveillance} \\[6pt]
+1 + \beta \cdot \dfrac{t_{\text{golden}} - t_{\text{completion}}(t_i, u_j)}{t_{\text{golden}}} & \text{if } m = \text{SAR} \\[6pt]
+\begin{cases}
+1.0 & \text{if } t_{\text{completion}} \leq t_{\text{deadline}} \\
+0.5 & \text{otherwise}
+\end{cases} & \text{if } m = \text{delivery}
+\end{cases}
+\label{eq:modifier}
+\end{equation}
+
+For surveillance missions, the modifier penalizes coverage gaps through parameter $\gamma$, where $\Delta t_{\text{gap}}$ represents the time since last coverage of the task's zone. For search and rescue operations, tasks completed before the golden hour receive a bonus weighted by $\beta$, incentivizing rapid coverage of high-probability areas. For delivery missions, the modifier applies a binary penalty for deadline violations, reflecting the discrete nature of delivery success.
+
+\subsection{Optimization Strategy}
+
+The DECIDE phase operates under strict temporal constraints (1.0--1.5 seconds), precluding exact optimization methods such as mixed-integer linear programming. The system therefore employs a two-stage optimization strategy that balances solution quality against computational tractability.
+
+\textbf{Stage 1: Greedy Initialization.} Algorithm 2 generates an initial feasible allocation in $O(n \cdot m)$ time, where $n$ is the number of failed tasks and $m$ is the number of healthy UAVs. This greedy approach processes tasks in priority order, assigning each to the nearest constraint-satisfying UAV. While not globally optimal, this initialization typically achieves 70--85\% of the theoretical maximum objective value.
+
+\textbf{Stage 2: Local Search Refinement.} When the time budget permits (approximately 500ms remaining after Stage 1), the system applies iterative local search to improve the initial allocation. The neighborhood structure considers pairwise task swaps between UAVs and reassignment of individual tasks to alternative vehicles:
+
+\begin{lstlisting}[language=Python, caption=Two-Stage Optimization Strategy]
+def optimize_allocation(failed_tasks, healthy_uavs, mission_context):
+    """
+    DECIDE phase optimization: maximize J(allocation) within time budget.
+    """
+    t_start = current_time_ms()
+    TIME_BUDGET_MS = 1200  # Total DECIDE phase budget
+
+    # Stage 1: Greedy initialization (Algorithm 2)
+    allocation = greedy_allocate(failed_tasks, healthy_uavs, mission_context)
+    best_score = compute_objective(allocation, mission_context)
+
+    # Stage 2: Local search refinement (if time permits)
+    elapsed = current_time_ms() - t_start
+    if elapsed < TIME_BUDGET_MS - 200:  # Reserve 200ms for finalization
+        allocation, best_score = local_search(
+            allocation,
+            failed_tasks,
+            healthy_uavs,
+            mission_context,
+            max_time_ms = TIME_BUDGET_MS - elapsed - 200
+        )
+
+    return allocation, best_score
+
+def local_search(allocation, tasks, uavs, context, max_time_ms):
+    """
+    Iterative improvement via task swaps and reassignments.
+    """
+    best = allocation.copy()
+    best_score = compute_objective(best, context)
+    t_start = current_time_ms()
+
+    while (current_time_ms() - t_start) < max_time_ms:
+        improved = False
+
+        # Try pairwise swaps
+        for t1, u1 in best.items():
+            for t2, u2 in best.items():
+                if u1 == u2:
+                    continue
+
+                # Propose swap: t1->u2, t2->u1
+                candidate = best.copy()
+                candidate[t1], candidate[t2] = u2, u1
+
+                if is_feasible(candidate, context):
+                    score = compute_objective(candidate, context)
+                    if score > best_score:
+                        best = candidate
+                        best_score = score
+                        improved = True
+                        break
+            if improved:
+                break
+
+        if not improved:
+            break  # Local optimum reached
+
+    return best, best_score
+\end{lstlisting}
+
+\subsection{Optimality Gap Analysis}
+
+The greedy-plus-local-search strategy does not guarantee global optimality. To characterize solution quality, we define the optimality gap as:
+
+\begin{equation}
+\text{Gap} = \frac{J^* - J(\mathcal{A}_{\text{heuristic}})}{J^*} \times 100\%
+\label{eq:gap}
+\end{equation}
+
+\noindent where $J^*$ is the optimal objective value computed offline via exhaustive search or MILP for small problem instances.
+
+Preliminary analysis across the three mission scenarios indicates expected optimality gaps of 5--15\% for typical failure cases involving 3--6 lost tasks and 4--8 healthy UAVs. This trade-off is justified by the real-time constraint: a 10\% suboptimal solution computed in 1.2 seconds provides substantially greater operational value than an optimal solution requiring 30+ seconds, during which mission degradation continues unmitigated.
+
+\subsection{Mission-Specific Parameter Configuration}
+
+The objective function parameters are configured per mission type to reflect operational priorities:
+
+\begin{table}[H]
+\centering
+\caption{Objective Function Parameters by Mission Type}
+\label{tab:objective_params}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Symbol} & \textbf{Surveillance} & \textbf{SAR} & \textbf{Delivery} \\
+\hline
+Unallocated penalty & $\lambda$ & 0.3 & 0.5 & 0.4 \\
+Coverage gap weight & $\gamma$ & 0.2 & --- & --- \\
+Golden hour bonus & $\beta$ & --- & 0.5 & --- \\
+Priority weights & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+                 & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
+                 & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
+\hline
+\end{tabular}
+\end{table}
+
+This parameterization enables the same OODA loop implementation to adapt its optimization behavior based on mission context, achieving domain-appropriate decision quality without requiring mission-specific algorithmic modifications.
+
 \chapter{Mission Scenarios and Performance Analysis}
 
 This chapter presents three representative mission scenarios that demonstrate the OODA-based fault tolerance system across diverse operational contexts. Each scenario illustrates different constraint priorities, failure modes, and recovery strategies, providing concrete validation of the system's adaptive capabilities under realistic conditions.

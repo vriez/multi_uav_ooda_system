@@ -8,6 +8,12 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Tuple
 import numpy as np
 
+# Import objective function module for optimized DECIDE phase
+from .objective_function import (
+    ObjectiveFunction, AllocationOptimizer, MissionContext,
+    MissionType, AllocationResult, create_optimizer
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,17 +73,51 @@ class OODAEngine:
     OODA Loop Engine implementing the four-phase decision cycle
     for fault-tolerant mission control
     """
-    
-    def __init__(self, config: dict, dashboard_bridge=None):
+
+    def __init__(self, config: dict, dashboard_bridge=None, mission_context: Optional[MissionContext] = None):
         self.config = config
         self.phase = OODAPhase.IDLE
         self.cycle_start_time = 0
         self.phase_timeouts = config['ooda_engine']['phase_timeouts']
         self.dashboard_bridge = dashboard_bridge
 
+        # Mission context for objective function optimization
+        # If not provided, will be inferred from mission_db or default to surveillance
+        self.mission_context = mission_context
+
+        # Optimizer instances (lazily initialized per mission)
+        self._objective_fn: Optional[ObjectiveFunction] = None
+        self._optimizer: Optional[AllocationOptimizer] = None
+
         # Performance tracking
         self.cycle_count = 0
         self.phase_times = {phase: [] for phase in OODAPhase}
+
+    def set_mission_context(self, context: MissionContext):
+        """Update mission context (resets optimizer)"""
+        self.mission_context = context
+        self._objective_fn = None
+        self._optimizer = None
+        logger.info(f"Mission context updated: {context.mission_type.value}")
+
+    def _get_optimizer(self, mission_db, constraint_validator) -> Tuple[ObjectiveFunction, AllocationOptimizer]:
+        """Get or create optimizer for current mission context"""
+        if self._objective_fn is None or self._optimizer is None:
+            # Determine mission type
+            if self.mission_context:
+                context = self.mission_context
+            else:
+                # Try to infer from mission_db or config
+                mission_type = self.config.get('mission_context', {}).get('mission_type', 'surveillance')
+                self._objective_fn, self._optimizer = create_optimizer(
+                    mission_type, mission_db, constraint_validator
+                )
+                return self._objective_fn, self._optimizer
+
+            self._objective_fn = ObjectiveFunction(context, mission_db, constraint_validator)
+            self._optimizer = AllocationOptimizer(self._objective_fn, context)
+
+        return self._objective_fn, self._optimizer
         
     def trigger_ooda_cycle(self, fleet_state: FleetState, mission_db, 
                            constraint_validator) -> OODADecision:
@@ -244,51 +284,81 @@ class OODAEngine:
                      mission_db, constraint_validator) -> OODADecision:
         """
         DECIDE: Select recovery strategy and plan reallocation
+
+        Uses two-stage optimization:
+        1. Greedy initialization (Algorithm 2)
+        2. Local search refinement (when time permits)
+
+        The objective function J(A) guides allocation quality.
         """
         phase_start = time.time()
         self.phase = OODAPhase.DECIDE
-        
-        # Determine recovery strategy based on impact
-        recovery_rate = (impact.recoverable_tasks / impact.total_lost_tasks * 100
-                        if impact.total_lost_tasks > 0 else 0)
-        
-        if recovery_rate >= 75:
-            strategy = RecoveryStrategy.FULL_REALLOCATION
-        elif recovery_rate >= 50:
-            strategy = RecoveryStrategy.PARTIAL_REALLOCATION
-        else:
-            strategy = RecoveryStrategy.OPERATOR_ESCALATION
-        
-        # Generate reallocation plan
-        reallocation_plan = {}
-        rationale = ""
-        
-        if strategy in [RecoveryStrategy.FULL_REALLOCATION, 
-                       RecoveryStrategy.PARTIAL_REALLOCATION]:
-            reallocation_plan = self._plan_reallocation(
-                fleet_state, impact, mission_db, constraint_validator
+
+        # Get optimizer for current mission context
+        objective_fn, optimizer = self._get_optimizer(mission_db, constraint_validator)
+
+        # Prepare lost tasks for optimization
+        lost_tasks = [mission_db.get_task(tid) for tid in fleet_state.lost_tasks]
+        lost_tasks = [t for t in lost_tasks if t is not None]
+
+        # Execute two-stage optimization
+        if lost_tasks and fleet_state.operational_uavs:
+            opt_result: AllocationResult = optimizer.optimize(
+                fleet_state, lost_tasks, constraint_validator
             )
-            rationale = (f"Reallocating {len(reallocation_plan)} tasks across "
-                        f"{len(fleet_state.operational_uavs)} operational UAVs. "
-                        f"Recovery rate: {recovery_rate:.1f}%")
+
+            # Determine strategy based on coverage achieved
+            coverage = opt_result.coverage_percentage
+
+            if coverage >= 75:
+                strategy = RecoveryStrategy.FULL_REALLOCATION
+            elif coverage >= 50:
+                strategy = RecoveryStrategy.PARTIAL_REALLOCATION
+            else:
+                strategy = RecoveryStrategy.OPERATOR_ESCALATION
+
+            reallocation_plan = opt_result.allocation
+            objective_score = opt_result.objective_score
+
+            rationale = (
+                f"Optimized reallocation: {len([t for ts in reallocation_plan.values() for t in ts])} tasks "
+                f"across {len(reallocation_plan)} UAVs. "
+                f"Coverage: {coverage:.1f}%, Objective: {objective_score:.3f}, "
+                f"Optimization: {opt_result.optimization_time_ms:.1f}ms ({opt_result.iterations} iterations)"
+            )
+
+            # Extended metrics including optimization details
+            metrics = {
+                'recovery_rate': coverage,
+                'coverage_loss': impact.coverage_loss_percent,
+                'battery_spare': impact.fleet_capacity_battery,
+                'temporal_margin': impact.temporal_margin_sec,
+                'objective_score': objective_score,
+                'optimization_time_ms': opt_result.optimization_time_ms,
+                'optimization_iterations': opt_result.iterations,
+                'optimality_gap_estimate': opt_result.optimality_gap_estimate,
+                'unallocated_count': len(opt_result.unallocated_tasks)
+            }
         else:
-            rationale = (f"Insufficient fleet capacity for autonomous recovery. "
-                        f"Only {recovery_rate:.1f}% of tasks recoverable. "
-                        f"Operator intervention required.")
-        
+            # No tasks to reallocate or no operational UAVs
+            strategy = RecoveryStrategy.OPERATOR_ESCALATION
+            reallocation_plan = {}
+            rationale = "No tasks to reallocate or no operational UAVs available."
+            metrics = {
+                'recovery_rate': 0,
+                'coverage_loss': impact.coverage_loss_percent,
+                'battery_spare': impact.fleet_capacity_battery,
+                'temporal_margin': impact.temporal_margin_sec
+            }
+
         decision = OODADecision(
             strategy=strategy,
             reallocation_plan=reallocation_plan,
             rationale=rationale,
-            metrics={
-                'recovery_rate': recovery_rate,
-                'coverage_loss': impact.coverage_loss_percent,
-                'battery_spare': impact.fleet_capacity_battery,
-                'temporal_margin': impact.temporal_margin_sec
-            },
+            metrics=metrics,
             execution_time_ms=0  # Will be set later
         )
-        
+
         elapsed = time.time() - phase_start
         self.phase_times[OODAPhase.DECIDE].append(elapsed)
 
@@ -303,8 +373,10 @@ class OODAEngine:
                 duration_ms=elapsed*1000,
                 details={
                     'strategy': strategy.value,
-                    'recovery_rate': recovery_rate,
-                    'reallocation_count': len(reallocation_plan)
+                    'recovery_rate': metrics.get('recovery_rate', 0),
+                    'reallocation_count': len(reallocation_plan),
+                    'objective_score': metrics.get('objective_score', 0),
+                    'optimality_gap': metrics.get('optimality_gap_estimate', 0)
                 }
             )
 
@@ -379,12 +451,12 @@ class OODAEngine:
         """Calculate time margin until nearest deadline"""
         current_time = time.time()
         min_margin = float('inf')
-        
-        for task in mission_db.tasks:
+
+        for task in mission_db.tasks.values():
             if task.deadline:
                 margin = task.deadline - current_time
                 min_margin = min(min_margin, margin)
-                
+
         return min_margin if min_margin != float('inf') else 0
     
     def _estimate_recoverable_tasks(self, fleet_state: FleetState,
