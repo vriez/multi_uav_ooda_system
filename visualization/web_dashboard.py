@@ -932,7 +932,7 @@ class WorkloadBalancer:
                         if has_priority:
                             priority_info = "PRIORITY"
 
-                    assignments.append(f"{uav_id} → Zones [{zone_str}]{priority_info}")
+                    assignments.append(f"{uav_id} → Zones [{zone_str}] {priority_info}")
                 elif uav['state'] == 'recovered':
                      assignments.append(f"{uav_id} → **RECOVERED / READY TO DEPLOY**")
                 elif uav['state'] == 'charging':
@@ -1376,6 +1376,71 @@ def simulation_loop():
                 if uav['state'] in ['recovered', 'charging', 'idle']:
                     continue
 
+                # State: RETURNING_TO_GRID (Moving back to grid boundary after identifying asset outside)
+                if uav['state'] == 'returning_to_grid':
+                    # Calculate closest grid boundary point if not already set
+                    if uav.get('return_to_grid_target') is None:
+                        # Find closest point on grid boundary to current position
+                        current_pos = np.array(uav['position'][:2])
+
+                        # Calculate which boundary is closest
+                        distances_to_boundaries = [
+                            abs(current_pos[0] - GRID_MAX),  # Right boundary
+                            abs(current_pos[0] - GRID_MIN),  # Left boundary
+                            abs(current_pos[1] - GRID_MAX),  # Top boundary
+                            abs(current_pos[1] - GRID_MIN)   # Bottom boundary
+                        ]
+
+                        closest_boundary_idx = np.argmin(distances_to_boundaries)
+
+                        if closest_boundary_idx == 0:  # Right
+                            target = [GRID_MAX, current_pos[1]]
+                        elif closest_boundary_idx == 1:  # Left
+                            target = [GRID_MIN, current_pos[1]]
+                        elif closest_boundary_idx == 2:  # Top
+                            target = [current_pos[0], GRID_MAX]
+                        else:  # Bottom
+                            target = [current_pos[0], GRID_MIN]
+
+                        # Clamp to grid boundaries
+                        target[0] = np.clip(target[0], GRID_MIN, GRID_MAX)
+                        target[1] = np.clip(target[1], GRID_MIN, GRID_MAX)
+
+                        uav['return_to_grid_target'] = target
+                        logger.info(f"{uid} calculated grid return target: ({target[0]:.1f}, {target[1]:.1f})")
+
+                    # Move toward grid boundary
+                    target = uav['return_to_grid_target']
+                    dx = target[0] - uav['position'][0]
+                    dy = target[1] - uav['position'][1]
+                    dist = np.sqrt(dx**2 + dy**2)
+
+                    if dist > WAYPOINT_ARRIVAL_THRESHOLD:
+                        # Move toward boundary
+                        speed_factor = BASE_CRUISE_SPEED
+                        uav['position'][0] += (dx / dist) * speed_factor * dt
+                        uav['position'][1] += (dy / dist) * speed_factor * dt
+                        uav['position'][2] = 15
+
+                        # Battery drain
+                        battery_drain = BASE_BATTERY_DRAIN * dt
+                        uav['battery'] -= battery_drain
+
+                        if uav['battery'] <= 0:
+                            uav['battery'] = 0
+                            uav['operational'] = False
+                            uav['state'] = 'crashed'
+                            logger.error(f"{uid} crashed while returning to grid (battery exhausted)")
+                            emit_ooda('observe', f'{uid} CRASHED returning to grid (battery exhausted)', critical=True)
+                    else:
+                        # Reached grid boundary - resume patrol
+                        uav['state'] = 'recovered'
+                        uav['return_to_grid_target'] = None
+                        logger.info(f"{uid} reached grid boundary - resuming patrol")
+                        emit_ooda('act', f'{uid} returned to grid - resuming patrol', critical=False)
+
+                    continue
+
                 # State: SEARCHING (Circling asset with reducing radius - 3 loops for identification, 5 loops for guardians)
                 if uav['state'] == 'searching' and (uav['searching_asset'] or uav['guardian_of_asset']):
                     asset_id = uav['searching_asset'] or uav['guardian_of_asset']
@@ -1489,30 +1554,56 @@ def simulation_loop():
                                     uav['circle_count'] += 1
                                     logger.info(f"{uid} completed circle #{uav['circle_count']} around {asset_id}")
 
-                                    # After 3 circles, decide guardian assignment
+                                    # After 3 circles, asset is identified - return to grid
                                     if uav['circle_count'] >= 3 and uav['guardian_of_asset'] is None:
-                                        # Not yet a guardian - check if we should become one
-                                        # If asset not yet rescued and no active guardian, become the guardian
-                                        if not asset.get('rescued', False) and asset['guardian_uav'] is None:
-                                            asset['guardian_uav'] = uid
-                                            asset['identified'] = True  # Mark asset as identified
-                                            uav['guardian_of_asset'] = asset_id
+                                        # Mark asset as identified (no guardian needed - just identify and move on)
+                                        asset['identified'] = True
+                                        asset['rescued'] = True  # Consider it rescued after identification
+
+                                        # Check if UAV is outside grid - need to return first
+                                        uav_outside_grid = is_position_outside_grid(uav['position'])
+
+                                        if uav_outside_grid:
+                                            # UAV is outside grid - set state to return to grid boundary
                                             uav['searching_asset'] = None
-                                            uav['circle_count'] = 0  # Reset count for guardian phase
-                                            uav['guardian_start_time'] = time.time()  # Track when guardian duty started
-                                            logger.info(f"{uid} assigned as guardian for {asset_id}")
-                                            emit_ooda('decide', f'{uid} assigned as guardian for {asset_id}', critical=False)
-                                        # Otherwise, release to search for other assets
+                                            uav['circle_waypoints'] = []
+                                            uav['circle_count'] = 0
+                                            uav['state'] = 'returning_to_grid'  # New state for returning to grid
+                                            uav['return_to_grid_target'] = None  # Will calculate boundary point
+
+                                            # Clear permission - will need new permission for next out-of-grid asset
+                                            uav['permission_granted_for_target'] = None
+                                            uav['out_of_grid_target'] = None
+
+                                            # Remove from searching list
+                                            if uid in asset['searching_uavs']:
+                                                asset['searching_uavs'].remove(uid)
+
+                                            logger.info(f"{uid} identified {asset_id} outside grid - returning to grid boundary")
+                                            emit_ooda('orient', f'{uid} identified {asset_id} - returning to grid', critical=False)
+
+                                            # Update mission metrics
+                                            if not mission_metrics.get(f'{asset_id}_counted', False):
+                                                mission_metrics['assets_rescued'] = mission_metrics.get('assets_rescued', 0) + 1
+                                                mission_metrics[f'{asset_id}_counted'] = True
                                         else:
+                                            # UAV is inside grid - can immediately resume patrol
                                             uav['searching_asset'] = None
                                             uav['circle_waypoints'] = []
                                             uav['circle_count'] = 0
                                             uav['state'] = 'recovered'  # Set to recovered so it gets reassigned zones
+
                                             # Remove from searching list
                                             if uid in asset['searching_uavs']:
                                                 asset['searching_uavs'].remove(uid)
-                                            logger.info(f"{uid} released from {asset_id} after 3 circles - will be reassigned to patrol zones")
-                                            emit_ooda('orient', f'{uid} completed search of {asset_id} - reassigning to patrol zones', critical=False)
+
+                                            logger.info(f"{uid} identified {asset_id} inside grid - resuming patrol")
+                                            emit_ooda('orient', f'{uid} identified {asset_id} - resuming patrol', critical=False)
+
+                                            # Update mission metrics
+                                            if not mission_metrics.get(f'{asset_id}_counted', False):
+                                                mission_metrics['assets_rescued'] = mission_metrics.get('assets_rescued', 0) + 1
+                                                mission_metrics[f'{asset_id}_counted'] = True
                                     # Guardian monitors for limited time (3 seconds)
                                     elif uav['guardian_of_asset'] == asset_id:
                                         guardian_duration = time.time() - uav.get('guardian_start_time', time.time())
@@ -1656,8 +1747,9 @@ def simulation_loop():
                             distance = np.linalg.norm(asset_pos - uav_pos)
 
                             # UAV enters visibility radius - start circling (use global constant)
+                            # Allow UAVs that are 'searching' to detect new assets (not just patrolling/deploying)
                             if distance <= SAR_VISIBILITY_RADIUS and uav['searching_asset'] is None:
-                                if uav_id not in asset['searching_uavs'] and uav['state'] in ['patrolling', 'deploying']:
+                                if uav_id not in asset['searching_uavs'] and uav['state'] in ['patrolling', 'deploying', 'searching']:
                                     # Check if this is first detection or confirmation
                                     is_first_contact = len(asset['searching_uavs']) == 0
 
@@ -2295,7 +2387,9 @@ def handle_charge_battery(data):
     old_battery = uav['battery']
     uav['battery'] = 100
     uav['battery_warning'] = False
-    
+
+    logger.info(f"CHARGE_BATTERY called for {uav_id}: {old_battery:.1f}% -> 100%, state={uav['state']}, searching_asset={uav.get('searching_asset')}")
+
     # If UAV was returning due to low battery, it can now continue its mission
     if uav['state'] in ['returning', 'charging']:
         uav['returning'] = False
@@ -2308,10 +2402,10 @@ def handle_charge_battery(data):
         uav['operational'] = False  # Will be set to True upon reassignment
         emit_ooda('act', f'{uav_id} revived and charged to 100%', critical=False)
     else:
-        emit_ooda('observe', f'{uav_id} battery topped up: {old_battery:.0f}% → 100%', critical=False)
+        emit_ooda('observe', f'{uav_id} battery topped up: {old_battery:.0f}% -> 100%', critical=False)
 
     safe_emit('workload_update', {'assignments': workload_balancer.get_current_assignments(uavs, tasks, scenario_type)})
-    logger.info(f"Battery charged for {uav_id}: {old_battery:.0f}% → 100%")
+    logger.info(f"Battery charged for {uav_id}: {old_battery:.0f}% -> 100%")
 
 
 @socketio.on('charge_all_batteries')
@@ -2387,6 +2481,8 @@ def handle_grant_permission(data):
 
     uav = uavs[uav_id]
 
+    logger.info(f"GRANT_PERMISSION: {uav_id} at position {uav['position']}, battery {uav['battery']:.1f}%, state '{uav['state']}'")
+
     # Check if UAV is in awaiting_permission state
     if not uav.get('awaiting_permission', False):
         logger.warning(f"Attempted to grant permission to {uav_id} which is not awaiting permission (state: {uav['state']})")
@@ -2394,6 +2490,8 @@ def handle_grant_permission(data):
 
     # Grant permission - reset awaiting_permission flag and resume appropriate state
     uav['awaiting_permission'] = False
+
+    logger.info(f"GRANT_PERMISSION: {uav_id} permission cleared, searching_asset={uav.get('searching_asset')}, assigned_task={uav.get('assigned_task')}")
 
     # Determine which state to resume based on mission context
     if uav.get('searching_asset') or uav.get('guardian_of_asset'):

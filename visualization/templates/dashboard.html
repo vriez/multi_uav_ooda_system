@@ -2933,6 +2933,8 @@
                         statusClass = 'uav-searching';
                     }
                 }
+                // Returning to grid after identifying asset outside
+                else if (u.state === 'returning_to_grid') statusClass = 'uav-returning';
                 // Awaiting permission: orange for SAR (boundary), red blinking for delivery
                 else if ((u.state === 'awaiting_permission' || u.awaiting_permission) && scenario === 'search_rescue') statusClass = 'uav-awaiting-boundary';
                 else if ((u.state === 'awaiting_permission' || u.awaiting_permission)) statusClass = 'uav-awaiting-permission';
