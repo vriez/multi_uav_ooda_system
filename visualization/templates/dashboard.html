@@ -1120,16 +1120,6 @@
                 </div>
             </div>
 
-            <h3 onclick="toggleSection(this)">Event Log</h3>
-            <div class="section-content">
-                <div class="events" id="events">
-                    <div class="event">
-                        <div>System ready. UAVs will auto-return & recharge when low on battery.</div>
-                        <div class="event-time">System Ready</div>
-                    </div>
-                </div>
-            </div>
-
             <h3 onclick="toggleSection(this)">OODA Loop Monitor</h3>
             <div class="section-content">
                 <!-- Cycle Metrics -->
@@ -1137,6 +1127,50 @@
                     <div class="stat-box" style="padding: 10px 20px; text-align: center;">
                         <div class="stat-value" id="ooda-cycle-count" style="font-size: 24px; font-weight: 700; color: var(--primary);">0</div>
                         <div class="stat-label" style="font-size: 11px;">OODA Cycles</div>
+                    </div>
+                </div>
+
+                <!-- OODA Loop Metrics -->
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 8px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">CYCLE METRICS</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="color: var(--text-muted);">Last Cycle</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-last-cycle-time">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Avg Cycle</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-avg-cycle-time">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Min Cycle</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-min-cycle-time">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Max Cycle</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-max-cycle-time">-</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color);">
+                        <div style="font-weight: 600; font-size: 10px; margin-bottom: 6px; color: var(--text-secondary);">PHASE AVERAGES</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--primary);">● Observe</span>
+                                <span style="color: var(--text-primary); font-weight: 600;" id="ooda-avg-observe">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--warning);">● Orient</span>
+                                <span style="color: var(--text-primary); font-weight: 600;" id="ooda-avg-orient">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--success);">● Decide</span>
+                                <span style="color: var(--text-primary); font-weight: 600;" id="ooda-avg-decide">-</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="color: var(--danger);">● Act</span>
+                                <span style="color: var(--text-primary); font-weight: 600;" id="ooda-avg-act">-</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1219,6 +1253,58 @@
                     <div style="font-weight: 600; font-size: 11px; margin-bottom: 5px; color: var(--text-secondary);">RECENT EVENTS</div>
                     <div id="ooda-event-log" style="font-size: 11px; color: var(--text-muted); max-height: 150px; overflow-y: auto;">
                         <div style="font-style: italic;">No events yet...</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">Event Log</h3>
+            <div class="section-content">
+                <div class="events" id="events">
+                    <div class="event">
+                        <div>System ready. UAVs will auto-return & recharge when low on battery.</div>
+                        <div class="event-time">System Ready</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 onclick="toggleSection(this)">Legend</h3>
+            <div class="section-content">
+                <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.5;">
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-weight: bold; margin-bottom: 6px; color: var(--text-primary);">UAV Status</div>
+                        <div style="display: flex; align-items: center; margin: 4px 0;">
+                            <div style="width: 14px; height: 14px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Operational</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 4px 0;">
+                            <div style="width: 14px; height: 14px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Low Battery</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 4px 0;">
+                            <div style="width: 14px; height: 14px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Returning/Charging</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 4px 0;">
+                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
+                            <span>Crashed</span>
+                        </div>
+                        <div style="display: flex; align-items: center; margin: 4px 0;">
+                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite;"></div>
+                            <span>Awaiting Permission</span>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px;">
+                        <div style="font-weight: bold; margin-bottom: 6px; color: var(--text-primary);">Scale & Performance</div>
+                        <div>Grid: 20m spacing</div>
+                        <div>Speed: 8 m/s (29 km/h)</div>
+                        <div>Range: ~2.7 km</div>
+                        <div>Endurance: ~5.5 min</div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 8px; font-size: 10px; color: var(--text-muted); font-style: italic;">
+                        Click UAV for details<br>
+                        Double-click red blinking UAV to grant permission
                     </div>
                 </div>
             </div>
@@ -1566,16 +1652,38 @@
                 cycleCountEl.textContent = oodaState.cycleCount || 0;
             }
 
+            // Update cycle time metrics
+            const cycleTimes = oodaState.cycleTimes;
+            if (cycleTimes && cycleTimes.length > 0) {
+                const lastCycle = cycleTimes[cycleTimes.length - 1];
+                const avgCycle = cycleTimes.reduce((a, b) => a + b, 0) / cycleTimes.length;
+                const minCycle = Math.min(...cycleTimes);
+                const maxCycle = Math.max(...cycleTimes);
+
+                const formatTime = (ms) => ms < 1000 ? ms.toFixed(2) + 'ms' : (ms / 1000).toFixed(2) + 's';
+
+                const lastEl = document.getElementById('ooda-last-cycle-time');
+                const avgEl = document.getElementById('ooda-avg-cycle-time');
+                const minEl = document.getElementById('ooda-min-cycle-time');
+                const maxEl = document.getElementById('ooda-max-cycle-time');
+
+                if (lastEl) lastEl.textContent = formatTime(lastCycle);
+                if (avgEl) avgEl.textContent = formatTime(avgCycle);
+                if (minEl) minEl.textContent = formatTime(minCycle);
+                if (maxEl) maxEl.textContent = formatTime(maxCycle);
+            }
+
             // Update phase times (if available)
             ['observe', 'orient', 'decide', 'act'].forEach(phase => {
                 const times = oodaState.phaseTimes[phase];
                 const el = document.getElementById(`ooda-${phase}-time`);
-                if (el) {
-                    if (times && times.length > 0) {
-                        const avg = times.reduce((a, b) => a + b, 0) / times.length;
-                        el.textContent = avg.toFixed(1) + 'ms';
-                    }
-                    // Keep showing '-' if no timing data yet
+                const avgEl = document.getElementById(`ooda-avg-${phase}`);
+
+                if (times && times.length > 0) {
+                    const avg = times.reduce((a, b) => a + b, 0) / times.length;
+                    const formatted = avg < 1000 ? avg.toFixed(2) + 'ms' : (avg / 1000).toFixed(2) + 's';
+                    if (el) el.textContent = formatted;
+                    if (avgEl) avgEl.textContent = formatted;
                 }
             });
         }
@@ -1671,10 +1779,17 @@
             document.getElementById('ooda-current-status').textContent = 'IDLE';
             document.getElementById('ooda-current-status').style.color = 'var(--text-muted)';
 
+            // Reset cycle metrics
+            document.getElementById('ooda-last-cycle-time').textContent = '-';
+            document.getElementById('ooda-avg-cycle-time').textContent = '-';
+            document.getElementById('ooda-min-cycle-time').textContent = '-';
+            document.getElementById('ooda-max-cycle-time').textContent = '-';
+
             ['observe', 'orient', 'decide', 'act'].forEach(phase => {
                 document.getElementById(`ooda-${phase}-time`).textContent = '-';
                 document.getElementById(`ooda-${phase}-content`).textContent = 'Waiting for cycle...';
                 document.getElementById(`ooda-${phase}-details`).style.display = 'none';
+                document.getElementById(`ooda-avg-${phase}`).textContent = '-';
             });
 
             const log = document.getElementById('ooda-event-log');
@@ -2411,89 +2526,6 @@
             origin.style.pointerEvents = 'none';
             origin.textContent = '(0,0)';
             map.appendChild(origin);
-
-            // Legend box (UAV status colors and scale)
-            const legendBox = document.createElement('div');
-            legendBox.style.position = 'absolute';
-            legendBox.style.top = '10px';
-            legendBox.style.right = '10px';
-            legendBox.style.background = 'var(--bg-secondary)';
-            legendBox.style.border = '2px solid var(--border-color)';
-            legendBox.style.borderRadius = '8px';
-            legendBox.style.padding = '10px 14px';
-            legendBox.style.fontSize = '11px';
-            legendBox.style.color = 'var(--text-secondary)';
-            legendBox.style.fontFamily = 'monospace';
-            legendBox.style.lineHeight = '1.5';
-            legendBox.style.boxShadow = 'var(--shadow-md)';
-            legendBox.innerHTML = `
-                <div style="font-weight: bold; margin-bottom: 8px; color: var(--text-primary); font-size: 13px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;" id="legend-header">
-                    <span>LEGEND</span>
-                    <span id="legend-toggle" style="font-size: 16px; user-select: none;">▼</span>
-                </div>
-
-                <div id="legend-content" style="transition: max-height 0.3s ease-out, opacity 0.3s ease-out; overflow: hidden;">
-                    <div style="margin-bottom: 8px;">
-                        <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">UAV Status</div>
-                        <div style="display: flex; align-items: center; margin: 3px 0;">
-                            <div style="width: 14px; height: 14px; background: #28a745; border-radius: 50%; margin-right: 8px;"></div>
-                            <span>Operational</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin: 3px 0;">
-                            <div style="width: 14px; height: 14px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></div>
-                            <span>Low Battery</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin: 3px 0;">
-                            <div style="width: 14px; height: 14px; background: #17a2b8; border-radius: 50%; margin-right: 8px;"></div>
-                            <span>Returning/Charging</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin: 3px 0;">
-                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px;"></div>
-                            <span>Crashed</span>
-                        </div>
-                        <div style="display: flex; align-items: center; margin: 3px 0;">
-                            <div style="width: 14px; height: 14px; background: #dc3545; border-radius: 50%; margin-right: 8px; animation: blink 1s infinite;"></div>
-                            <span>Awaiting Permission</span>
-                        </div>
-                    </div>
-
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px;">
-                        <div style="font-weight: bold; margin-bottom: 4px; color: var(--text-primary); font-size: 11px;">Scale & Performance</div>
-                        <div>Grid: 20m spacing</div>
-                        <div>Speed: 8 m/s (29 km/h)</div>
-                        <div>Range: ~2.7 km</div>
-                        <div>Endurance: ~5.5 min</div>
-                    </div>
-
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 6px; margin-top: 6px; font-size: 9px; color: var(--text-muted); font-style: italic;">
-                        Click UAV for details<br>
-                        Double-click red blinking UAV to grant permission
-                    </div>
-                </div>
-            `;
-            map.appendChild(legendBox);
-
-            // Add collapse/expand functionality
-            const legendHeader = legendBox.querySelector('#legend-header');
-            const legendContent = legendBox.querySelector('#legend-content');
-            const legendToggle = legendBox.querySelector('#legend-toggle');
-            let isCollapsed = false;
-
-            legendHeader.addEventListener('click', () => {
-                isCollapsed = !isCollapsed;
-                if (isCollapsed) {
-                    legendContent.style.maxHeight = '0';
-                    legendContent.style.opacity = '0';
-                    legendToggle.textContent = '▶';
-                } else {
-                    legendContent.style.maxHeight = legendContent.scrollHeight + 'px';
-                    legendContent.style.opacity = '1';
-                    legendToggle.textContent = '▼';
-                }
-            });
-
-            // Set initial max-height for smooth transitions
-            legendContent.style.maxHeight = legendContent.scrollHeight + 'px';
 
             // Visual scale bar (bottom left)
             const scaleBar = document.createElement('div');
