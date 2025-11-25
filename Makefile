@@ -1,4 +1,4 @@
-.PHONY: help install gui dash launch gcs uav test test-unit test-integration test-regression test-verbose test-coverage clean
+.PHONY: help install gui dash launch gcs uav test test-unit test-integration test-regression test-verbose test-coverage experiments clean
 
 help:
 	@echo "UAV System - Quick Commands"
@@ -19,6 +19,7 @@ help:
 	@echo "  make test-regression - Run regression tests only"
 	@echo "  make test-verbose    - Run tests with verbose output"
 	@echo "  make test-coverage   - Run tests with coverage report"
+	@echo "  make experiments     - Run experiments and generate results.md"
 	@echo ""
 	@echo "Development:"
 	@echo "  make clean      - Clean cache files"
@@ -55,6 +56,9 @@ test-verbose:
 
 test-coverage:
 	uv run pytest --cov=visualization --cov=gcs --cov=uav --cov-report=html --cov-report=term
+
+experiments:
+	uv run python -m tests.experiments.run_experiments --output results.md
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true

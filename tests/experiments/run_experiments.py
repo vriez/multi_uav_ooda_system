@@ -48,6 +48,16 @@ class ExperimentSummary:
     key_findings: List[str]
 
 
+def format_time(time_sec: float) -> str:
+    """Format time intelligently: ms for fast times, seconds for slow times"""
+    if time_sec < 0.1:  # Less than 100ms, show in ms
+        return f"{time_sec * 1000:.2f}ms"
+    elif time_sec < 1.0:  # Less than 1s, show in ms
+        return f"{time_sec * 1000:.1f}ms"
+    else:  # 1s or more, show in seconds
+        return f"{time_sec:.2f}s"
+
+
 class ExperimentRunner:
     """Runs baseline comparison experiments and generates reports"""
 
@@ -147,7 +157,7 @@ class ExperimentRunner:
                 'reallocated': result.tasks_reallocated
             }
             print(f"{name}: Coverage={result.coverage_percentage:.1f}%, "
-                  f"Time={result.adaptation_time_sec:.2f}s, "
+                  f"Time={format_time(result.adaptation_time_sec)}, "
                   f"Safe={len(result.safety_violations) == 0}")
 
         # Validate thesis claims
@@ -165,7 +175,7 @@ class ExperimentRunner:
 
         findings = [
             f"OODA is {speedup:.0f}x faster than manual operator",
-            f"OODA adaptation time: {ooda['time_sec']:.2f}s",
+            f"OODA adaptation time: {format_time(ooda['time_sec'])}",
             f"All safety constraints respected by OODA"
         ]
 
@@ -246,7 +256,7 @@ class ExperimentRunner:
                 'golden_hour_impact_pct': result.adaptation_time_sec / 3600 * 100
             }
             print(f"{name}: Coverage={result.coverage_percentage:.1f}%, "
-                  f"Time={result.adaptation_time_sec:.2f}s, "
+                  f"Time={format_time(result.adaptation_time_sec)}, "
                   f"Golden Hour Impact={result.adaptation_time_sec/60:.1f}min")
 
         ooda = strategy_results["OODA"]
@@ -263,7 +273,7 @@ class ExperimentRunner:
         findings = [
             f"OODA saves {time_saved_min:.1f} minutes in golden hour",
             f"Manual operator delay: {manual['time_sec']/60:.1f} min",
-            f"OODA delay: {ooda['time_sec']:.2f}s",
+            f"OODA delay: {format_time(ooda['time_sec'])}",
             "In SAR, this time advantage can save lives"
         ]
 
@@ -346,6 +356,7 @@ class ExperimentRunner:
             }
             safe_str = "Safe" if len(result.safety_violations) == 0 else "UNSAFE"
             print(f"{name}: Coverage={result.coverage_percentage:.1f}%, "
+                  f"Time={format_time(result.adaptation_time_sec)}, "
                   f"Violations={result.constraint_violations}, Safety={safe_str}")
 
         ooda = strategy_results["OODA"]
@@ -418,7 +429,7 @@ class ExperimentRunner:
 
             lines.append(
                 f"| {result.experiment_name} | {result.mission_type} | "
-                f"{ooda.get('coverage', 0):.1f}% | {ooda.get('time_sec', 0):.2f}s | "
+                f"{ooda.get('coverage', 0):.1f}% | {format_time(ooda.get('time_sec', 0))} | "
                 f"{'Safe' if ooda.get('safe', False) else 'UNSAFE'} | "
                 f"{'YES' if claims_valid else 'NO'} |"
             )
@@ -441,7 +452,7 @@ class ExperimentRunner:
             for name, data in result.strategy_results.items():
                 lines.append(
                     f"| {name} | {data.get('coverage', 0):.1f}% | "
-                    f"{data.get('time_sec', 0):.2f}s | "
+                    f"{format_time(data.get('time_sec', 0))} | "
                     f"{'Yes' if data.get('safe', False) else '**NO**'} | "
                     f"{data.get('violations', 0)} |"
                 )
