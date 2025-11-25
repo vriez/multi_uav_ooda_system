@@ -2182,9 +2182,16 @@
             // Clear all simulation state
             clearSimulation();
 
-            // Log completion message
+            // Log completion message with details
             const missionName = data.mission_type === 'search_rescue' ? 'SAR' : data.mission_type.toUpperCase();
-            log(`${missionName} mission completed in ${data.elapsed_time.toFixed(1)}s`, false);
+            let completionMsg = `${missionName} mission completed in ${data.elapsed_time.toFixed(1)}s`;
+
+            if (data.mission_type === 'delivery' && data.deliveries_completed) {
+                completionMsg += ` - ${data.deliveries_completed}/${data.total_packages} packages delivered`;
+            }
+
+            log(completionMsg, false);
+            console.log('Mission stopped:', data);
         });
 
         function handleAssetMouseDown(e) {

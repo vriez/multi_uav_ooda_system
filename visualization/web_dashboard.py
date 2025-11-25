@@ -1322,6 +1322,8 @@ def simulation_loop():
                     dy = home_base[1] - uav['position'][1]
                     dist = np.sqrt(dx**2 + dy**2)
 
+                    logger.debug(f"{uid} RETURNING: position={uav['position'][:2]}, distance_to_home={dist:.1f}m, battery={uav['battery']:.1f}%, operational={uav['operational']}")
+
                     if dist > HOME_ARRIVAL_THRESHOLD:
                         # Use BASE_RETURN_SPEED (m/s) * dt (simulated seconds)
                         speed_factor = BASE_RETURN_SPEED
@@ -1344,19 +1346,27 @@ def simulation_loop():
                         # Snap to home position to prevent floating point drift
                         uav['position'][0] = home_base[0]
                         uav['position'][1] = home_base[1]
-                        
+
                         # Battery charges 1% per simulated second
-                        charge_rate = 1.0 
+                        charge_rate = 1.0
                         uav['battery'] = min(100, uav['battery'] + charge_rate * dt)
                         uav['state'] = 'charging'
-                        
-                        # State Transition: CHARGING -> RECOVERED
+
+                        logger.debug(f"{uid} charging: battery={uav['battery']:.1f}%, operational={uav['operational']}, state={uav['state']}")
+
+                        # State Transition: CHARGING -> RECOVERED or IDLE
                         if uav['battery'] >= RECOVERY_THRESHOLD:
                             uav['returning'] = False
-                            uav['state'] = 'recovered'
+                            # For delivery, transition to 'idle' for inline task assignment
+                            # For surveillance/SAR, transition to 'recovered' for OODA reassignment
+                            if scenario_type == 'delivery':
+                                uav['state'] = 'idle'
+                            else:
+                                uav['state'] = 'recovered'
                             uav['battery_warning'] = False
-                            logger.info(f"{uid} finished charging, state set to 'recovered'")
-                            emit_ooda('observe', f'{uid} fully charged and ready for redeployment', critical=False)
+                            uav['operational'] = True  # Set operational when fully charged
+                            logger.info(f"{uid} finished charging, state set to '{uav['state']}'")
+                            emit_ooda('observe', f'{uid} fully charged ({uav["battery"]:.0f}%) and ready for redeployment', critical=False)
                     continue
                 
                 # FAILSAFE: If UAV is at home with low battery - force into charging cycle
@@ -1373,8 +1383,44 @@ def simulation_loop():
                     continue
                 
                 # State: RECOVERED or CHARGING or IDLE (Waiting for Reassignment/Task)
+                # If UAV is at home and not fully charged, ensure it's charging
+                dx = home_base[0] - uav['position'][0]
+                dy = home_base[1] - uav['position'][1]
+                dist_to_home = np.sqrt(dx**2 + dy**2)
+
                 if uav['state'] in ['recovered', 'charging', 'idle']:
-                    continue
+                    # Check if UAV is at home and needs charging
+                    if dist_to_home < HOME_ARRIVAL_THRESHOLD and uav['battery'] < 100:
+                        # UAV is at home but not fully charged - charge it
+                        charge_rate = 1.0
+                        uav['battery'] = min(100, uav['battery'] + charge_rate * dt)
+
+                        if uav['state'] != 'charging':
+                            uav['state'] = 'charging'
+                            logger.info(f"{uid} started charging at home (battery: {uav['battery']:.1f}%)")
+
+                        # Check if charging complete
+                        if uav['battery'] >= RECOVERY_THRESHOLD:
+                            # For delivery, transition to 'idle' for inline task assignment
+                            # For surveillance/SAR, transition to 'recovered' for OODA reassignment
+                            if scenario_type == 'delivery':
+                                uav['state'] = 'idle'
+                            else:
+                                uav['state'] = 'recovered'
+                            uav['battery_warning'] = False
+                            uav['operational'] = True
+                            logger.info(f"{uid} charging complete, state set to '{uav['state']}' (battery: {uav['battery']:.1f}%)")
+
+                        # Continue to skip task assignment while still charging
+                        continue
+
+                    # For surveillance/SAR: recovered UAVs wait for OODA reassignment
+                    # For delivery: idle UAVs can proceed to task assignment below
+                    if scenario_type != 'delivery' and uav['state'] in ['recovered', 'charging']:
+                        continue
+
+                    # Delivery mission: allow 'idle' UAVs to proceed to task assignment section
+                    # (don't continue, let them fall through to delivery logic)
 
                 # State: RETURNING_TO_GRID (Moving back to grid boundary after identifying asset outside)
                 if uav['state'] == 'returning_to_grid':
