@@ -367,6 +367,69 @@ class WorkloadBalancer:
         
         return waypoints
     
+    def _group_zones_spatially(self, tasks, num_uavs):
+        """
+        Group zones spatially to ensure each UAV gets neighboring zones.
+        Uses a simple greedy clustering approach based on zone proximity.
+        """
+        import numpy as np
+
+        # Get zone centers
+        zone_list = []
+        for zid, task in tasks.items():
+            if 'center' in task:
+                zone_list.append((zid, np.array(task['center'][:2])))
+
+        if not zone_list:
+            return [[] for _ in range(num_uavs)]
+
+        # Start with empty groups
+        zone_groups = [[] for _ in range(num_uavs)]
+        remaining_zones = zone_list.copy()
+
+        # Assign zones to UAVs using nearest neighbor clustering
+        for uav_idx in range(num_uavs):
+            if not remaining_zones:
+                break
+
+            # Start with first remaining zone (or zone closest to previous group)
+            if uav_idx == 0:
+                seed_zone = remaining_zones[0]
+            else:
+                # Find zone closest to any zone in previous group
+                prev_centers = [pos for zid, pos in zone_list if zid in zone_groups[uav_idx-1]]
+                if prev_centers:
+                    prev_center = np.mean(prev_centers, axis=0)
+                    distances = [np.linalg.norm(pos - prev_center) for zid, pos in remaining_zones]
+                    seed_zone = remaining_zones[np.argmin(distances)]
+                else:
+                    seed_zone = remaining_zones[0]
+
+            zone_groups[uav_idx].append(seed_zone[0])
+            remaining_zones.remove(seed_zone)
+
+            # Determine how many zones this UAV should get
+            zones_per_uav = len(zone_list) // num_uavs
+            extra_zones = len(zone_list) % num_uavs
+            target_count = zones_per_uav + (1 if uav_idx < extra_zones else 0)
+
+            # Add neighboring zones to this UAV's group
+            current_center = seed_zone[1]
+            while len(zone_groups[uav_idx]) < target_count and remaining_zones:
+                # Find closest remaining zone to current group center
+                distances = [np.linalg.norm(pos - current_center) for zid, pos in remaining_zones]
+                closest_idx = np.argmin(distances)
+                closest_zone = remaining_zones[closest_idx]
+
+                zone_groups[uav_idx].append(closest_zone[0])
+                remaining_zones.remove(closest_zone)
+
+                # Update group center
+                group_positions = [pos for zid, pos in zone_list if zid in zone_groups[uav_idx]]
+                current_center = np.mean(group_positions, axis=0)
+
+        return zone_groups
+
     def _point_in_zones(self, x, y, zone_bounds, margin=5):
         """Check if a point is inside any of the zones (with margin)."""
         for zb in zone_bounds:
@@ -698,10 +761,8 @@ class WorkloadBalancer:
                 [9]          # UAV 5: Bottom right (1 zone)
             ]
         else:
-            # Generic: Distribute zones evenly
-            zone_groups = [[] for _ in range(num_uavs)]
-            for i, zid in enumerate(sorted(tasks.keys())):
-                zone_groups[i % num_uavs].append(zid)
+            # Generic: Group neighboring zones spatially
+            zone_groups = self._group_zones_spatially(tasks, num_uavs)
 
         assignments = []
         uav_list = sorted(operational_uavs)
@@ -1367,8 +1428,7 @@ def simulation_loop():
                                 uav['state'] = 'recovered'
                             uav['battery_warning'] = False
                             uav['operational'] = True  # Set operational when fully charged
-                            logger.info(f"{uid} finished charging, state set to '{uav['state']}'")
-                            emit_ooda('observe', f'{uid} fully charged ({uav["battery"]:.0f}%) and ready for redeployment', critical=False)
+                            logger.info(f"{uid} finished charging (battery: {uav['battery']:.1f}%), state='{uav['state']}', operational=True, awaiting OODA reassignment")
                     continue
                 
                 # FAILSAFE: If UAV is at home with low battery - force into charging cycle
@@ -1391,18 +1451,22 @@ def simulation_loop():
                 dist_to_home = np.sqrt(dx**2 + dy**2)
 
                 if uav['state'] in ['recovered', 'charging', 'idle']:
-                    # Check if UAV is at home and needs charging
-                    if dist_to_home < HOME_ARRIVAL_THRESHOLD and uav['battery'] < 100:
-                        # UAV is at home but not fully charged - charge it
-                        charge_rate = 1.0
-                        uav['battery'] = min(100, uav['battery'] + charge_rate * dt)
+                    # Check if UAV is at home
+                    if dist_to_home < HOME_ARRIVAL_THRESHOLD:
+                        # Check if still charging (battery < RECOVERY_THRESHOLD)
+                        if uav['battery'] < RECOVERY_THRESHOLD:
+                            # UAV is at home but not fully charged - charge it
+                            charge_rate = 1.0
+                            uav['battery'] = min(100, uav['battery'] + charge_rate * dt)
 
-                        if uav['state'] != 'charging':
-                            uav['state'] = 'charging'
-                            logger.info(f"{uid} started charging at home (battery: {uav['battery']:.1f}%)")
+                            if uav['state'] != 'charging':
+                                uav['state'] = 'charging'
+                                logger.info(f"{uid} started charging at home (battery: {uav['battery']:.1f}%)")
 
-                        # Check if charging complete
-                        if uav['battery'] >= RECOVERY_THRESHOLD:
+                            # Continue to skip task assignment while still charging
+                            continue
+                        # Battery >= RECOVERY_THRESHOLD: ensure UAV is in correct recovered state
+                        elif uav['state'] == 'charging':
                             # For delivery, transition to 'idle' for inline task assignment
                             # For surveillance/SAR, transition to 'recovered' for OODA reassignment
                             if scenario_type == 'delivery':
@@ -1412,9 +1476,10 @@ def simulation_loop():
                             uav['battery_warning'] = False
                             uav['operational'] = True
                             logger.info(f"{uid} charging complete, state set to '{uav['state']}' (battery: {uav['battery']:.1f}%)")
-
-                        # Continue to skip task assignment while still charging
-                        continue
+                        # Optional: Continue charging to 100% even after operational
+                        elif uav['battery'] < 100:
+                            charge_rate = 1.0
+                            uav['battery'] = min(100, uav['battery'] + charge_rate * dt)
 
                     # For surveillance/SAR: recovered UAVs wait for OODA reassignment
                     # For delivery: idle UAVs can proceed to task assignment below
@@ -2126,6 +2191,12 @@ def simulation_loop():
 
                 # THEN: Handle recovered AND idle UAVs (any UAV ready for assignment)
                 # Exclude UAVs actively searching or guarding assets in SAR missions
+
+                # Debug: Log all UAV states
+                logger.debug(f"OODA: Checking UAVs for reassignment:")
+                for uid, u in uavs.items():
+                    logger.debug(f"  {uid}: state={u['state']}, operational={u['operational']}, assigned_zones={u.get('assigned_zones', [])}, searching={u.get('searching_asset')}, guardian={u.get('guardian_of_asset')}")
+
                 ready_uavs = [uid for uid, u in uavs.items()
                              if (u['state'] in ['recovered', 'idle']
                                  or (u['state'] == 'patrolling' and not u['assigned_zones']))
@@ -2133,12 +2204,15 @@ def simulation_loop():
                              and not u.get('guardian_of_asset')]
 
                 if ready_uavs:
-                    logger.info(f"Found {len(ready_uavs)} UAVs ready for assignment: {ready_uavs}")
+                    logger.info(f"OODA: Found {len(ready_uavs)} UAVs ready for assignment: {ready_uavs}")
                     new_assignments = []
                     for uid in sorted(ready_uavs):
+                        logger.info(f"OODA: Reassigning {uid} (battery={uavs[uid]['battery']:.1f}%, state={uavs[uid]['state']})")
                         assignments = workload_balancer.reassign_recovered_uav(uid, uavs, tasks)
                         new_assignments.extend(assignments)
                         ooda_count += 1
+                        # Emit individual redeployment message
+                        emit_ooda('act', f'{uid} redeployed to zones {uavs[uid]["assigned_zones"]} (battery: {uavs[uid]["battery"]:.0f}%)', critical=False)
 
                     # Always update workload display when UAVs are reassigned
                     safe_emit('workload_update', {'assignments': workload_balancer.get_current_assignments(uavs, tasks, scenario_type)})
