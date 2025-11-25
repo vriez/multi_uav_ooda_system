@@ -1133,14 +1133,10 @@
             <h3 onclick="toggleSection(this)">OODA Loop Monitor</h3>
             <div class="section-content">
                 <!-- Cycle Metrics -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px;">
-                    <div class="stat-box" style="padding: 8px;">
-                        <div class="stat-value" id="ooda-cycle-count" style="font-size: 20px;">0</div>
-                        <div class="stat-label" style="font-size: 11px;">Total Cycles</div>
-                    </div>
-                    <div class="stat-box" style="padding: 8px;">
-                        <div class="stat-value" id="ooda-avg-time" style="font-size: 20px;">N/A</div>
-                        <div class="stat-label" style="font-size: 11px;">Avg Cycle Time</div>
+                <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    <div class="stat-box" style="padding: 10px 20px; text-align: center;">
+                        <div class="stat-value" id="ooda-cycle-count" style="font-size: 24px; font-weight: 700; color: var(--primary);">0</div>
+                        <div class="stat-label" style="font-size: 11px;">OODA Cycles</div>
                     </div>
                 </div>
 
@@ -1570,18 +1566,7 @@
                 cycleCountEl.textContent = oodaState.cycleCount || 0;
             }
 
-            // Calculate average cycle time
-            const avgTimeEl = document.getElementById('ooda-avg-time');
-            if (avgTimeEl) {
-                if (oodaState.cycleTimes.length > 0) {
-                    const avg = oodaState.cycleTimes.reduce((a, b) => a + b, 0) / oodaState.cycleTimes.length;
-                    avgTimeEl.textContent = avg.toFixed(1) + 'ms';
-                } else {
-                    avgTimeEl.textContent = 'N/A';
-                }
-            }
-
-            // Update phase times
+            // Update phase times (if available)
             ['observe', 'orient', 'decide', 'act'].forEach(phase => {
                 const times = oodaState.phaseTimes[phase];
                 const el = document.getElementById(`ooda-${phase}-time`);
@@ -1683,7 +1668,6 @@
 
             updateOodaCircle('idle');
             document.getElementById('ooda-cycle-count').textContent = '0';
-            document.getElementById('ooda-avg-time').textContent = 'N/A';
             document.getElementById('ooda-current-status').textContent = 'IDLE';
             document.getElementById('ooda-current-status').style.color = 'var(--text-muted)';
 
