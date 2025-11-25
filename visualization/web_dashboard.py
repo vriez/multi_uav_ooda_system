@@ -1993,7 +1993,21 @@ def simulation_loop():
                                 uav['battery'] = 0
                                 uav['operational'] = False
                                 uav['state'] = 'crashed'
-                                logger.error(f"{uid} battery depleted during delivery - mission failed")
+
+                                # Unassign task if UAV crashes during delivery
+                                if task_id in tasks:
+                                    task['status'] = 'pending'
+                                    task['assigned_uav'] = None
+                                    logger.error(f"{uid} CRASHED during delivery - {task_id} reset to pending for reassignment")
+                                    emit_ooda('observe', f'{uid} CRASHED - package {task_id} will be reassigned', critical=True)
+                                else:
+                                    logger.error(f"{uid} battery depleted during delivery - mission failed")
+
+                                uav['assigned_task'] = None
+                                uav['awaiting_permission'] = False
+                                uav['permission_granted_for_target'] = None
+                                uav['boundary_stop_position'] = None
+                                uav['out_of_grid_target'] = None
 
                             # Check for low battery warning
                             if uav['battery'] <= BATTERY_LOW_THRESHOLD and not uav.get('battery_warning'):
