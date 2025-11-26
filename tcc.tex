@@ -2264,36 +2264,13 @@ Table~\ref{tab:executive_summary} provides a comprehensive overview of all exper
 
 \subsection{Detailed Performance Metrics}
 
-\textbf{OODA adaptation timing (measured):}
-\begin{itemize}
-\item Surveillance (S5): \textbf{0.34 ms} (target: <5 seconds, achieved: 14,706$\times$ faster)
-\item Search \& Rescue (R5): \textbf{0.50 ms} (target: <5 seconds)
-\item SAR Out-of-Grid (R6): \textbf{0.16 ms} (fastest measured)
-\item Delivery D6: \textbf{0.11 ms} (escalated correctly)
-\item Delivery D7: \textbf{0.23 ms} (escalated correctly)
-\end{itemize}
+The measured OODA adaptation timings reveal performance characteristics that substantially exceed initial design expectations. The surveillance scenario (S5) completed its entire OODA cycle in 0.34 milliseconds, achieving a response 14,706 times faster than the conservative five-second target established during system design. Search and rescue operations demonstrated comparable efficiency, with scenario R5 completing in 0.50 milliseconds and the out-of-grid variant R6 achieving the fastest measured response at 0.16 milliseconds. Even the delivery scenarios requiring constraint violation detection and operator escalation (D6 and D7) completed their analysis in 0.11 and 0.23 milliseconds respectively, demonstrating that safety-critical constraint checking imposes negligible computational overhead.
 
-\textbf{Coverage recovery (single UAV failure):}
-\begin{itemize}
-\item Surveillance: \textbf{100\%} recovery (target: 75-95\%, exceeded)
-\item Search \& Rescue: \textbf{100\%} recovery (target: 75-95\%, exceeded)
-\item Delivery: \textbf{Intelligent escalation} (0\% autonomous, operator intervention required)
-\end{itemize}
+Coverage recovery patterns across mission types illuminate the system's adaptive capabilities under realistic constraints. Both surveillance and search-and-rescue missions achieved complete 100\% task recovery following single-UAV failures, substantially exceeding the 75-95\% target range established during design. This outcome validates the priority-based reallocation strategy's effectiveness when sufficient spare capacity exists within the operational fleet. The delivery scenarios presented a contrasting yet equally important result: zero percent autonomous reallocation accompanied by intelligent escalation to human operators. This apparent absence of autonomous recovery represents not system failure but rather successful constraint violation detection---the system correctly identified physically infeasible reallocations and appropriately deferred to human judgment rather than compromising safety boundaries.
 
-\textbf{Speed advantage over manual operation:}
-\begin{itemize}
-\item OODA: 0.16-0.50 ms average
-\item Manual operator: 465 seconds (7.75 minutes)
-\item \textbf{Speed-up: $\sim$500,000$\times$ faster than manual}
-\item \textbf{Critical for SAR:} Saves 7.7 minutes in golden hour scenarios
-\end{itemize}
+The speed advantage over manual operator intervention proves particularly striking when examined quantitatively. While the OODA system completes its full decision cycle in 0.16 to 0.50 milliseconds on average, manual operator replanning requires approximately 465 seconds (7.75 minutes) to achieve equivalent task reallocation. This represents a performance multiplication factor approaching 500,000, transforming response latency from minutes to sub-millisecond timescales. For time-critical search and rescue operations conducted under golden-hour constraints, this 7.7-minute advantage can directly influence mission success probability and, in life-threatening scenarios, determine whether intervention arrives within the window of survivability.
 
-\textbf{Safety validation:}
-\begin{itemize}
-\item OODA: \textbf{Zero constraint violations} across all scenarios
-\item Greedy baseline: 2 violations (unsafe payload/boundary violations)
-\item Manual: Zero violations but unacceptable latency (7.75 min)
-\end{itemize}
+Safety validation across all experimental scenarios demonstrates perfect constraint adherence. The OODA system maintained zero constraint violations throughout all five test scenarios, respecting battery reserves, payload limits, and operational boundaries without exception. In stark contrast, the greedy baseline algorithm---which prioritizes coverage maximization without explicit constraint verification---produced two distinct safety violations: a payload overload in scenario D6 where package weight exceeded available capacity, and a boundary transgression in scenario D7 where destination coordinates fell outside permitted flight zones. Manual operator intervention similarly achieved zero violations but at the cost of unacceptable 7.75-minute response latency, reinforcing the value proposition of automated constraint-aware decision-making that combines both speed and safety.
 
 \begin{figure}[H]
 \centering
