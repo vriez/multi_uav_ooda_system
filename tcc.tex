@@ -2249,9 +2249,9 @@ These results validate a crucial principle often overlooked in autonomous system
 \label{fig:ch6_coverage}
 \end{figure}
 
-\section{Comparative Analysis}
+\section{Synthesis and Contributions}
 
-Table~\ref{tab:scenario_comparison} synthesizes performance characteristics across all experimental scenarios, revealing patterns that transcend individual mission contexts. The data demonstrates remarkable consistency in computational efficiency despite substantial variation in problem complexity: all five scenarios completed their OODA cycles within the sub-millisecond regime spanning 0.11 to 0.50 milliseconds. This narrow performance band confirms that algorithmic complexity scales gracefully with problem size within the tested operational envelope of three to four vehicles and five to eight tasks.
+Table~\ref{tab:scenario_comparison} synthesizes performance characteristics across all experimental scenarios.
 
 \begin{table}[H]
 \centering
@@ -2269,44 +2269,30 @@ Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
 \hline
 Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
 \hline
-Mission Outcome & 100\% complete & 100\% complete & Escalated (safe) \\
-\hline
 \end{tabular}
 \end{table}
 
-Several cross-scenario patterns emerge from this data that illuminate fundamental system characteristics. First, computational speed remains uniformly sub-millisecond across all mission types, with the full range from fastest (0.11 ms) to slowest (0.50 ms) spanning less than half a millisecond. This consistency validates the architectural decision to employ greedy heuristics with linear-time constraint checking rather than optimization algorithms whose execution time might vary unpredictably with problem structure. Second, safety performance proves absolute rather than statistical: zero constraint violations occurred across all five scenarios despite widely varying constraint types (battery, payload, spatial boundaries) and failure conditions. This perfect safety record distinguishes the constraint-aware approach from opportunistic algorithms that might occasionally produce valid solutions but lack systematic safety guarantees.
+Four patterns emerge from this data. First, computational speed remains uniformly under half a millisecond across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, response times compress seven minutes of human cognitive processing into sub-millisecond algorithmic execution.
 
-Third, the system demonstrates appropriate domain-specific adaptation through its coverage recovery patterns: complete 100\% recovery in surveillance and search-and-rescue scenarios where sufficient spare capacity existed, versus correct escalation in delivery scenarios where physical or regulatory limitations precluded safe autonomous reallocation. This selective autonomy---aggressive adaptation when feasible, intelligent refusal when infeasible---represents the hybrid human-machine operational paradigm essential for deploying autonomous systems within contemporary regulatory frameworks. Finally, the performance advantage over manual operator intervention remains consistent across mission types, compressing what would require seven minutes of human cognitive processing into half a millisecond of algorithmic execution.
+\subsection{Claims Validated}
 
-\section{Thesis Claims Validated}
+The experimental program validated all primary thesis claims:
 
-The experimental program comprehensively validated all primary thesis claims advanced in the introduction, transforming theoretical propositions into empirically demonstrated capabilities. The claim of rapid adaptation received dramatic confirmation through measured execution times spanning 0.11 to 0.50 milliseconds---four orders of magnitude faster than the conservative five-second design target. This result validates both the algorithmic efficiency of the greedy reallocation strategy and the architectural decision to implement centralized rather than consensus-based coordination, which eliminates multi-round negotiation overhead.
+\begin{itemize}
+\item \textbf{Rapid adaptation:} Measured times of 0.11--0.50 ms exceed the 5-second design target by four orders of magnitude
+\item \textbf{Safety guarantee:} Zero constraint violations across all scenarios (battery, payload, spatial boundaries)
+\item \textbf{Intelligent escalation:} D6 and D7 correctly refused infeasible reallocations rather than producing unsafe plans
+\item \textbf{Time-critical advantage:} 7.7-minute advantage over manual operators in search-and-rescue scenarios
+\item \textbf{Coverage recovery:} 100\% task recovery in surveillance and SAR missions, exceeding the 75--95\% target
+\end{itemize}
 
-The safety guarantee claim achieved perfect experimental confirmation: zero constraint violations occurred across all five scenarios encompassing battery reserve verification, payload capacity checking, and spatial boundary enforcement. This absolute safety record distinguishes the present work from approaches that treat constraints as soft preferences rather than hard limits. The intelligent escalation claim received validation through scenarios D6 and D7, where the system correctly refused physically or regulatorily infeasible reallocations rather than producing superficially complete but unexecutable mission plans. This capability to recognize operational boundaries and appropriately defer to human judgment represents a critical requirement for regulatory approval of autonomous systems in civilian airspace.
+\subsection{Research Contributions}
 
-The time-critical advantage claim gained empirical support through search-and-rescue scenario analysis demonstrating 7.7-minute response advantage over manual operator intervention---a temporal margin that directly impacts victim survival probability during golden hour operations. Finally, the coverage recovery claim achieved validation through 100\% task recovery in surveillance and search-and-rescue missions, substantially exceeding the 75-95\% target range established during system design. These results collectively confirm that constraint-aware OODA-based fault tolerance delivers the rapid, safe, and intelligent adaptation essential for real-world UAV fleet operations.
+The work advances three contributions. First, a \textbf{unified constraint verification framework} that simultaneously enforces battery reserves, payload limits, and temporal deadlines through fail-fast sequential checking---the first multi-UAV fault tolerance system to address all three constraint categories together. Second, a \textbf{quantified degradation framework} with explicit decision rules governing when autonomous reallocation transitions from feasible to infeasible, enabling honest acknowledgment of system limitations rather than claiming universal fault tolerance. Third, a \textbf{hybrid autonomy architecture} that balances machine speed with human oversight, enabling deployment under current BVLOS regulations that require operator-in-the-loop supervision.
 
-\section{Technical Contributions}
+Beyond algorithmic innovation, the research delivers practical value: compatibility with commercial UAV platforms, 60\% reduction in operator intervention (S5, R5, R6 handled autonomously), and a comprehensive test suite (169 tests, 0.22s execution) enabling rapid validation. The open-source simulation platform provides infrastructure for future research without requiring physical hardware.
 
-The research advances three distinct technical contributions that collectively enable constraint-aware fault tolerance for multi-UAV systems. First, the constraint-aware task reallocation algorithm explicitly models the triad of operational constraints---battery reserves, payload capacity, and temporal deadlines---within a unified sequential verification framework augmented with geometric collision avoidance. While prior work addresses individual constraint types in isolation, this represents the first multi-UAV fault tolerance system to simultaneously enforce all three constraint categories through fail-fast sequential checking. The priority-based partial coverage strategy extends this foundation by providing graceful degradation mechanisms when complete recovery proves infeasible, enabling quantified mission continuation rather than binary success-failure outcomes.
-
-Second, the quantified performance degradation framework establishes rigorous metrics for evaluating fault tolerance under realistic resource limitations. This framework calculates precise coverage percentages following vehicle failures, determines when autonomous reallocation transitions from feasible to infeasible regimes, and formulates explicit decision rules governing operator escalation. The novelty lies not in mathematical sophistication but rather in philosophical approach: honest acknowledgment that some failure configurations exceed autonomous compensation capabilities, accompanied by systematic methods for identifying such scenarios and formulating appropriate human-machine collaboration strategies. This contrasts sharply with idealized approaches that claim universal fault tolerance by implicitly assuming unlimited spare capacity.
-
-Third, the hybrid autonomy architecture balances aggressive machine adaptation against human supervisory oversight through a clear authority hierarchy: autonomous response when constraint satisfaction permits, mandatory escalation when physical or regulatory boundaries are approached. This architectural pattern enables deployment within contemporary regulatory frameworks requiring operator-in-the-loop supervision for beyond-visual-line-of-sight operations. The practical contribution extends beyond algorithmic innovation to address the institutional and regulatory barriers that often prevent academic fault tolerance systems from transitioning to operational deployment.
-
-\section{Practical Contributions}
-
-Beyond theoretical advances, the research delivers tangible practical contributions that address real-world deployment requirements. The system achieves deployability through compatibility with commercial UAV platforms, using simulation parameters representative of mid-size quadrotors common in surveillance and delivery applications. This design choice ensures that the developed algorithms can transition directly to physical hardware without requiring custom vehicle development---a critical pathway for technology transfer to operational users.
-
-Regulatory compliance emerges naturally from the operator-in-the-loop architecture with intelligent escalation. By maintaining human supervisory authority over all safety-critical decisions while automating routine adaptation, the system satisfies beyond-visual-line-of-sight operational requirements under current aviation regulations. This hybrid authority model bridges the regulatory gap between fully manual control and aspirational full autonomy, providing a pragmatic intermediate point compatible with near-term certification frameworks.
-
-The measured economic impact demonstrates substantial operational value through multiple quantified dimensions. Automated response replaces minutes of human cognitive processing with milliseconds of algorithmic execution. Operator workload experiences measurable reduction through automatic handling of sixty percent of failure scenarios (S5, R5, R6), with escalation reserved exclusively for cases where human judgment provides essential value (D6, D7). Mission failure prevention achieves quantifiable benefit: whereas the no-adaptation baseline abandons 12.5 to 33.3 percent of tasks following vehicle failures, the system recovers these assignments when physically feasible or escalates appropriately when infeasible. In time-critical search-and-rescue operations, the 7.7-minute response advantage over manual intervention translates directly to life-saving potential through preservation of the golden hour window.
-
-The comprehensive test coverage comprising 169 automated tests---53 unit tests verifying individual components, 81 integration tests validating end-to-end workflows, and 15 regression tests preventing historical bugs---executes in 0.22 seconds, enabling rapid validation during development and deployment. This test infrastructure provides confidence in system reliability while facilitating future extensions and modifications.
-
-\section{Academic Contributions}
-
-The research contributes to academic discourse through its realism-first design philosophy that explicitly bridges the theory-practice gap plaguing much multi-agent systems research. By foregrounding rather than abstracting real-world constraints, the work demonstrates that practical deployability and theoretical rigor need not conflict. The application of OODA loop principles to constrained multi-agent coordination extends Boyd's original military framework into civilian autonomous systems, establishing a conceptual bridge between human decision-making theory and machine adaptation algorithms. Finally, the open-source simulation platform developed during this research provides future investigators with validated infrastructure for exploring fault tolerance, task allocation, and human-machine collaboration in multi-UAV systems without requiring physical hardware or flight testing facilities.
+The philosophical contribution may prove most significant: demonstrating that realism-first design---explicitly modeling constraints rather than abstracting them away---produces systems that are both academically rigorous and operationally deployable.
 
 \chapter{Limitations and Future Work}
 
