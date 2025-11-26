@@ -2280,7 +2280,7 @@ Third, the hybrid autonomy architecture balances aggressive machine adaptation a
 
 \section{Practical Contributions}
 
-Beyond theoretical advances, the research delivers tangible practical contributions that address real-world deployment requirements. The system achieves deployability through compatibility with commercial UAV platforms exemplified by the DJI Matrice 350 RTK, whose specifications informed the simulation parameters and constraint models. This design choice ensures that the developed algorithms can transition directly to physical hardware without requiring custom vehicle development---a critical pathway for technology transfer to operational users.
+Beyond theoretical advances, the research delivers tangible practical contributions that address real-world deployment requirements. The system achieves deployability through compatibility with commercial UAV platforms, using simulation parameters representative of mid-size quadrotors common in surveillance and delivery applications. This design choice ensures that the developed algorithms can transition directly to physical hardware without requiring custom vehicle development---a critical pathway for technology transfer to operational users.
 
 Regulatory compliance emerges naturally from the operator-in-the-loop architecture with intelligent escalation. By maintaining human supervisory authority over all safety-critical decisions while automating routine adaptation, the system satisfies beyond-visual-line-of-sight operational requirements under current aviation regulations. This hybrid authority model bridges the regulatory gap between fully manual control and aspirational full autonomy, providing a pragmatic intermediate point compatible with near-term certification frameworks.
 
@@ -2312,7 +2312,7 @@ Hierarchical architectures that partition large fleets into coordinated subgroup
 
 \subsection{Validation Methodology}
 
-Current validation relies exclusively on software-in-the-loop simulation using physics-based models validated against DJI Matrice 350 RTK specifications. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
+Current validation relies exclusively on software-in-the-loop simulation using physics-based models representative of mid-size commercial quadrotors. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
 
 Hardware-in-the-loop testing with physical flight controllers would provide intermediate validation capturing timing constraints and communication latencies. Field trials with two to three physical UAVs would expose the system to genuine environmental challenges and enable parameter refinement. Future validation should prioritize systematic characterization of performance degradation under realistic operating conditions, establishing the operational envelope for reliable performance.
 
@@ -2456,11 +2456,13 @@ Yu, X., \& Jiang, J. (2015). A survey of fault-tolerant controllers based on saf
 Parker, L. E. (1998). ALLIANCE: An architecture for fault tolerant multirobot cooperation. \textit{IEEE Transactions on Robotics and Automation}, 14(2), 220-240.
 
 \bibitem{repo}
-Project Repository: \url{https://github.com/vriesz/fuse}
+Eulálio Reis, V. (2025). \textit{FUSE: Fault-tolerant UAV System Environment - OODA-based Multi-Agent Coordination with Constraint-Aware Recovery}. GitHub repository. \url{https://github.com/vriesz/fuse}
 
 \bibitem{quadref}
 Quad SimCon Reference: \url{https://github.com/bobzwik/Quadcopter_SimCon}
 
+% \bibitem{repo}
+% Project Repository: \url{https://github.com/vriesz/fuse}
 % \bibitem{guo2018}
 % Guo, J., Zhang, Y., \& Li, W. (2018). Fault-tolerant control of quadrotor UAVs with actuator faults using adaptive backstepping. \textit{International Journal of Control, Automation and Systems}, 16(4), 1572-1583.
 
