@@ -302,7 +302,7 @@ To Prof. Dr. Jorge Bidinotto for his leadership in managing the Specialization P
 
 \vspace{0.5cm}
 
-When a drone fails mid-mission, what happens to the tasks it was carrying? This work develops a fault-tolerant control system for multi-UAV fleets that answers this question under realistic operational conditions---limited batteries, finite payload capacity, and regulatory constraints that academic research often ignores.
+The failure of a UAV during mission execution creates an immediate resource allocation challenge: reassigning orphaned tasks to operational vehicles while respecting battery limitations, payload capacity, and regulatory constraints that academic research often ignores. This work develops a fault-tolerant control system for multi-UAV fleets that addresses this challenge under realistic operational conditions.
 
 The system applies Boyd's OODA loop (Observe-Orient-Decide-Act) to transform vehicle failures into recoverable events. Upon detecting a fault, the system evaluates remaining fleet capacity, prioritizes orphaned tasks, and reallocates them to healthy vehicles while enforcing safety margins. When physical or regulatory limitations make full recovery impossible, the system escalates to human operators with quantified impact assessments rather than forcing unsafe autonomous decisions.
 
@@ -1730,6 +1730,10 @@ This work addresses the reality gap in multi-agent UAV fault tolerance by explic
 \textbf{Key insight:} Selective autonomy---aggressive adaptation when feasible, intelligent refusal when infeasible---proves more valuable than unconstrained systems that risk safety violations. In time-critical search-and-rescue operations, the 7.7-minute response advantage over manual operators can determine mission success and preserve lives during the golden hour.
 
 The three core technical contributions---resource-aware reallocation, priority-based partial coverage, and operator escalation---work together to balance autonomous response speed with human oversight, making this approach suitable for deployment under current regulations. The comprehensive test suite (169 tests executing in 0.22 seconds) provides confidence in system reliability while enabling rapid development iteration.
+
+\textbf{Acknowledged limitations.} These results must be interpreted within the system's design constraints. The centralized GCS architecture creates a single-point vulnerability---though individual UAVs implement autonomous Return-to-Launch upon communication timeout, fleet-level adaptation ceases during GCS failure. The greedy allocation strategy trades global optimality for real-time response, potentially yielding suboptimal task assignments when spare capacity is marginal. Most critically, validation remains exclusively software-in-the-loop without field deployment exposure to GPS multipath errors, RF interference, environmental turbulence, or sensor noise that characterize real-world operations. Hardware-in-the-loop testing and field trials represent essential next steps before operational deployment.
+
+Despite these constraints, the work demonstrates that constraint-aware, operator-supervised fault tolerance represents a practical architecture for near-term UAV fleet deployments in regulated, safety-critical applications. The path forward lies not in claiming unrestricted autonomy, but in designing hybrid systems that explicitly acknowledge physical limits while maximizing autonomous capability within those bounds.
 
 % ====================================
 % REFERENCES
