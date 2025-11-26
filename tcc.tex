@@ -15,7 +15,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{listings}
-\usepackage{xcolor}
+\usepackage[table]{xcolor}
 \usepackage{url}
 \usepackage{hyperref}
 \usepackage{titlesec}
@@ -314,6 +314,13 @@ This work proposes a constraint-aware fault-tolerant control system for multi-ag
 \newpage
 \listoffigures
 \addcontentsline{toc}{chapter}{List of Figures}
+
+% ====================================
+% LIST OF TABLES
+% ====================================
+\newpage
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
 
 % ====================================
 % LIST OF ABBREVIATIONS
@@ -839,15 +846,17 @@ The objective function parameters are configured per mission type to reflect ope
 \centering
 \caption{Objective Function Parameters by Mission Type}
 \label{tab:objective_params}
+\rowcolors{2}{gray!15}{white}
 \begin{tabular}{|l|c|c|c|c|}
 \hline
+\rowcolor{gray!30}
 \textbf{Parameter} & \textbf{Symbol} & \textbf{Surveillance} & \textbf{SAR} & \textbf{Delivery} \\
 \hline
 Unallocated penalty & $\lambda$ & 0.3 & 0.5 & 0.4 \\
 Coverage gap weight & $\gamma$ & 0.2 & --- & --- \\
 Golden hour bonus & $\beta$ & --- & 0.5 & --- \\
-                 & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
-Priority weights & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
+Priority weights & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+                 & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
                  & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
 \hline
 \end{tabular}
@@ -885,7 +894,9 @@ Each scenario represents a distinct operational domain with documented real-worl
 
 \subsection{Mission Setup}
 
-The surveillance mission divides the operational area into six equal patrol zones, with each UAV assigned continuous coverage of one zone. The 30-minute battery limitation relative to the 2-hour mission duration necessitates coordinated rotation scheduling to maintain uninterrupted coverage.
+The surveillance mission partitions a 1200m $\times$ 1200m operational area into six equal patrol zones, each spanning 200m $\times$ 200m. This tessellation ensures complete coverage while allowing each UAV to maintain a dedicated patrol circuit without inter-vehicle coordination overhead. Figure~\ref{fig:zone_assignment} illustrates the spatial assignment strategy.
+
+The fundamental challenge lies in the mismatch between mission duration and individual vehicle endurance. A 2-hour continuous coverage requirement, combined with 30-minute battery limitations, necessitates a coordinated rotation scheme involving at least 12 UAVs operating in two alternating shifts. This constraint transforms what might appear as a simple coverage problem into a sophisticated scheduling and fault-tolerance challenge.
 
 \begin{figure}[H]
 \centering
@@ -896,33 +907,17 @@ The surveillance mission divides the operational area into six equal patrol zone
 
 \subsection{Patrol Zone Specifications}
 
-\textbf{Zone Characteristics:}
-\begin{itemize}
-\item \textbf{Zones A, B (North Perimeter):} High priority (P=0.9) - Main entry points
-\item \textbf{Zones C, D (East/West):} Medium priority (P=0.6) - Secondary access
-\item \textbf{Zones E, F (South Perimeter):} Standard priority (P=0.4) - Low-risk boundary
-\end{itemize}
+Not all perimeter sections demand equal vigilance. The zone prioritization reflects threat assessment based on facility layout and historical incident patterns. Zones A and B along the northern perimeter guard main entry points and receive the highest priority rating ($P = 0.9$), commanding the most intensive patrol patterns. The eastern and western flanks (Zones C and D) cover secondary access routes with moderate priority ($P = 0.6$), while the southern boundary (Zones E and F) monitors low-risk terrain at standard priority ($P = 0.4$).
 
-\textbf{Waypoint Density:}
-\begin{itemize}
-\item High-priority zones: 8 waypoints per patrol circuit
-\item Medium-priority zones: 6 waypoints per patrol circuit
-\item Standard-priority zones: 4 waypoints per patrol circuit
-\end{itemize}
+This priority differentiation manifests in patrol circuit complexity. High-priority zones require eight waypoints per circuit, creating dense coverage patterns that minimize detection gaps. Medium-priority zones operate with six waypoints, balancing coverage density against battery consumption. Standard-priority zones employ four-waypoint circuits, sufficient for perimeter awareness without expending resources needed elsewhere. The waypoint density directly influences energy expenditure—a consideration that becomes critical during failure recovery when remaining UAVs must potentially absorb additional coverage responsibilities.
 
 \subsection{Rotation Strategy}
 
-The 2-hour mission duration with 30-minute battery life requires coordinated rotation:
+Sustaining 2-hour coverage with 30-minute endurance vehicles requires orchestrated fleet rotation. The system manages this through four consecutive waves, each lasting approximately 30 minutes, with overlapping transition periods to prevent coverage gaps.
 
-\begin{itemize}
-    \item \textbf{Wave 1 (0-30 min):} UAVs 1-6 patrol zones A-F
-    \item \textbf{Transition 1 (25-30 min):} UAVs signal 20\% battery threshold
-    \item \textbf{Wave 2 (30-60 min):} UAVs 1-6 return for battery swap, backup UAVs 7-12 deployed
-    \item \textbf{Transition 2 (55-60 min):} Backup UAVs signal battery threshold
-    \item \textbf{Wave 3 (60-90 min):} Recharged UAVs 1-6 resume patrol
-    \item \textbf{Transition 3 (85-90 min):} Rotation cycle repeats
-    \item \textbf{Wave 4 (90-120 min):} Final rotation with backup fleet 7-12
-\end{itemize}
+The first wave deploys UAVs 1--6 across zones A--F at mission start. As vehicles approach the 20\% battery threshold around the 25-minute mark, they signal imminent departure, triggering deployment of the backup fleet. Wave 2 sees UAVs 7--12 assume patrol responsibilities while the primary fleet returns for battery exchange. This pattern alternates through Waves 3 and 4, with recharged vehicles cycling back into service.
+
+The 5-minute transition overlap between waves provides fault tolerance against timing variations—early battery depletion, delayed takeoffs, or communication latency cannot create coverage voids when both incoming and outgoing vehicles share airspace briefly. This redundancy, however, introduces collision avoidance complexity that the OODA system must manage alongside its primary fault-tolerance responsibilities.
 
 \subsection{Failure Scenario: Mid-Mission Battery Depletion}
 
