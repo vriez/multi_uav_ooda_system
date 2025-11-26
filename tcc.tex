@@ -2226,6 +2226,44 @@ All tests execute in approximately 0.22 seconds with pytest, enabling rapid vali
 
 The system was validated through five experimental scenarios comparing OODA-based fault tolerance against three baseline strategies. Results demonstrate performance significantly exceeding initial expectations.
 
+\subsection{Executive Summary}
+
+Table~\ref{tab:executive_summary} provides a comprehensive overview of all experimental scenarios, enabling quick comparison across mission types.
+
+\begin{table}[H]
+\centering
+\caption{Executive Summary of Experimental Results}
+\label{tab:executive_summary}
+\small
+\begin{tabular}{|l|c|c|c|c|c|}
+\hline
+\textbf{Scenario} & \textbf{Mission} & \textbf{Coverage} & \textbf{Time} & \textbf{Safety} & \textbf{Outcome} \\
+ & \textbf{Type} & \textbf{Recovery} & \textbf{(ms)} & \textbf{Violations} & \\
+\hline
+\textbf{S5} & Surveillance & 100\% & 0.34 & 0 & Full Autonomous \\
+\hline
+\textbf{R5} & SAR & 100\% & 0.50 & 0 & Full Autonomous \\
+\hline
+\textbf{R6} & SAR (OOG) & 100\% & 0.16 & 0 & Full Autonomous \\
+\hline
+\textbf{D6} & Delivery & 0\% (esc.) & 0.11 & 0 & Intelligent Escalation \\
+\hline
+\textbf{D7} & Delivery & 0\% (esc.) & 0.23 & 0 & Intelligent Escalation \\
+\hline
+\multicolumn{6}{|l|}{\textit{OOG = Out-of-Grid; esc. = escalated to operator}} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/chapter6_performance_radar.png}
+\caption{Multi-Dimensional Performance Comparison}
+\label{fig:ch6_radar}
+\end{figure}
+
+\subsection{Detailed Performance Metrics}
+
 \textbf{OODA adaptation timing (measured):}
 \begin{itemize}
 \item Surveillance (S5): \textbf{0.34 ms} (target: <5 seconds, achieved: 14,706$\times$ faster)
@@ -2256,6 +2294,20 @@ The system was validated through five experimental scenarios comparing OODA-base
 \item Greedy baseline: 2 violations (unsafe payload/boundary violations)
 \item Manual: Zero violations but unacceptable latency (7.75 min)
 \end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/chapter6_time_comparison.png}
+\caption{Computation Time Comparison Across Approaches (Log Scale)}
+\label{fig:ch6_time}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{images/chapter6_safety_violations.png}
+\caption{Safety Validation: Constraint Violations by Approach}
+\label{fig:ch6_safety}
+\end{figure}
 
 \section{Experimental Scenario Analysis}
 
@@ -2295,6 +2347,13 @@ The system was validated through five experimental scenarios comparing OODA-base
 
 \textbf{Key Finding:} In life-or-death SAR scenarios, OODA's 7.7-minute time savings versus manual operation can determine mission success. The permission system enables safe out-of-grid operations when authorized.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{images/chapter6_golden_hour.png}
+\caption{Search \& Rescue: Golden Hour Time Consumption}
+\label{fig:ch6_golden_hour}
+\end{figure}
+
 \subsection{D6 \& D7: Delivery with Intelligent Escalation}
 
 \textbf{Scenario D6:} Package B (2.0 kg) exceeds all available UAV spare capacity (max 0.7 kg).
@@ -2316,6 +2375,54 @@ The system was validated through five experimental scenarios comparing OODA-base
 \end{itemize}
 
 \textbf{Key Finding:} OODA's 0\% reallocation in constrained delivery scenarios is NOT a failure---it demonstrates the system correctly identifying infeasible reallocations and escalating to human operators. The alternative (greedy) achieves 100\% coverage by violating safety constraints. This validates the constraint-aware design philosophy.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/chapter6_constraint_space.png}
+\caption{D6 Payload Constraint Violation: Geometric Illustration of Escalation Necessity}
+\label{fig:ch6_constraint}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{images/chapter6_coverage_heatmap.png}
+\caption{Coverage Recovery Matrix Across All Approaches and Scenarios}
+\label{fig:ch6_coverage}
+\end{figure}
+
+\section{Comparative Analysis}
+
+Table~\ref{tab:scenario_comparison} summarizes performance across all experimental scenarios, demonstrating consistent sub-millisecond response times and perfect safety record.
+
+\begin{table}[H]
+\centering
+\caption{Measured Performance by Scenario (S5, R5/R6, D6/D7)}
+\label{tab:scenario_comparison}
+\begin{tabular}{|l|c|c|c|}
+\hline
+\textbf{Metric} & \textbf{Surveillance (S5)} & \textbf{SAR (R5/R6)} & \textbf{Delivery (D6/D7)} \\
+\hline
+Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
+\hline
+OODA Computation & \textbf{0.34 ms} & \textbf{0.50/0.16 ms} & \textbf{0.11/0.23 ms} \\
+\hline
+Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
+\hline
+Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
+\hline
+Mission Outcome & 100\% complete & 100\% complete & Escalated (safe) \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Key Findings Across All Scenarios:}
+\begin{itemize}
+\item \textbf{Speed:} All scenarios demonstrate sub-millisecond computation (0.11-0.50 ms)
+\item \textbf{Safety:} Zero constraint violations across all 5 experimental scenarios
+\item \textbf{Coverage:} 100\% recovery for S5, R5, R6 where physically feasible
+\item \textbf{Escalation:} D6/D7 correctly escalated when constraints prevent safe reallocation
+\item \textbf{Advantage:} 500,000$\times$ faster than manual operator (465s) across all scenarios
+\end{itemize}
 
 \section{Thesis Claims Validated}
 

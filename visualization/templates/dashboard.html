@@ -197,6 +197,20 @@
             opacity: 0;
             margin: 0;
         }
+        /* Disabled section styles */
+        .panel h3.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .panel h3.disabled::after {
+            opacity: 0.4;
+        }
+        .section-content.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            user-select: none;
+        }
 
         .scenario-card {
             background: var(--bg-tertiary);
@@ -812,7 +826,7 @@
 
     <div class="main">
         <div class="panel">
-            <h3 onclick="toggleSection(this)">Home Base Position</h3>
+            <h3 id="section-home-base" onclick="toggleSection(this)">Home Base Position</h3>
             <div class="section-content">
                 <div class="home-base-inputs">
                     <div class="input-group">
@@ -834,7 +848,7 @@
                 </div>
             </div>
 
-            <h3 onclick="toggleSection(this)">Scenarios</h3>
+            <h3 id="section-scenarios" onclick="toggleSection(this)">Scenarios</h3>
             <div class="section-content">
                 <div class="scenario-card selected" data-scenario="surveillance" onclick="selectScenario('surveillance')">
                     <div class="scenario-title">Surveillance</div>
@@ -850,7 +864,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Fleet Configuration</h3>
+            <h3 id="section-fleet-config" style="margin-top: 20px;" onclick="toggleSection(this)">Fleet Configuration</h3>
             <div class="section-content">
                 <div class="home-base-inputs">
                     <div class="input-group" style="display: flex; align-items: center; gap: 8px;">
@@ -870,7 +884,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Playback</h3>
+            <h3 id="section-playback" style="margin-top: 20px;" onclick="toggleSection(this)">Playback</h3>
             <div class="section-content">
                 <button class="btn btn-primary" id="btn-start">Start Mission</button>
                 <button class="btn btn-warning" id="btn-pause" disabled>Pause</button>
@@ -881,7 +895,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Movement Pattern</h3>
+            <h3 id="section-movement-pattern" style="margin-top: 20px;" onclick="toggleSection(this)">Movement Pattern</h3>
             <div class="section-content">
                 <div class="mode-toggle">
                     <button class="btn btn-mode active" data-mode="per_zone" onclick="setMode('per_zone')">Per Zone</button>
@@ -898,7 +912,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Speed</h3>
+            <h3 id="section-speed" style="margin-top: 20px;" onclick="toggleSection(this)">Speed</h3>
             <div class="section-content">
                 <div class="failure-grid">
                     <button class="btn btn-warning failure-btn" onclick="setSpeed(0.5)">0.5x</button>
@@ -908,7 +922,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Inject Failures</h3>
+            <h3 id="section-inject-failures" style="margin-top: 20px;" onclick="toggleSection(this)">Inject Failures</h3>
             <div class="section-content">
                 <div class="failure-grid">
                     <button class="btn btn-danger failure-btn" onclick="openFailureModal('battery')">Battery</button>
@@ -918,19 +932,19 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Charge Battery</h3>
+            <h3 id="section-charge-battery" style="margin-top: 20px;" onclick="toggleSection(this)">Charge Battery</h3>
             <div class="section-content">
                 <button class="btn btn-charge" onclick="openChargeModal()">Charge UAV to 100%</button>
                 <button class="btn btn-charge charge-all-btn" onclick="chargeAllUAVs()">Charge ALL UAVs</button>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Drain Battery</h3>
+            <h3 id="section-drain-battery" style="margin-top: 20px;" onclick="toggleSection(this)">Drain Battery</h3>
             <div class="section-content">
                 <button class="btn btn-drain" onclick="openDrainModal()">Drain UAV to 15%</button>
                 <button class="btn btn-drain charge-all-btn" onclick="drainAllUAVs()">Drain ALL to 15%</button>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Asset Positioning</h3>
+            <h3 id="section-asset-positioning" style="margin-top: 20px;" onclick="toggleSection(this)">Asset Positioning</h3>
             <div class="section-content">
                 <button class="btn btn-warning" onclick="randomizeAssets()">Randomize Assets</button>
                 <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
@@ -938,7 +952,7 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Recovery</h3>
+            <h3 id="section-recovery" style="margin-top: 20px;" onclick="toggleSection(this)">Recovery</h3>
             <div class="section-content">
                 <button class="btn btn-info" onclick="openRecoveryModal()">Recover Failed UAVs</button>
 
@@ -951,7 +965,7 @@
         <div class="panel map" id="map"></div>
 
         <div class="panel">
-            <h3 onclick="toggleSection(this)">Statistics</h3>
+            <h3 id="section-statistics" onclick="toggleSection(this)">Statistics</h3>
             <div class="section-content">
                 <div class="stats-grid">
                     <div class="stat-box">
@@ -1010,7 +1024,7 @@
                 </div>
             </div>
 
-            <h3 onclick="toggleSection(this)">Workload Assignments</h3>
+            <h3 id="section-workload" onclick="toggleSection(this)">Workload Assignments</h3>
             <div class="section-content">
                 <!-- Legend for delivery scenario -->
                 <div id="delivery-legend" style="display: none; background: var(--bg-tertiary); padding: 10px; margin-bottom: 10px; border-radius: 5px; border: 1px solid var(--border-color);">
@@ -1027,7 +1041,7 @@
                 </div>
             </div>
 
-            <h3 onclick="toggleSection(this)">OODA Loop Monitor</h3>
+            <h3 id="section-ooda-monitor" onclick="toggleSection(this)">OODA Loop Monitor</h3>
             <div class="section-content">
                 <!-- Cycle Metrics -->
                 <div style="display: flex; justify-content: center; margin-bottom: 15px;">
@@ -1546,6 +1560,69 @@
             collapseStates[sectionName] = !isCollapsed;
             localStorage.setItem('sectionStates', JSON.stringify(collapseStates));
         }
+
+        // Section enable/disable functions
+        // Sections that should always be enabled (even before mission starts)
+        const alwaysEnabledSections = [
+            'section-scenarios',
+            'section-playback',
+            'section-ooda-monitor'
+        ];
+
+        function setSectionDisabled(sectionId, disabled) {
+            const header = document.getElementById(sectionId);
+            if (!header) return;
+            const content = header.nextElementSibling;
+
+            if (disabled) {
+                header.classList.add('disabled');
+                if (content) content.classList.add('disabled');
+            } else {
+                header.classList.remove('disabled');
+                if (content) content.classList.remove('disabled');
+            }
+        }
+
+        function setAllSectionsDisabled(disabled) {
+            // List of all section IDs
+            const allSections = [
+                'section-home-base',
+                'section-scenarios',
+                'section-fleet-config',
+                'section-playback',
+                'section-movement-pattern',
+                'section-speed',
+                'section-inject-failures',
+                'section-charge-battery',
+                'section-drain-battery',
+                'section-asset-positioning',
+                'section-recovery',
+                'section-statistics',
+                'section-workload',
+                'section-ooda-monitor'
+            ];
+
+            allSections.forEach(sectionId => {
+                // Skip always-enabled sections
+                if (alwaysEnabledSections.includes(sectionId)) {
+                    setSectionDisabled(sectionId, false);
+                } else {
+                    setSectionDisabled(sectionId, disabled);
+                }
+            });
+        }
+
+        function enableAllSections() {
+            setAllSectionsDisabled(false);
+        }
+
+        // Initialize sections as disabled on page load (before mission starts)
+        function initializeSectionStates() {
+            setAllSectionsDisabled(true);
+        }
+
+        // Call initialization on page load
+        initializeSectionStates();
 
         // OODA Loop Visualization Functions
         const oodaState = {
@@ -2184,6 +2261,8 @@
                 document.getElementById('btn-pause').disabled = false;
                 document.getElementById('btn-stop').disabled = false;
                 document.getElementById('status').textContent = 'ACTIVE';
+                // Enable all sections when mission starts
+                enableAllSections();
                 log(`Mission started from (${homeX}, ${homeY})`, false);
             }, 500);
         };
@@ -2206,6 +2285,9 @@
 
             // Clear all simulation state
             clearSimulation();
+
+            // Disable sections again (only Scenarios, Playback, OODA Monitor remain enabled)
+            initializeSectionStates();
 
             log('Mission stopped');
         };
@@ -2404,6 +2486,9 @@
 
             // Clear all simulation state
             clearSimulation();
+
+            // Disable sections again (only Scenarios, Playback, OODA Monitor remain enabled)
+            initializeSectionStates();
 
             // Log completion message with details
             const missionName = data.mission_type === 'search_rescue' ? 'SAR' : data.mission_type.toUpperCase();
