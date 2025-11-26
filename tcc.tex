@@ -620,335 +620,129 @@ These scenario variations demonstrate architectural flexibility through consiste
 
 \section{Priority-Based Task Scoring Algorithm}
 
-\textbf{ALGORITHM 1: Task Priority Calculation}
+Effective task reallocation requires a principled method for determining which orphaned tasks deserve immediate attention and which can tolerate delayed or degraded service. Algorithm~1 formalizes a multi-factor priority scoring function that balances temporal urgency, mission-specific criticality, and spatial reallocation cost.
 
-\begin{lstlisting}[language=Python, caption=Task Priority Calculation Algorithm]
-def calculate_task_priority(task, fleet_state, mission_context):
-    """
-    Calculate priority score P_i in [0, 1] for task i
-    
-    Inputs:
-        task: Task object with (position, type, deadline, criticality)
-        fleet_state: Current state of all UAVs
-        mission_context: Mission type and global parameters
-    
-    Output:
-        P_i: Priority score (higher = more urgent/important)
-    """
-    
-    # 1. TEMPORAL URGENCY COMPONENT (0-1, higher = more urgent)
-    # Based on deadline proximity
-    t_remaining = task.deadline - current_time
-    t_total = task.deadline - task.start_time
-    temporal_urgency = 1.0 - (t_remaining / t_total)
-    temporal_urgency = max(0, min(1, temporal_urgency))
-    
-    # 2. MISSION CRITICALITY COMPONENT (mission-specific weights)
-    criticality_weights = {
-        # Surveillance mission
-        'surveillance': {
-            'security_critical_zone': 1.0,  # High-value areas
-            'routine_patrol': 0.3,           # Standard coverage
-            'redundant_coverage': 0.1        # Already covered recently
-        },
-        # Search & Rescue mission
-        'sar': {
-            'victim_likely_zone': 1.0,       # High probability areas
-            'debris_search': 0.6,             # Secondary search
-            'perimeter_patrol': 0.3           # Low priority
-        },
-        # Delivery mission
-        'delivery': {
-            'medical_emergency': 1.0,         # Life-critical
-            'time_sensitive': 0.7,            # Commercial priority
-            'standard_delivery': 0.4          # Regular packages
-        }
-    }
-    
-    mission_type = mission_context['type']
-    task_criticality = criticality_weights[mission_type][task.type]
-    
-    # 3. SPATIAL REALLOCATION COST (battery required)
-    # Find nearest available UAV
-    min_distance = float('inf')
-    for uav in fleet_state.healthy_uavs:
-        distance = euclidean_distance(uav.position, task.position)
-        if distance < min_distance:
-            min_distance = distance
-    
-    # Normalize by max range
-    max_range = mission_context['uav_max_range']
-    spatial_cost = min_distance / max_range
-    spatial_cost = max(0, min(1, spatial_cost))
-    
-    # 4. COMBINED PRIORITY SCORE
-    # Weighted combination (weights sum to 1.0)
-    w_temporal = 0.3
-    w_criticality = 0.5
-    w_spatial = 0.2
-    
-    P_i = (w_temporal * temporal_urgency + 
-           w_criticality * task_criticality - 
-           w_spatial * spatial_cost)
-    
-    # Normalize to [0, 1]
-    P_i = max(0, min(1, P_i))
-    
-    return P_i
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Algorithm 1: Task Priority Calculation} \\
+\hline
+\textbf{Input:} Task $t_i$ with position, type, and deadline; fleet state $\mathcal{F}$; mission context $\mathcal{M}$ \\
+\textbf{Output:} Priority score $P_i \in [0, 1]$ \\[6pt]
+\textbf{1.} Compute temporal urgency: $\tau \gets 1 - \dfrac{t_i.\text{deadline} - t_{\text{now}}}{t_i.\text{deadline} - t_i.\text{start}}$ \\[6pt]
+\textbf{2.} Look up mission criticality weight: $c \gets W_{\mathcal{M}.\text{type}}[t_i.\text{type}]$ \\[6pt]
+\textbf{3.} Find minimum distance to healthy UAV: $d_{\min} \gets \min_{u \in \mathcal{F}.\text{healthy}} \| u.\text{pos} - t_i.\text{pos} \|$ \\[6pt]
+\textbf{4.} Normalize spatial cost: $\sigma \gets d_{\min} \,/\, R_{\max}$ \\[6pt]
+\textbf{5.} Combine components: $P_i \gets w_\tau \cdot \text{clamp}(\tau) + w_c \cdot c - w_\sigma \cdot \text{clamp}(\sigma)$ \\[6pt]
+\textbf{6.} \textbf{return} $\text{clamp}(P_i, 0, 1)$ \\
+\hline
+\end{tabular}
+\end{table}
 
-# Priority sorting for task allocation
-def rank_tasks_by_priority(failed_tasks, fleet_state, mission_context):
-    """
-    Rank all failed UAV tasks by priority for reallocation
-    """
-    task_priority_list = []
-    
-    for task in failed_tasks:
-        priority = calculate_task_priority(task, fleet_state, mission_context)
-        task_priority_list.append((task, priority))
-    
-    # Sort in descending order of priority
-    task_priority_list.sort(key=lambda x: x[1], reverse=True)
-    
-    return task_priority_list
-\end{lstlisting}
+The temporal component $\tau$ increases as deadlines approach, ensuring time-critical tasks receive priority. Mission criticality $c$ reflects domain-specific importance: in delivery missions, medical emergencies score 1.0 while standard packages score 0.4; in search and rescue, high-probability victim zones dominate over perimeter patrols. The spatial term $\sigma$ penalizes tasks distant from available UAVs, implicitly accounting for battery expenditure required for reallocation.
 
-\textbf{Justification:}
-\begin{itemize}
-\item \textbf{Temporal component:} Ensures deadline-driven tasks are prioritized
-\item \textbf{Criticality component:} Mission-specific importance (medical > commercial)
-\item \textbf{Spatial component:} Penalizes tasks far from available UAVs (battery cost)
-\item \textbf{Weights:} Tunable based on mission requirements (can be adjusted)
-\end{itemize}
+Default weights ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasize criticality while maintaining responsiveness to deadlines. These parameters are configurable per mission type, as detailed in Section~3.5.
 
-\textbf{Related work:}
-\begin{itemize}
-\item Similar to auction-based task allocation (Choi et al., 2009)
-\item Inspired by utility functions in market-based coordination (Dias et al., 2006)
-\item Differs by explicitly modeling resource costs
-\end{itemize}
+This formulation draws inspiration from auction-based task allocation and utility functions in market-based coordination, but differs by explicitly incorporating resource costs into the priority calculus rather than treating them as post-hoc constraints.
 
 \section{Constraint-Aware Task Reallocation with Collision Avoidance}
 
-\textbf{ALGORITHM 2: Safe Task Reallocation}
+With tasks ranked by priority, the system must assign them to healthy UAVs while respecting hard operational constraints. Algorithm~2 implements a greedy allocation strategy that processes tasks in priority order, assigning each to the nearest UAV with sufficient capacity. This approach guarantees constraint satisfaction at the cost of global optimality—a trade-off justified by real-time requirements.
 
-\begin{lstlisting}[language=Python, caption=Constraint-Aware Task Reallocation Algorithm]
-def reallocate_tasks_with_constraints(failed_uav, healthy_uavs, 
-                                     mission_context):
-    """
-    Reallocate failed UAV tasks to healthy UAVs with:
-    - Battery constraints
-    - Payload constraints
-    - Collision avoidance
-    
-    Returns:
-        reallocation_plan: Dict mapping tasks to UAVs
-        coverage_percentage: % of failed tasks successfully reallocated
-        operator_alerts: List of non-compensable tasks
-    """
-    
-    # 1. CALCULATE AVAILABLE CAPACITY
-    available_capacity = {}
-    for uav in healthy_uavs:
-        # Battery constraint
-        battery_reserve = uav.battery_remaining - SAFETY_RESERVE
-        spare_battery = max(0, battery_reserve - uav.committed_battery)
-        
-        # Payload constraint (for delivery missions)
-        spare_payload = uav.max_payload - uav.current_payload
-        
-        available_capacity[uav.id] = {
-            'battery': spare_battery,
-            'payload': spare_payload,
-            'position': uav.current_position
-        }
-    
-    # 2. RANK FAILED TASKS BY PRIORITY
-    failed_tasks = failed_uav.task_queue
-    ranked_tasks = rank_tasks_by_priority(failed_tasks, 
-                                          healthy_uavs, 
-                                          mission_context)
-    
-    # 3. GREEDY ALLOCATION WITH CONSTRAINTS
-    reallocation_plan = {}
-    unallocated_tasks = []
-    
-    for task, priority in ranked_tasks:
-        allocated = False
-        
-        # Try to assign to nearest UAV with sufficient capacity
-        candidate_uavs = sorted(
-            healthy_uavs,
-            key=lambda u: euclidean_distance(u.position, task.position)
-        )
-        
-        for uav in candidate_uavs:
-            # Check battery constraint
-            distance_to_task = euclidean_distance(uav.position, 
-                                                  task.position)
-            battery_required = distance_to_task / uav.battery_efficiency
-            
-            if available_capacity[uav.id]['battery'] < battery_required:
-                continue  # Insufficient battery
-            
-            # Check payload constraint (delivery missions only)
-            if mission_context['type'] == 'delivery':
-                if available_capacity[uav.id]['payload'] < task.payload:
-                    continue  # Insufficient payload capacity
-            
-            # Check collision-free path
-            if not is_collision_free_path(uav, task, reallocation_plan):
-                continue  # Path conflict detected
-            
-            # ALLOCATION SUCCESSFUL
-            reallocation_plan[task.id] = uav.id
-            available_capacity[uav.id]['battery'] -= battery_required
-            if mission_context['type'] == 'delivery':
-                available_capacity[uav.id]['payload'] -= task.payload
-            allocated = True
-            break
-        
-        if not allocated:
-            unallocated_tasks.append((task, priority))
-    
-    # 4. CALCULATE COVERAGE PERCENTAGE
-    total_tasks = len(failed_tasks)
-    reallocated_tasks = len(reallocation_plan)
-    coverage_percentage = (reallocated_tasks / total_tasks) * 100
-    
-    # 5. GENERATE OPERATOR ALERTS
-    operator_alerts = []
-    for task, priority in unallocated_tasks:
-        alert = {
-            'task_id': task.id,
-            'priority': priority,
-            'reason': 'Insufficient fleet capacity',
-            'recommendation': 'Manual intervention required' if priority > 0.7 
-                            else 'Acceptable degradation'
-        }
-        operator_alerts.append(alert)
-    
-    return reallocation_plan, coverage_percentage, operator_alerts
-\end{lstlisting}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Algorithm 2: Constraint-Aware Task Reallocation} \\
+\hline
+\textbf{Input:} Failed UAV's task queue $\mathcal{T}$; healthy UAVs $\mathcal{U}$; mission context $\mathcal{M}$ \\
+\textbf{Output:} Allocation $\mathcal{A}$; coverage percentage; operator alerts \\[6pt]
+\textbf{1.} \textbf{for each} $u \in \mathcal{U}$ \textbf{do} \\
+\quad Compute spare battery: $b_u \gets u.\text{battery} - B_{\text{reserve}} - u.\text{committed}$ \\
+\quad Compute spare payload: $p_u \gets u.\text{max\_payload} - u.\text{current\_payload}$ \\[4pt]
+\textbf{2.} $\mathcal{T}_{\text{ranked}} \gets \textsc{RankByPriority}(\mathcal{T}, \mathcal{U}, \mathcal{M})$ \hfill \textit{// Algorithm 1} \\[4pt]
+\textbf{3.} $\mathcal{A} \gets \emptyset$; \quad $\mathcal{T}_{\text{unalloc}} \gets \emptyset$ \\[4pt]
+\textbf{4.} \textbf{for each} $(t_i, P_i) \in \mathcal{T}_{\text{ranked}}$ \textbf{do} \\
+\quad Sort candidates by distance: $\mathcal{U}_{\text{sorted}} \gets \text{sort}(\mathcal{U}, \text{key}=\|u.\text{pos} - t_i.\text{pos}\|)$ \\
+\quad \textbf{for each} $u \in \mathcal{U}_{\text{sorted}}$ \textbf{do} \\
+\quad\quad $d \gets \|u.\text{pos} - t_i.\text{pos}\|$; \quad $b_{\text{req}} \gets d \,/\, \eta_u$ \\
+\quad\quad \textbf{if} $b_u < b_{\text{req}}$ \textbf{then continue} \hfill \textit{// Battery constraint} \\
+\quad\quad \textbf{if} $\mathcal{M}.\text{type} = \text{delivery} \land p_u < t_i.\text{payload}$ \textbf{then continue} \hfill \textit{// Payload constraint} \\
+\quad\quad \textbf{if} $\neg\textsc{CollisionFree}(u, t_i, \mathcal{A})$ \textbf{then continue} \hfill \textit{// Algorithm 3} \\
+\quad\quad $\mathcal{A} \gets \mathcal{A} \cup \{(t_i, u)\}$; \quad $b_u \gets b_u - b_{\text{req}}$; \quad \textbf{break} \\
+\quad \textbf{if} $t_i \notin \mathcal{A}$ \textbf{then} $\mathcal{T}_{\text{unalloc}} \gets \mathcal{T}_{\text{unalloc}} \cup \{(t_i, P_i)\}$ \\[4pt]
+\textbf{5.} coverage $\gets |\mathcal{A}| \,/\, |\mathcal{T}| \times 100\%$ \\[4pt]
+\textbf{6.} \textbf{return} $\mathcal{A}$, coverage, $\textsc{GenerateAlerts}(\mathcal{T}_{\text{unalloc}})$ \\
+\hline
+\end{tabular}
+\end{table}
 
-\textbf{ALGORITHM 3: Collision Avoidance Check}
+The algorithm enforces three constraint types sequentially. Battery constraints verify that the UAV retains sufficient charge to reach the task location while maintaining the 20\% safety reserve mandated by operational policy. Payload constraints, active only in delivery missions, ensure the vehicle can physically carry the required cargo. Collision avoidance, delegated to Algorithm~3, prevents spatial conflicts between reassigned flight paths.
 
-\begin{lstlisting}[language=Python, caption=Collision Avoidance Verification]
-def is_collision_free_path(uav, new_task, current_plan):
-    """
-    Check if assigning new_task to uav creates collision risk
-    with other UAVs in current_plan
-    
-    Uses spatial separation and temporal deconfliction
-    """
-    
-    SAFETY_BUFFER = 15.0  # meters (3x typical UAV wingspan)
-    TIME_BUFFER = 10.0    # seconds (safety margin)
-    
-    # Get UAV's new planned path
-    new_path = generate_path(uav.position, new_task.position)
-    new_timeline = estimate_arrival_times(new_path, uav.speed)
-    
-    # Check against all other UAVs' paths
-    for other_uav_id, assigned_tasks in current_plan.items():
-        if other_uav_id == uav.id:
-            continue
-        
-        other_path = get_planned_path(other_uav_id, assigned_tasks)
-        other_timeline = get_timeline(other_uav_id)
-        
-        # Spatial-temporal conflict detection
-        for i, point1 in enumerate(new_path):
-            t1 = new_timeline[i]
-            
-            for j, point2 in enumerate(other_path):
-                t2 = other_timeline[j]
-                
-                # Check if UAVs are near same point at similar time
-                spatial_distance = euclidean_distance(point1, point2)
-                temporal_distance = abs(t1 - t2)
-                
-                if (spatial_distance < SAFETY_BUFFER and 
-                    temporal_distance < TIME_BUFFER):
-                    # COLLISION RISK DETECTED
-                    return False
-    
-    # No conflicts found
-    return True
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Algorithm 3: Collision-Free Path Verification} \\
+\hline
+\textbf{Input:} UAV $u$; candidate task $t$; current allocation $\mathcal{A}$ \\
+\textbf{Output:} Boolean indicating path safety \\[6pt]
+\textbf{Constants:} $D_{\text{safe}} = 15\text{m}$ (spatial buffer); $T_{\text{safe}} = 10\text{s}$ (temporal buffer) \\[6pt]
+\textbf{1.} $\pi_{\text{new}} \gets \textsc{GeneratePath}(u.\text{pos}, t.\text{pos})$ \\
+\textbf{2.} $\tau_{\text{new}} \gets \textsc{EstimateTimeline}(\pi_{\text{new}}, u.\text{speed})$ \\[4pt]
+\textbf{3.} \textbf{for each} $(t', u') \in \mathcal{A}$ where $u' \neq u$ \textbf{do} \\
+\quad $\pi_{\text{other}} \gets \textsc{GetPlannedPath}(u')$ \\
+\quad $\tau_{\text{other}} \gets \textsc{GetTimeline}(u')$ \\
+\quad \textbf{for each} $(p_1, t_1) \in (\pi_{\text{new}}, \tau_{\text{new}})$ \textbf{do} \\
+\quad\quad \textbf{for each} $(p_2, t_2) \in (\pi_{\text{other}}, \tau_{\text{other}})$ \textbf{do} \\
+\quad\quad\quad \textbf{if} $\|p_1 - p_2\| < D_{\text{safe}} \land |t_1 - t_2| < T_{\text{safe}}$ \textbf{then return} \textsc{False} \\[4pt]
+\textbf{4.} \textbf{return} \textsc{True} \\
+\hline
+\end{tabular}
+\end{table}
 
-def apply_temporal_separation(uav, conflicting_uav):
-    """
-    If spatial conflict exists, delay one UAV's task
-    """
-    # Delay the lower-priority UAV by TIME_BUFFER seconds
-    if uav.task_priority < conflicting_uav.task_priority:
-        uav.add_delay(TIME_BUFFER)
-    else:
-        conflicting_uav.add_delay(TIME_BUFFER)
-\end{lstlisting}
+The collision avoidance module implements spatiotemporal conflict detection. Two UAVs are considered in conflict if their paths bring them within 15 meters of each other (approximately three times a typical UAV wingspan) during overlapping time windows. When conflicts arise during allocation, the candidate assignment is rejected and the next-nearest UAV is evaluated. If no conflict-free assignment exists, temporal separation can be applied by delaying the lower-priority UAV's departure.
 
-\textbf{Collision avoidance approach:}
-\begin{itemize}
-\item \textbf{Spatial separation:} Maintain 15m minimum distance (3$\times$ wingspan)
-\item \textbf{Temporal deconfliction:} If paths intersect, stagger arrival times
-\item \textbf{Priority-based:} Lower-priority tasks delayed if conflict occurs
-\end{itemize}
-
-\textbf{Related work:}
-\begin{itemize}
-\item Based on velocity obstacles (van den Berg et al., 2008)
-\item Simpler than distributed RVO but sufficient for centralized planning
-\item Similar to air traffic control separation standards
-\end{itemize}
+This approach draws on velocity obstacle methods but simplifies the formulation for centralized planning where global path information is available. The 15-meter spatial buffer and 10-second temporal margin mirror conservative air traffic control separation standards adapted for low-altitude UAV operations.
 
 \section{Operator Escalation Decision Rules}
 
-\textbf{Decision tree for operator involvement:}
+A distinguishing feature of this architecture is its capacity for honest self-assessment. Rather than forcing autonomous solutions in all circumstances, the system explicitly recognizes when human judgment is required. Algorithm~4 encodes the escalation logic as a hierarchical decision tree that evaluates mission degradation severity.
 
-\begin{lstlisting}[language=Python, caption=Operator Escalation Decision Logic]
-def determine_operator_escalation(coverage_percentage, unallocated_tasks):
-    """
-    Decide when to escalate to operator based on mission degradation
-    """
-    
-    # ESCALATION TRIGGERS
-    
-    # 1. Critical coverage loss
-    if coverage_percentage < 50:
-        return {
-            'escalate': True,
-            'urgency': 'HIGH',
-            'reason': 'Mission coverage below 50% threshold',
-            'recommendation': 'Consider aborting mission or deploying backup UAV'
-        }
-    
-    # 2. High-priority tasks unallocated
-    critical_tasks_lost = [t for t in unallocated_tasks if t[1] > 0.7]
-    if len(critical_tasks_lost) > 0:
-        return {
-            'escalate': True,
-            'urgency': 'HIGH',
-            'reason': f'{len(critical_tasks_lost)} critical tasks cannot be covered',
-            'recommendation': 'Manual task prioritization required'
-        }
-    
-    # 3. Moderate degradation
-    if coverage_percentage < 75:
-        return {
-            'escalate': True,
-            'urgency': 'MEDIUM',
-            'reason': 'Moderate mission degradation (50-75% coverage)',
-            'recommendation': 'Monitor closely, consider manual reallocation'
-        }
-    
-    # 4. Minor degradation - autonomous handling
-    return {
-        'escalate': False,
-        'urgency': 'LOW',
-        'reason': 'Acceptable autonomous compensation (>75% coverage)',
-        'recommendation': 'Continue autonomous operation'
-    }
-\end{lstlisting}
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Algorithm 4: Operator Escalation Decision} \\
+\hline
+\textbf{Input:} Coverage percentage $\rho$; unallocated tasks $\mathcal{T}_{\text{unalloc}}$ with priorities \\
+\textbf{Output:} Escalation decision with urgency level and recommendation \\[6pt]
+\textbf{1.} \textbf{if} $\rho < 50\%$ \textbf{then} \\
+\quad \textbf{return} (escalate=\textsc{True}, urgency=\textsc{High}, \\
+\quad\quad reason=``Coverage below 50\% threshold'', \\
+\quad\quad recommendation=``Deploy backup UAV or abort mission'') \\[4pt]
+\textbf{2.} $n_{\text{critical}} \gets |\{t \in \mathcal{T}_{\text{unalloc}} : P_t > 0.7\}|$ \\
+\quad \textbf{if} $n_{\text{critical}} > 0$ \textbf{then} \\
+\quad \textbf{return} (escalate=\textsc{True}, urgency=\textsc{High}, \\
+\quad\quad reason=``$n_{\text{critical}}$ critical tasks unassignable'', \\
+\quad\quad recommendation=``Manual prioritization required'') \\[4pt]
+\textbf{3.} \textbf{if} $\rho < 75\%$ \textbf{then} \\
+\quad \textbf{return} (escalate=\textsc{True}, urgency=\textsc{Medium}, \\
+\quad\quad reason=``Moderate degradation (50--75\% coverage)'', \\
+\quad\quad recommendation=``Monitor; consider manual reallocation'') \\[4pt]
+\textbf{4.} \textbf{return} (escalate=\textsc{False}, urgency=\textsc{Low}, \\
+\quad reason=``Acceptable autonomous compensation ($>$75\%)'', \\
+\quad recommendation=``Continue autonomous operation'') \\
+\hline
+\end{tabular}
+\end{table}
+
+The escalation hierarchy reflects operational risk tolerance. Coverage below 50\% indicates that the failure has exceeded the fleet's compensatory capacity—continuing autonomously would produce unacceptable mission outcomes. The presence of any unallocated high-priority task ($P > 0.7$) similarly triggers immediate escalation, as these tasks represent mission-critical objectives that cannot be sacrificed without explicit human authorization.
+
+Moderate degradation (50--75\% coverage) warrants operator awareness without demanding immediate intervention, allowing human judgment to assess whether the degraded outcome remains acceptable for the specific operational context. Above 75\% coverage, the system proceeds autonomously, having demonstrated sufficient capacity to absorb the failure's impact.
+
+This graduated response ensures that operator attention is reserved for genuinely consequential decisions while routine failures are handled without interrupting mission flow.
 
 \section{Objective Function and Optimization Strategy}
 
@@ -994,69 +788,35 @@ The DECIDE phase operates under strict temporal constraints (1.0--1.5 seconds), 
 
 \textbf{Stage 1: Greedy Initialization.} Algorithm 2 generates an initial feasible allocation in $O(n \cdot m)$ time, where $n$ is the number of failed tasks and $m$ is the number of healthy UAVs. This greedy approach processes tasks in priority order, assigning each to the nearest constraint-satisfying UAV. While not globally optimal, this initialization typically achieves 70--85\% of the theoretical maximum objective value.
 
-\textbf{Stage 2: Local Search Refinement.} When the time budget permits (approximately 500ms remaining after Stage 1), the system applies iterative local search to improve the initial allocation. The neighborhood structure considers pairwise task swaps between UAVs and reassignment of individual tasks to alternative vehicles:
+\textbf{Stage 2: Local Search Refinement.} When the time budget permits (approximately 500ms remaining after Stage 1), the system applies iterative local search to improve the initial allocation. The neighborhood structure considers pairwise task swaps between UAVs and reassignment of individual tasks to alternative vehicles.
 
-\begin{lstlisting}[language=Python, caption=Two-Stage Optimization Strategy]
-def optimize_allocation(failed_tasks, healthy_uavs, mission_context):
-    """
-    DECIDE phase optimization: maximize J(allocation) within time budget.
-    """
-    t_start = current_time_ms()
-    TIME_BUDGET_MS = 1200  # Total DECIDE phase budget
+\begin{table}[H]
+\centering
+\begin{tabular}{|p{12cm}|}
+\hline
+\textbf{Algorithm 5: Two-Stage Optimization} \\
+\hline
+\textbf{Input:} Failed tasks $\mathcal{T}$; healthy UAVs $\mathcal{U}$; mission context $\mathcal{M}$; time budget $T_{\max}$ \\
+\textbf{Output:} Optimized allocation $\mathcal{A}^*$ with objective score $J^*$ \\[6pt]
+\textbf{Stage 1: Greedy Initialization} \\
+\textbf{1.} $t_0 \gets \textsc{CurrentTime}()$ \\
+\textbf{2.} $\mathcal{A} \gets \textsc{GreedyAllocate}(\mathcal{T}, \mathcal{U}, \mathcal{M})$ \hfill \textit{// Algorithm 2} \\
+\textbf{3.} $J_{\text{best}} \gets \textsc{ComputeObjective}(\mathcal{A}, \mathcal{M})$ \\[4pt]
+\textbf{Stage 2: Local Search Refinement} \\
+\textbf{4.} \textbf{while} $\textsc{CurrentTime}() - t_0 < T_{\max} - T_{\text{reserve}}$ \textbf{do} \\
+\quad $\text{improved} \gets \textsc{False}$ \\
+\quad \textbf{for each} $(t_1, u_1), (t_2, u_2) \in \mathcal{A} \times \mathcal{A}$ where $u_1 \neq u_2$ \textbf{do} \\
+\quad\quad $\mathcal{A}' \gets \mathcal{A}$ with swap: $t_1 \to u_2$, $t_2 \to u_1$ \\
+\quad\quad \textbf{if} $\textsc{IsFeasible}(\mathcal{A}', \mathcal{M})$ \textbf{then} \\
+\quad\quad\quad $J' \gets \textsc{ComputeObjective}(\mathcal{A}', \mathcal{M})$ \\
+\quad\quad\quad \textbf{if} $J' > J_{\text{best}}$ \textbf{then} $\mathcal{A} \gets \mathcal{A}'$; $J_{\text{best}} \gets J'$; $\text{improved} \gets \textsc{True}$; \textbf{break} \\
+\quad \textbf{if} $\neg\text{improved}$ \textbf{then break} \hfill \textit{// Local optimum reached} \\[4pt]
+\textbf{5.} \textbf{return} $\mathcal{A}$, $J_{\text{best}}$ \\
+\hline
+\end{tabular}
+\end{table}
 
-    # Stage 1: Greedy initialization (Algorithm 2)
-    allocation = greedy_allocate(failed_tasks, healthy_uavs, mission_context)
-    best_score = compute_objective(allocation, mission_context)
-
-    # Stage 2: Local search refinement (if time permits)
-    elapsed = current_time_ms() - t_start
-    if elapsed < TIME_BUDGET_MS - 200:  # Reserve 200ms for finalization
-        allocation, best_score = local_search(
-            allocation,
-            failed_tasks,
-            healthy_uavs,
-            mission_context,
-            max_time_ms = TIME_BUDGET_MS - elapsed - 200
-        )
-
-    return allocation, best_score
-
-def local_search(allocation, tasks, uavs, context, max_time_ms):
-    """
-    Iterative improvement via task swaps and reassignments.
-    """
-    best = allocation.copy()
-    best_score = compute_objective(best, context)
-    t_start = current_time_ms()
-
-    while (current_time_ms() - t_start) < max_time_ms:
-        improved = False
-
-        # Try pairwise swaps
-        for t1, u1 in best.items():
-            for t2, u2 in best.items():
-                if u1 == u2:
-                    continue
-
-                # Propose swap: t1->u2, t2->u1
-                candidate = best.copy()
-                candidate[t1], candidate[t2] = u2, u1
-
-                if is_feasible(candidate, context):
-                    score = compute_objective(candidate, context)
-                    if score > best_score:
-                        best = candidate
-                        best_score = score
-                        improved = True
-                        break
-            if improved:
-                break
-
-        if not improved:
-            break  # Local optimum reached
-
-    return best, best_score
-\end{lstlisting}
+The local search explores pairwise task swaps, proposing exchanges between UAVs and accepting improvements that increase the objective function while maintaining constraint feasibility. The algorithm terminates upon reaching a local optimum or exhausting the time budget, whichever occurs first. A 200ms reserve ($T_{\text{reserve}}$) ensures sufficient time for finalization and command dispatch.
 
 \subsection{Optimality Gap Analysis}
 
@@ -1086,8 +846,8 @@ The objective function parameters are configured per mission type to reflect ope
 Unallocated penalty & $\lambda$ & 0.3 & 0.5 & 0.4 \\
 Coverage gap weight & $\gamma$ & 0.2 & --- & --- \\
 Golden hour bonus & $\beta$ & --- & 0.5 & --- \\
-Priority weights & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
-                 & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
+                 & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+Priority weights & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
                  & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
 \hline
 \end{tabular}
