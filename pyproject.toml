@@ -71,3 +71,29 @@ ignore = ["E501"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+max-complexity = 10
+
+# List of directories/files to exclude
+exclude = [
+    ".git",
+    "__pycache__",
+    "docs",
+    "venv",          # Virtual environments
+    ".venv",         # Another common name for virtual environments
+    "migrations/*",  # Database migration files (often auto-generated)
+    "build/*",       # Build directories
+    "setup.py",      # Often excluded as it is treated differently
+    ".venv",
+    "venv",
+    "migrations/*",
+    "build/*",
+]
+
+# List of error codes to ignore (common ones for use with Black)
+ignore = [
+    "W503",  # Line break before binary operator
+    "E203",  # Whitespace before ':'
+    "E501",  # line too long (81 > 79 characters)
+]
+
