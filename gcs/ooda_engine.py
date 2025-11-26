@@ -454,7 +454,8 @@ class OODAEngine:
                     'reallocation_count': len(reallocation_plan),
                     'objective_score': metrics.get('objective_score', 0),
                     'optimality_gap': metrics.get('optimality_gap_estimate', 0)
-                }
+                },
+                metrics=metrics  # Send all enhanced metrics to dashboard
             )
 
         return decision

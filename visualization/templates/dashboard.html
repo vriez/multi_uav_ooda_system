@@ -861,40 +861,12 @@
                         <input type="range" id="numUAVsSlider" min="1" max="20" value="5"
                                style="flex: 1; height: 6px; border-radius: 3px; background: var(--border-color);"
                                oninput="syncUAVSlider(this.value)">
-                        <span id="uavCountLabel" style="font-size: 14px; font-weight: 600; color: var(--accent-primary); min-width: 30px;">5</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                    <div style="font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">
-                        UAV Capabilities (Future Use)
-                    </div>
-                    <div style="display: grid; gap: 8px;">
-                        <label class="capability-checkbox">
-                            <input type="checkbox" id="cap_ftc" checked disabled>
-                            <span>Fault-Tolerant Control</span>
-                        </label>
-                        <label class="capability-checkbox">
-                            <input type="checkbox" id="cap_autonomous" checked disabled>
-                            <span>Autonomous Navigation</span>
-                        </label>
-                        <label class="capability-checkbox">
-                            <input type="checkbox" id="cap_swarm" checked disabled>
-                            <span>Swarm Coordination</span>
-                        </label>
-                        <label class="capability-checkbox">
-                            <input type="checkbox" id="cap_payload" disabled>
-                            <span>Heavy Payload Capacity</span>
-                        </label>
-                        <label class="capability-checkbox">
-                            <input type="checkbox" id="cap_weather" disabled>
-                            <span>Weather Resistance</span>
-                        </label>
+                        <span id="uavCountLabel" style="font-size: 14px; font-weight: 600; color: var(--accent-primary); min-width: 20px;">5</span>
                     </div>
                 </div>
 
                 <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
-                    Configure fleet size before starting mission. Capabilities are for future implementation.
+                    Configure fleet size before starting mission.
                 </div>
             </div>
 
@@ -1170,6 +1142,71 @@
                                 <span style="color: var(--danger);">● Act</span>
                                 <span style="color: var(--text-primary); font-weight: 600;" id="ooda-avg-act">-</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision Quality Metrics -->
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 8px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">DECISION QUALITY</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="color: var(--text-muted);">Recovery Rate</div>
+                            <div style="font-weight: 600; color: var(--status-operational);" id="ooda-recovery-rate">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Tasks Recovered</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-tasks-recovered">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Coverage Loss</div>
+                            <div style="font-weight: 600; color: var(--status-danger);" id="ooda-coverage-loss">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Objective Score</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-objective-score">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fleet Capacity Metrics -->
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 8px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">FLEET STATUS</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="color: var(--text-muted);">Operational</div>
+                            <div style="font-weight: 600; color: var(--status-operational);" id="ooda-operational-uavs">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Failed</div>
+                            <div style="font-weight: 600; color: var(--status-danger);" id="ooda-failed-uavs">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Battery Spare</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-battery-spare">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Payload Spare</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-payload-spare">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Optimization Metrics -->
+                <div style="background: var(--bg-tertiary); border-radius: 6px; padding: 10px; margin-bottom: 15px; border: 1px solid var(--border-color);">
+                    <div style="font-weight: 600; font-size: 11px; margin-bottom: 8px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); padding-bottom: 5px;">OPTIMIZATION</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="color: var(--text-muted);">Opt. Time</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-opt-time">-</div>
+                        </div>
+                        <div>
+                            <div style="color: var(--text-muted);">Iterations</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-opt-iterations">-</div>
+                        </div>
+                        <div style="grid-column: 1 / -1;">
+                            <div style="color: var(--text-muted);">Optimality Gap</div>
+                            <div style="font-weight: 600; color: var(--text-primary);" id="ooda-opt-gap">-</div>
                         </div>
                     </div>
                 </div>
@@ -1686,6 +1723,75 @@
                     if (avgEl) avgEl.textContent = formatted;
                 }
             });
+        }
+
+        function updateEnhancedOodaMetrics(metrics) {
+            // Helper to format values safely
+            const safe = (val, defaultVal = '-') => (val !== undefined && val !== null) ? val : defaultVal;
+            const safePct = (val) => (val !== undefined && val !== null) ? val.toFixed(1) + '%' : '-';
+            const safeNum = (val, decimals = 1) => (val !== undefined && val !== null) ? val.toFixed(decimals) : '-';
+
+            // Decision Quality Metrics
+            const recoveryRateEl = document.getElementById('ooda-recovery-rate');
+            if (recoveryRateEl) recoveryRateEl.textContent = safePct(metrics.recovery_rate);
+
+            const tasksRecoveredEl = document.getElementById('ooda-tasks-recovered');
+            if (tasksRecoveredEl) {
+                const recovered = safe(metrics.tasks_recovered, 0);
+                const lost = safe(metrics.tasks_lost, 0);
+                tasksRecoveredEl.textContent = `${recovered}/${lost}`;
+            }
+
+            const coverageLossEl = document.getElementById('ooda-coverage-loss');
+            if (coverageLossEl) coverageLossEl.textContent = safePct(metrics.coverage_loss);
+
+            const objectiveScoreEl = document.getElementById('ooda-objective-score');
+            if (objectiveScoreEl) objectiveScoreEl.textContent = safeNum(metrics.objective_score, 3);
+
+            // Fleet Capacity Metrics
+            const operationalEl = document.getElementById('ooda-operational-uavs');
+            if (operationalEl) operationalEl.textContent = safe(metrics.operational_uavs, 0);
+
+            const failedEl = document.getElementById('ooda-failed-uavs');
+            if (failedEl) failedEl.textContent = safe(metrics.failed_uavs, 0);
+
+            const batterySpareEl = document.getElementById('ooda-battery-spare');
+            if (batterySpareEl) {
+                const spare = safe(metrics.battery_spare, 0);
+                batterySpareEl.textContent = safeNum(spare, 1) + ' Wh';
+            }
+
+            const payloadSpareEl = document.getElementById('ooda-payload-spare');
+            if (payloadSpareEl) {
+                const spare = safe(metrics.payload_spare, 0);
+                payloadSpareEl.textContent = safeNum(spare, 2) + ' kg';
+            }
+
+            // Optimization Metrics
+            const optTimeEl = document.getElementById('ooda-opt-time');
+            if (optTimeEl) {
+                const time = metrics.optimization_time_ms;
+                if (time !== undefined && time !== null) {
+                    optTimeEl.textContent = time < 1000 ?
+                        time.toFixed(2) + 'ms' :
+                        (time / 1000).toFixed(2) + 's';
+                } else {
+                    optTimeEl.textContent = '-';
+                }
+            }
+
+            const optIterationsEl = document.getElementById('ooda-opt-iterations');
+            if (optIterationsEl) optIterationsEl.textContent = safe(metrics.optimization_iterations, 0);
+
+            const optGapEl = document.getElementById('ooda-opt-gap');
+            if (optGapEl) {
+                const gap = metrics.optimality_gap_estimate;
+                if (gap !== undefined && gap !== null) {
+                    optGapEl.textContent = (gap * 100).toFixed(2) + '%';
+                } else {
+                    optGapEl.textContent = '-';
+                }
+            }
         }
 
         function addOodaEvent(event) {
@@ -2232,6 +2338,15 @@
             }
             document.getElementById('zones').textContent = taskCount;
 
+            // Update basic fleet status in OODA monitor even when no cycle is running
+            if (data.fleet) {
+                const opEl = document.getElementById('ooda-operational-uavs');
+                if (opEl) opEl.textContent = data.fleet.operational || 0;
+
+                const failEl = document.getElementById('ooda-failed-uavs');
+                if (failEl) failEl.textContent = data.fleet.failed || 0;
+            }
+
             // Update scenario-specific metrics
             if (data.metrics) {
                 if (scenario === 'search_rescue') {
@@ -2319,6 +2434,11 @@
                 }
 
                 updateOodaMetrics();
+            }
+
+            // Update enhanced metrics if provided
+            if (e.metrics) {
+                updateEnhancedOodaMetrics(e.metrics);
             }
         });
 

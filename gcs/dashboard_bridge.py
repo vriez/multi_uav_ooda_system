@@ -77,9 +77,21 @@ class DashboardBridge:
     def notify_ooda_event(self, event_message: str, is_critical: bool = False,
                           phase: str = None, uav_id: int = None,
                           cycle_num: int = None, duration_ms: float = None,
-                          details: dict = None):
-        """Send OODA event notification to dashboard"""
-        self.socketio.emit('ooda_event', {
+                          details: dict = None, metrics: dict = None):
+        """
+        Send OODA event notification to dashboard
+
+        Args:
+            event_message: Event description
+            is_critical: Whether this is a critical event
+            phase: OODA phase (observe, orient, decide, act)
+            uav_id: Optional UAV ID involved
+            cycle_num: OODA cycle number
+            duration_ms: Phase duration in milliseconds
+            details: Phase-specific details
+            metrics: Enhanced OODA metrics (decision quality, fleet status, optimization)
+        """
+        event_data = {
             'message': event_message,
             'critical': is_critical,
             'phase': phase,
@@ -88,4 +100,9 @@ class DashboardBridge:
             'duration_ms': duration_ms,
             'details': details or {},
             'timestamp': __import__('time').time()
-        })
+        }
+
+        if metrics is not None:
+            event_data['metrics'] = metrics
+
+        self.socketio.emit('ooda_event', event_data)

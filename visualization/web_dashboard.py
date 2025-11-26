@@ -215,6 +215,10 @@ mission_metrics = {
     'assets_rescued': 0
 }
 
+# Persistent OODA metrics - retained throughout server lifetime
+latest_ooda_metrics = None
+latest_ooda_timestamp = None
+
 # =============================================================================
 # GRID BOUNDARY SAFETY CONSTANTS AND HELPERS
 # =============================================================================
@@ -2288,7 +2292,7 @@ def safe_emit(event, data, broadcast=False):
     except Exception as e:
         logger.error(f"Failed to emit {event}: {e}")
 
-def emit_ooda(phase, message, critical=False, cycle_num=None):
+def emit_ooda(phase, message, critical=False, cycle_num=None, duration_ms=None, details=None, metrics=None):
     """
     Emit OODA event with explicit phase label.
 
@@ -2297,14 +2301,30 @@ def emit_ooda(phase, message, critical=False, cycle_num=None):
         message: Event message string
         critical: Whether this is a critical event
         cycle_num: Optional cycle number for tracking
+        duration_ms: Optional phase duration in milliseconds
+        details: Optional phase-specific details dictionary
+        metrics: Optional enhanced OODA metrics dictionary
     """
-    global ooda_count
+    global ooda_count, latest_ooda_metrics, latest_ooda_timestamp
     event_data = {
         'phase': phase,
         'message': message,
         'critical': critical,
         'cycle_num': cycle_num if cycle_num is not None else ooda_count
     }
+
+    if duration_ms is not None:
+        event_data['duration_ms'] = duration_ms
+
+    if details is not None:
+        event_data['details'] = details
+
+    if metrics is not None:
+        event_data['metrics'] = metrics
+        # Store metrics persistently for new clients
+        latest_ooda_metrics = metrics.copy()
+        latest_ooda_timestamp = time.time()
+
     safe_emit('ooda_event', event_data)
 
 @socketio.on('connect')
@@ -2320,6 +2340,18 @@ def handle_connect():
         emit('workload_update', {'assignments': workload_balancer.get_current_assignments(uavs, tasks, scenario_type)})
         emit('pattern_update', {'pattern': patrol_pattern})
         emit('mode_update', {'mode': pattern_mode})
+
+        # Send latest OODA metrics if available (persistent display)
+        if latest_ooda_metrics is not None:
+            emit('ooda_event', {
+                'phase': 'restore',
+                'message': 'Restored latest OODA metrics',
+                'critical': False,
+                'cycle_num': ooda_count,
+                'metrics': latest_ooda_metrics,
+                'timestamp': latest_ooda_timestamp
+            })
+            logger.info(f"Sent persistent OODA metrics to new client {client_id}")
     except Exception as e:
         logger.error(f"Error sending initial state to client: {e}")
 
