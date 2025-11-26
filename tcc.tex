@@ -363,7 +363,7 @@ UAV & Unmanned Aerial Vehicle \\
 
 Over the last decade, Unmanned Aerial Vehicles (UAVs) have progressed from experimental platforms to essential tools in logistics, environmental monitoring, and emergency response. Multi-UAV coordination, in particular, has emerged as a key enabler of scalable autonomy, allowing fleets to execute missions more efficiently and robustly than any single vehicle could achieve alone.
 
-Despite this progress, much of the research in fault-tolerant multi-agent systems still operates within idealized boundaries. Academic frameworks often presume conditions that are far removed from operational reality: unlimited energy reserves, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority. These simplifying assumptions make theoretical analysis tractable, but they mask the complexities that dominate real-world deployments.
+Despite this progress, much of the research in fault-tolerant multi-agent systems still operates within idealized boundaries (ZHANG; JIANG, 2008; YU; JIANG, 2015). Academic frameworks often presume conditions that are far removed from operational reality: unlimited energy reserves, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority. These simplifying assumptions make theoretical analysis tractable, but they mask the complexities that dominate real-world deployments.
 
 In practice, UAV operations are governed by strict physical and regulatory limits. Batteries must retain safety reserves of 10–20\% to satisfy aviation standards. Payload resources, whether spray tanks or delivery packages, deplete irreversibly during flight and cannot be replenished mid-mission. Communication links introduce latencies of up to two seconds, and mission execution beyond visual line of sight requires constant operator supervision.
 
@@ -371,17 +371,17 @@ The result is a persistent ``reality gap'' between simulated autonomy and deploy
 
 \section{The OODA Loop: From Combat Theory to Autonomous Resilience}
 
-The concept of the OODA loop—Observe, Orient, Decide, Act—originated from U.S. Air Force Colonel John Boyd's studies of aerial combat dynamics. Boyd proposed that victory depends not merely on speed or strength, but on the ability to process information and adapt more quickly than the opponent. The OODA loop thus represents a continuous cycle of perception, reasoning, and action, where each iteration refines understanding and enhances responsiveness to change.
+The concept of the OODA loop—Observe, Orient, Decide, Act—originated from U.S. Air Force Colonel John Boyd's studies of aerial combat dynamics (BOYD, 1987). Boyd proposed that victory depends not merely on speed or strength, but on the ability to process information and adapt more quickly than the opponent. The OODA loop thus represents a continuous cycle of perception, reasoning, and action, where each iteration refines understanding and enhances responsiveness to change.
 
 In the context of autonomous systems, the OODA loop provides a natural metaphor for adaptive control. The ``Observe'' phase involves collecting data from sensors and system telemetry; ``Orient'' interprets this data to establish situational awareness; ``Decide'' selects a course of action under the prevailing constraints; and ``Act'' executes that decision, feeding its outcomes back into the next cycle. Crucially, the loop is not linear but recursive: every action reshapes the environment that the next observation must interpret.
 
 Applied to UAV fleets, this framework extends beyond traditional feedback control by integrating situational reasoning and contextual adaptation. Each vehicle, and the system as a whole, can maintain awareness not only of environmental conditions but also of internal resource states, communication health, and mission progress. The OODA architecture thus provides a foundation for resilient autonomy, where the fleet continuously senses its collective state, interprets disruptions, and reorganizes tasks in real time.
 
-Most existing UAV coordination systems implement a subset of these principles, emphasizing either rapid reaction or long-term planning, but rarely both. What remains underexplored is the integration of the OODA loop into a real-time, resource-constrained, operator-supervised control system—one that can detect faults, reorient mission objectives, and adapt dynamically while remaining within the operational bounds of safety and regulation.
+Most existing UAV coordination systems implement a subset of these principles, emphasizing either rapid reaction or long-term planning, but rarely both (BALA et al., 2025). What remains underexplored is the integration of the OODA loop into a real-time, resource-constrained, operator-supervised control system—one that can detect faults, reorient mission objectives, and adapt dynamically while remaining within the operational bounds of safety and regulation.
 
 \section{Bridging the Gap: OODA-Based Fault-Tolerant Mission Control}
 
-Despite its theoretical appeal, the OODA framework has rarely been implemented as a real-time operational control system for UAV fleets. Most prior work either focuses on single-vehicle fault recovery (Mueller \& D'Andrea, 2014) or treats multi-agent coordination under ideal conditions with unlimited resources (Li et al., 2017). Consequently, few systems integrate real-world resource constraints, probabilistic fault detection, and operator-in-the-loop supervision within a unified architecture.
+Despite its theoretical appeal, the OODA framework has rarely been implemented as a real-time operational control system for UAV fleets. Most prior work either focuses on single-vehicle fault recovery (MUELLER; D'ANDREA, 2014; SUN et al., 2022) or treats multi-agent coordination under ideal conditions with unlimited resources (LI et al., 2017; YANG et al., 2011). Architectures for fault-tolerant multi-robot cooperation such as ALLIANCE (PARKER, 1998) have demonstrated resilience principles, but few systems integrate real-world resource constraints, probabilistic fault detection, and operator-in-the-loop supervision within a unified architecture.
 
 This research addresses that gap through the development of a hybrid OODA-based fault-tolerant mission control system designed for real-time UAV fleet management. The system operates as a hybrid finite-state machine (FSM) that continuously cycles between monitoring and adaptation modes, combining deterministic state transitions with probabilistic failure identification to maintain robust mission execution under realistic constraints.
 
@@ -494,7 +494,7 @@ An important distinction exists between \textbf{OODA algorithm computation time}
 
 \textbf{OODA computation time (measured):} The core OODA loop algorithm---encompassing failure detection logic, capacity analysis, constraint validation, and reallocation optimization---executes in 0.11 to 0.50 milliseconds. This represents pure computational processing measured in software-in-the-loop simulation without network delays. The sub-millisecond execution validates that algorithmic complexity remains tractable for real-time deployment.
 
-\textbf{End-to-end system latency (design target):} The original 4-6 second estimate accounts for complete system response including bidirectional RF communication delays (0.5-1.0 seconds uplink for failure notification, 0.5-1.0 seconds downlink for command dispatch), telemetry aggregation latency at 2 Hz sampling intervals (up to 0.5 seconds), and command acknowledgment verification (0.2 seconds). In field deployment with long-range radio links, total adaptation time spans:
+\textbf{End-to-end system latency (design target):} The original 4-6 second estimate accounts for complete system response including bidirectional RF communication delays, a critical factor in distributed UAV coordination (ABDESSAMEUD; TAYEBI, 2011; IZADI; GORDON; ZHANG, 2009). This encompasses 0.5-1.0 seconds uplink for failure notification, 0.5-1.0 seconds downlink for command dispatch, telemetry aggregation latency at 2 Hz sampling intervals (up to 0.5 seconds), and command acknowledgment verification (0.2 seconds). In field deployment with long-range radio links, total adaptation time spans:
 
 \begin{equation}
 T_{total} = T_{uplink} + T_{compute} + T_{downlink} + T_{ack} \approx 1.0 + 0.0005 + 1.0 + 0.2 = 2.2 \text{ seconds}
@@ -517,7 +517,7 @@ The OBSERVE phase (1.0-1.5s budget) establishes situational awareness through mu
 
 \subsection{ORIENT Phase: Situation Assessment and Capacity Analysis}
 
-The ORIENT phase (1.0-1.5s budget) transforms observations into actionable intelligence. Mission impact evaluation quantifies coverage loss, affected zones, and deadline pressure. Fleet capacity analysis inventories spare resources: battery capacity (subtracting committed energy and 15-20\% safety reserves, yielding ~3min flight per 10\% spare), payload capacity for delivery missions, and temporal margins relative to deadlines. Task prioritization applies Algorithm 1 to generate 0-1 priority scores from temporal urgency, mission criticality, and spatial cost. Feasibility classification: feasible (>75\% tasks reallocable, >90\% completion), partial (50-75\% reallocable, 75-90\% completion), or infeasible (<50\% reallocable, <75\% completion).
+The ORIENT phase (1.0-1.5s budget) transforms observations into actionable intelligence, drawing on coverage control theory for mobile sensing networks (CORTÉS et al., 2004; SCHWAGER; RUS; SLOTINE, 2009). Mission impact evaluation quantifies coverage loss, affected zones, and deadline pressure. Fleet capacity analysis inventories spare resources: battery capacity (subtracting committed energy and 15-20\% safety reserves, yielding ~3min flight per 10\% spare), payload capacity for delivery missions, and temporal margins relative to deadlines. Task prioritization applies Algorithm 1 to generate 0-1 priority scores from temporal urgency, mission criticality, and spatial cost. Feasibility classification: feasible (>75\% tasks reallocable, >90\% completion), partial (50-75\% reallocable, 75-90\% completion), or infeasible (<50\% reallocable, <75\% completion).
 
 \subsection{DECIDE Phase: Strategic Planning and Algorithmic Optimization}
 
@@ -651,7 +651,7 @@ The temporal component $\tau$ increases as deadlines approach, ensuring time-cri
 
 Default weights ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasize criticality while maintaining responsiveness to deadlines. These parameters are configurable per mission type, as detailed in Section~3.5.
 
-This formulation draws inspiration from auction-based task allocation and utility functions in market-based coordination, but differs by explicitly incorporating resource costs into the priority calculus rather than treating them as post-hoc constraints.
+This formulation draws inspiration from auction-based task allocation (CHOI; BRUNET; HOW, 2009) and utility functions in market-based coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), but differs by explicitly incorporating resource costs into the priority calculus rather than treating them as post-hoc constraints. The formal taxonomy of task allocation in multi-robot systems established by Gerkey and Matarić (2004) provides the theoretical foundation for this approach.
 
 \section{Constraint-Aware Task Reallocation with Collision Avoidance}
 
@@ -711,7 +711,7 @@ The algorithm enforces three constraint types sequentially. Battery constraints 
 
 The collision avoidance module implements spatiotemporal conflict detection. Two UAVs are considered in conflict if their paths bring them within 15 meters of each other (approximately three times a typical UAV wingspan) during overlapping time windows. When conflicts arise during allocation, the candidate assignment is rejected and the next-nearest UAV is evaluated. If no conflict-free assignment exists, temporal separation can be applied by delaying the lower-priority UAV's departure.
 
-This approach draws on velocity obstacle methods but simplifies the formulation for centralized planning where global path information is available. The 15-meter spatial buffer and 10-second temporal margin mirror conservative air traffic control separation standards adapted for low-altitude UAV operations.
+This approach draws on velocity obstacle methods, particularly Reciprocal Velocity Obstacles (VAN DEN BERG; LIN; MANOCHA, 2008), but simplifies the formulation for centralized planning where global path information is available. The 15-meter spatial buffer and 10-second temporal margin mirror conservative air traffic control separation standards adapted for low-altitude UAV operations.
 
 \section{Operator Escalation Decision Rules}
 
@@ -882,6 +882,8 @@ Each scenario represents a distinct operational domain with documented real-worl
 
 \section{SCENARIO 1: Long-Duration Perimeter Surveillance}
 
+Perimeter surveillance represents a canonical application of decentralized aerial monitoring, with established methodologies for coordinating multiple UAVs across extended operational periods (BEARD et al., 2006).
+
 \subsection{Mission Context}
 
 \begin{itemize}
@@ -909,7 +911,7 @@ The fundamental challenge lies in the mismatch between mission duration and indi
 
 Not all perimeter sections demand equal vigilance. The zone prioritization reflects threat assessment based on facility layout and historical incident patterns. Zones A and B along the northern perimeter guard main entry points and receive the highest priority rating ($P = 0.9$), commanding the most intensive patrol patterns. The eastern and western flanks (Zones C and D) cover secondary access routes with moderate priority ($P = 0.6$), while the southern boundary (Zones E and F) monitors low-risk terrain at standard priority ($P = 0.4$).
 
-This priority differentiation manifests in patrol circuit complexity. High-priority zones require eight waypoints per circuit, creating dense coverage patterns that minimize detection gaps. Medium-priority zones operate with six waypoints, balancing coverage density against battery consumption. Standard-priority zones employ four-waypoint circuits, sufficient for perimeter awareness without expending resources needed elsewhere. The waypoint density directly influences energy expenditure—a consideration that becomes critical during failure recovery when remaining UAVs must potentially absorb additional coverage responsibilities.
+This priority differentiation manifests in patrol circuit complexity, following principles established in multi-robot area patrol research (ELMALIACH; AGMON; KAMINKA, 2009). High-priority zones require eight waypoints per circuit, creating dense coverage patterns that minimize detection gaps. Medium-priority zones operate with six waypoints, balancing coverage density against battery consumption. Standard-priority zones employ four-waypoint circuits, sufficient for perimeter awareness without expending resources needed elsewhere. The waypoint density directly influences energy expenditure—a consideration that becomes critical during failure recovery when remaining UAVs must potentially absorb additional coverage responsibilities.
 
 \subsection{Rotation Strategy}
 
@@ -2033,7 +2035,7 @@ These three scenarios validate the OODA-based hybrid autonomy architecture acros
 
 \section{Simulation Environment}
 
-Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce systematically. This research therefore employs software-in-the-loop simulation, implementing physically-grounded vehicle dynamics within a controlled computational environment where failures can be injected deterministically and experiments repeated indefinitely.
+Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce systematically. This research therefore employs software-in-the-loop simulation (SOARES et al., 2025), implementing physically-grounded vehicle dynamics within a controlled computational environment where failures can be injected deterministically and experiments repeated indefinitely.
 
 The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 2.5 kg maximum payload) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
 
@@ -2302,7 +2304,7 @@ This chapter presents a critical assessment of the proposed OODA-based fault-tol
 
 The system employs a centralized Ground Control Station for OODA loop execution, creating a single point of failure. Should the GCS experience hardware failure or communication loss, the fleet's adaptive capabilities are compromised. Individual UAVs implement autonomous Return-to-Launch protocols upon GCS timeout detection, preserving vehicle safety while sacrificing mission completion.
 
-Future work could explore distributed OODA architectures using consensus algorithms for peer-to-peer coordination. This approach would eliminate the centralization vulnerability while introducing new challenges including increased communication complexity, network partitioning risks, and Byzantine fault tolerance requirements. The transition to distributed coordination must carefully balance robustness against implementation complexity.
+Future work could explore distributed OODA architectures using consensus algorithms for peer-to-peer coordination, building on hierarchical decentralized control approaches that handle communication failures (IZADI; GORDON; ZHANG, 2013). This approach would eliminate the centralization vulnerability while introducing new challenges including increased communication complexity, network partitioning risks, and Byzantine fault tolerance requirements. The transition to distributed coordination must carefully balance robustness against implementation complexity.
 
 \subsection{Fleet Scalability}
 
