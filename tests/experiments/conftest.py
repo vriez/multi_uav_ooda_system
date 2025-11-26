@@ -5,15 +5,15 @@ Imports all fixtures from experiment_fixtures.py and makes them available
 to all tests in the experiments directory.
 """
 
-import pytest
 import sys
 import os
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from gcs.constraint_validator import ConstraintValidator
-from gcs.ooda_engine import OODAEngine
+import pytest  # noqa: E402
+from gcs.constraint_validator import ConstraintValidator  # noqa: E402
+from gcs.ooda_engine import OODAEngine  # noqa: E402
 
 
 @pytest.fixture

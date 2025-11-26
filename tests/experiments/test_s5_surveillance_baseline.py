@@ -25,21 +25,17 @@ import time
 import numpy as np
 
 from tests.experiments.baseline_strategies import (
-    StrategyType,
     NoAdaptationStrategy,
     GreedyNearestStrategy,
     ManualOperatorStrategy,
     OODAStrategy,
-    create_strategy,
 )
 from tests.experiments.experiment_fixtures import (
     MockMissionDatabase,
-    MockTask,
     FleetState,
     ExperimentResults,
 )
 from gcs.ooda_engine import OODAEngine
-from gcs.constraint_validator import ConstraintValidator
 from gcs.objective_function import MissionContext, MissionType
 
 
@@ -285,7 +281,6 @@ class TestS5SurveillanceBaseline:
         # Validate thesis claims
         ooda_result = results.results["OODA"]
         manual_result = results.results["Manual Operator"]
-        greedy_result = results.results["Greedy Nearest"]
 
         # Claim 1: OODA is 75-150x faster than manual
         speedup = manual_result.adaptation_time_sec / max(

@@ -4,7 +4,6 @@ Constraint Validator - Sequential verification of battery, payload, and time con
 
 import logging
 import numpy as np
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

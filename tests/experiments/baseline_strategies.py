@@ -17,7 +17,7 @@ import logging
 import numpy as np
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ class GreedyNearestStrategy(BaselineStrategy):
     def __init__(self):
         super().__init__(StrategyType.GREEDY_NEAREST)
 
-    def reallocate(
+    def reallocate(  # noqa: C901
         self, fleet_state, lost_tasks: List, mission_db, constraint_validator
     ) -> ReallocationResult:
         """Assign to nearest UAV ignoring constraints"""

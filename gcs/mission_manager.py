@@ -4,7 +4,7 @@ Mission Manager - Task database and assignment management
 
 import logging
 import numpy as np
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List, Dict, Optional
 from enum import Enum
 

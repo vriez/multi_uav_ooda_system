@@ -30,7 +30,7 @@ def is_position_outside_grid(position):
     return x < GRID_MIN or x > GRID_MAX or y < GRID_MIN or y > GRID_MAX
 
 
-def calculate_boundary_intersection(start_pos, target_pos):
+def calculate_boundary_intersection(start_pos, target_pos):  # noqa: C901
     """
     Calculate where the line from start to target intersects the grid boundary.
     Returns the boundary intersection point (x, y).
@@ -210,7 +210,7 @@ class TestAwaitingPermissionState:
         """UAV should stop when reaching boundary with outside target"""
         uav_position = [59, 0, 10]
         boundary_position = [60, 0, 10]
-        target = [80, 0, 10]  # Outside grid
+        # target = [80, 0, 10] - Outside grid (context only)
 
         # Calculate distance to boundary
         distance_to_boundary = np.linalg.norm(
@@ -254,7 +254,7 @@ class TestPermissionTracking:
 
     def test_different_target_requires_new_permission(self):
         """Different target should not inherit permission"""
-        pickup_target = (80, 20)
+        # pickup_target = (80, 20) - context only
         dropoff_target = (-80, -20)
         permission_granted_for_target = (80, 20)
 

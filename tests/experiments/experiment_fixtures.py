@@ -8,21 +8,21 @@ Provides:
 - OODA engine setup for experiments
 """
 
-import pytest
-import time
-import numpy as np
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
-from enum import Enum
-
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from gcs.ooda_engine import OODAEngine, FleetState, OODAPhase, RecoveryStrategy
-from gcs.constraint_validator import ConstraintValidator
-from gcs.objective_function import MissionContext, MissionType
+import pytest  # noqa: E402
+import time  # noqa: E402
+import numpy as np  # noqa: E402
+from dataclasses import dataclass, field  # noqa: E402
+from typing import Dict, List, Optional  # noqa: E402
+from enum import Enum  # noqa: E402
+
+from gcs.ooda_engine import OODAEngine, FleetState  # noqa: E402
+from gcs.constraint_validator import ConstraintValidator  # noqa: E402
+from gcs.objective_function import MissionType  # noqa: E402
 
 
 # =============================================================================
@@ -269,8 +269,8 @@ def surveillance_mission_db():
         (700, 300, 40, "Zone H - Standard"),
     ]
 
-    for i, (x, y, priority, desc) in enumerate(zones, 1):
-        task = db.add_task(
+    for i, (x, y, priority, _desc) in enumerate(zones, 1):
+        db.add_task(
             position=np.array([x, y, 50.0]),
             priority=priority,
             zone_id=i,
@@ -362,8 +362,8 @@ def sar_mission_db():
         (800, 800, 30, "Zone 6 - Dense forest"),
     ]
 
-    for i, (x, y, priority, desc) in enumerate(zones, 1):
-        task = db.add_task(
+    for i, (x, y, priority, _desc) in enumerate(zones, 1):
+        db.add_task(
             position=np.array([x, y, 50.0]),
             priority=priority,
             zone_id=i,
@@ -455,8 +455,8 @@ def delivery_mission_db():
         (1200, 300, 20, 1.8, 90, "Package E - Vitamins"),
     ]
 
-    for i, (x, y, priority, payload, deadline_min, desc) in enumerate(packages, 1):
-        task = db.add_task(
+    for i, (x, y, priority, payload, deadline_min, _desc) in enumerate(packages, 1):
+        db.add_task(
             position=np.array([x, y, 0.0]),  # Ground level delivery
             priority=priority,
             payload_kg=payload,

@@ -10,20 +10,17 @@ Tests cover:
 - Battery charging at home base
 """
 
-import pytest
-import numpy as np
-from unittest.mock import Mock, patch
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from visualization.config import (
+import pytest  # noqa: E402
+
+from visualization.config import (  # noqa: E402
     BASE_BATTERY_DRAIN,
     BATTERY_LOW_THRESHOLD,
-    BATTERY_CHARGE_RATE,
-    HOME_ARRIVAL_THRESHOLD,
     LOOP_REAL_INTERVAL,
 )
 

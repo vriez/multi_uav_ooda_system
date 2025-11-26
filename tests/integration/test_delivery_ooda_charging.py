@@ -5,7 +5,6 @@ Verifies that when all UAVs are charging and packages are pending,
 the OODA loop immediately assigns packages as soon as a UAV finishes charging.
 """
 
-import pytest
 import sys
 import os
 
@@ -190,8 +189,6 @@ class TestDeliveryOODACharging:
                 "assigned_task": None,
             },
         }
-
-        RECOVERY_THRESHOLD = 80
 
         print("Initial State:")
         print(f"  {len(packages)} packages pending")

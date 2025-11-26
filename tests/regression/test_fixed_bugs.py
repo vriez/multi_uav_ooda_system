@@ -43,7 +43,7 @@ class TestBatteryFreezeBugs:
         """
         battery = 45.0
         awaiting_permission = True
-        mission_type = "search_rescue"
+        # mission_type = "search_rescue" - context only
         dt = 0.05
         drain_rate = 0.3
 
@@ -261,10 +261,9 @@ class TestPermissionBugs:
         """
         # Pickup phase
         permission_granted_for_target = (80, 20)
-        task_status = "assigned"
+        # task_status = "assigned" -> "picked_up" (simulated phase transition)
 
-        # Complete pickup
-        task_status = "picked_up"
+        # Complete pickup - permission must be cleared
         permission_granted_for_target = None  # Must clear
 
         # Now at dropoff phase
@@ -287,7 +286,7 @@ class TestEdgeCaseRegressions:
         BUG: Battery warning flag could persist after recharge
         FIX: Reset battery_warning flag when recovered (web_dashboard.py:1353)
         """
-        battery = 100.0
+        # battery = 100.0 - fully charged (context)
         state = "recovered"
         battery_warning = True  # Was set during low battery
 

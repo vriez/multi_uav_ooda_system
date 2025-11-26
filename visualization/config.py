@@ -7,7 +7,7 @@ This module contains all configuration constants, magic numbers, and
 scenario definitions to improve maintainability and reduce code duplication.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 
 # =============================================================================
 # SIMULATION TIMING CONSTANTS

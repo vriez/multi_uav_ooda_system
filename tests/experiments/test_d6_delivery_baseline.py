@@ -27,7 +27,6 @@ import time
 import numpy as np
 
 from tests.experiments.baseline_strategies import (
-    StrategyType,
     NoAdaptationStrategy,
     GreedyNearestStrategy,
     ManualOperatorStrategy,
@@ -39,7 +38,6 @@ from tests.experiments.experiment_fixtures import (
     ExperimentResults,
 )
 from gcs.ooda_engine import OODAEngine
-from gcs.constraint_validator import ConstraintValidator
 from gcs.objective_function import MissionContext, MissionType
 
 

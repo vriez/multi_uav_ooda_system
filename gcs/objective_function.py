@@ -10,7 +10,7 @@ Reference: TCC Section 3.5 - Objective Function and Optimization Strategy
 import time
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional, Callable
+from typing import Dict, List, Tuple, Optional
 from enum import Enum
 import numpy as np
 
@@ -382,7 +382,7 @@ class AllocationOptimizer:
         # Remove empty entries
         return {k: v for k, v in allocation.items() if v}
 
-    def _local_search(
+    def _local_search(  # noqa: C901
         self,
         initial_allocation: Dict[int, List[int]],
         fleet_state,

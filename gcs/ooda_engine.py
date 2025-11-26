@@ -14,7 +14,6 @@ from .objective_function import (
     ObjectiveFunction,
     AllocationOptimizer,
     MissionContext,
-    MissionType,
     AllocationResult,
     create_optimizer,
 )
@@ -635,7 +634,7 @@ class OODAEngine:
 
         return reallocation
 
-    def get_performance_stats(self) -> Dict[str, float]:
+    def get_performance_stats(self) -> Dict[str, float]:  # noqa: C901
         """
         Get comprehensive OODA cycle performance statistics
 

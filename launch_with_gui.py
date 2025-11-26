@@ -6,7 +6,6 @@ import subprocess
 import time
 import sys
 import os
-import threading
 
 
 def launch_dashboard():

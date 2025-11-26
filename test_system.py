@@ -8,10 +8,10 @@ sys.path.insert(0, ".")
 
 print("Testing imports...")
 try:
-    from gcs.ooda_engine import OODAEngine
-    from gcs.fleet_monitor import FleetMonitor
-    from gcs.constraint_validator import ConstraintValidator
-    from gcs.mission_manager import MissionDatabase
+    from gcs.ooda_engine import OODAEngine  # noqa: F401
+    from gcs.fleet_monitor import FleetMonitor  # noqa: F401
+    from gcs.constraint_validator import ConstraintValidator  # noqa: F401
+    from gcs.mission_manager import MissionDatabase  # noqa: F401
     from uav.simulation import UAVSimulation
 
     print("✓ All imports successful")

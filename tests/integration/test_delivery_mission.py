@@ -177,7 +177,7 @@ class TestOutOfGridDelivery:
     def test_separate_permission_for_pickup_and_dropoff(self):
         """Pickup and dropoff require separate permissions if both outside"""
         pickup_location = (80, 20)
-        dropoff_location = (-80, -20)
+        # dropoff_location = (-80, -20) - Context for permission logic
 
         permission_for_pickup = pickup_location
         task_status = "assigned"
@@ -189,6 +189,7 @@ class TestOutOfGridDelivery:
         # Now need permission for dropoff
         permission_for_dropoff = None  # Will need to be granted separately
 
+        assert task_status == "picked_up"
         assert permission_for_pickup is None
         assert permission_for_dropoff is None
 
@@ -398,7 +399,7 @@ class TestDeliveryEdgeCases:
         """Handle UAV crash during delivery"""
         state = "delivering"
         battery = 0.0
-        assigned_task = "pkg_1"
+        # assigned_task = "pkg_1" - Task will be undelivered
 
         if battery <= 0:
             state = "crashed"

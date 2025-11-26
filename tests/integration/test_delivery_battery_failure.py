@@ -5,8 +5,6 @@ Tests the behavior when UAVs run out of battery during delivery missions,
 especially when delivering packages outside the grid.
 """
 
-import pytest
-import numpy as np
 import sys
 import os
 
@@ -75,7 +73,7 @@ class TestDeliveryBatteryFailure:
         # Simulate battery drain while waiting
         uav["battery"] -= 2.0  # Now at 23%
 
-        assert uav["awaiting_permission"] == True
+        assert uav["awaiting_permission"] is True
         assert uav["battery"] > 15.0  # Still above critical
         print(f"✓ {uav_id} stopped at boundary {boundary_pos}")
         print(f"  Awaiting permission for target [80, 80, 0]")
@@ -106,7 +104,7 @@ class TestDeliveryBatteryFailure:
         print("Phase 5: UAV should abort delivery due to low battery")
 
         should_abort = uav["battery"] <= 15 and not uav["returning"]
-        assert should_abort == True, "UAV should abort when battery <= 15%"
+        assert should_abort is True, "UAV should abort when battery <= 15%"
 
         # Simulate abort logic
         uav["returning"] = True
@@ -121,7 +119,7 @@ class TestDeliveryBatteryFailure:
         uav["awaiting_permission"] = False
         uav["permission_granted_for_target"] = None
 
-        assert uav["returning"] == True
+        assert uav["returning"] is True
         assert uav["state"] == "returning"
         assert package["status"] == "pending"
         assert package["assigned_uav"] is None
@@ -255,7 +253,7 @@ class TestDeliveryBatteryFailure:
 
         # Check if should abort
         should_abort = uav["battery"] <= 15 and not uav["returning"]
-        assert should_abort == True, "UAV should abort at boundary when battery <= 15%"
+        assert should_abort is True, "UAV should abort at boundary when battery <= 15%"
 
         # Simulate abort
         uav["returning"] = True
@@ -270,8 +268,8 @@ class TestDeliveryBatteryFailure:
         uav["permission_granted_for_target"] = None
         uav["out_of_grid_target"] = None
 
-        assert uav["returning"] == True
-        assert uav["awaiting_permission"] == False
+        assert uav["returning"] is True
+        assert uav["awaiting_permission"] is False
         assert package["status"] == "pending"
 
         print("✓ UAV aborted while waiting at boundary")

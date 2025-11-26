@@ -7,7 +7,7 @@ import socket
 import json
 import logging
 import threading
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Callable
 from collections import deque
 import numpy as np
 

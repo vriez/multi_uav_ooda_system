@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Dashboard integration (optional)
 try:
-    from flask_socketio import SocketIO
-    from gcs.dashboard_bridge import DashboardBridge
+    from flask_socketio import SocketIO  # noqa: F401
+    from gcs.dashboard_bridge import DashboardBridge  # noqa: F401
 
     DASHBOARD_AVAILABLE = True
 except ImportError:

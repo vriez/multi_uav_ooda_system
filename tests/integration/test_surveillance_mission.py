@@ -25,14 +25,8 @@ class TestSurveillanceZoneAssignment:
         num_zones = 9
         num_uavs = 5
 
-        # Expected spatial contiguity pattern
-        expected_assignments = {
-            "uav_1": [1, 2],
-            "uav_2": [3, 6],
-            "uav_3": [4, 5],
-            "uav_4": [7, 8],
-            "uav_5": [9],
-        }
+        # Expected spatial contiguity pattern:
+        # uav_1: [1, 2], uav_2: [3, 6], uav_3: [4, 5], uav_4: [7, 8], uav_5: [9]
 
         # Simulate zone allocation
         zone_groups = [
@@ -135,7 +129,7 @@ class TestRecoveredUAVReassignment:
     def test_recovered_uav_gets_reassigned(self):
         """Recovered UAV should receive zone assignments"""
         uav_state = "recovered"
-        battery = 100.0
+        # battery = 100.0 - Fully charged (context only)
         assigned_zones = []
 
         # Simulate reassignment
@@ -166,7 +160,7 @@ class TestContinuousMissionOperation:
 
     def test_mission_runs_until_manually_stopped(self):
         """Surveillance mission should run indefinitely"""
-        mission_type = "surveillance"
+        # mission_type = "surveillance" - context
         auto_stop = False  # No auto-stop for surveillance
 
         assert not auto_stop
@@ -178,23 +172,18 @@ class TestContinuousMissionOperation:
         # Simulate multiple cycles
         for i in range(3):
             # UAV deploys
-            state = "deploying"
             cycles.append(("deploy", i))
 
             # UAV patrols
-            state = "patrolling"
             cycles.append(("patrol", i))
 
             # Battery low, returns
-            state = "returning"
             cycles.append(("return", i))
 
             # Charges
-            state = "charging"
             cycles.append(("charge", i))
 
             # Recovers
-            state = "recovered"
             cycles.append(("recover", i))
 
         # Should have 5 events × 3 cycles = 15 events
@@ -285,7 +274,7 @@ class TestSurveillanceEdgeCases:
 
     def test_single_uav_covers_all_zones(self):
         """Single operational UAV should cover all zones"""
-        operational_uavs = ["uav_1"]
+        # When only one UAV is operational, it covers all zones
         all_zones = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         # All zones assigned to single UAV

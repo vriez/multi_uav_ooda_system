@@ -9,14 +9,14 @@ Tests cover:
 - Operational flag management
 """
 
-import pytest
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from visualization.config import (
+import pytest  # noqa: E402
+from visualization.config import (  # noqa: E402
     UAV_STATE_IDLE,
     UAV_STATE_DEPLOYING,
     UAV_STATE_PATROLLING,
@@ -94,7 +94,7 @@ class TestCrashStateTransitions:
 
     def test_any_state_to_crashed_on_battery_depletion(self):
         """UAV should crash from any state if battery depletes"""
-        battery = 0.0
+        # battery = 0.0 triggers crash
         state = "crashed"
         operational = False
 
@@ -236,16 +236,14 @@ class TestOperationalFlag:
 
     def test_operational_false_on_low_battery_return(self):
         """Operational flag should be False when returning for low battery"""
-        state = "returning"
-        battery = 14.0
+        # state = "returning", battery = 14.0 (context)
         operational = False  # Set False when starting return
 
         assert not operational
 
     def test_operational_true_after_recovery(self):
         """Operational flag should be True after recovery"""
-        state = "recovered"
-        battery = 100.0
+        # state = "recovered", battery = 100.0 (context)
         operational = True  # Ready for redeployment
 
         # Actually, in the code operational stays False until reassignment
@@ -254,8 +252,7 @@ class TestOperationalFlag:
 
     def test_operational_false_for_crashed(self):
         """Operational flag should always be False for crashed UAVs"""
-        state = "crashed"
-        battery = 0.0
+        # state = "crashed", battery = 0.0 (context)
         operational = False
 
         assert not operational
@@ -299,8 +296,7 @@ class TestStateTransitionEdgeCases:
         state = "awaiting_permission"
         awaiting_permission = True
 
-        # Permission granted
-        permission_granted = True
+        # Permission granted - UAV resumes delivery
         awaiting_permission = False
         state = "delivering"
 
@@ -311,7 +307,7 @@ class TestStateTransitionEdgeCases:
         """Recovered UAV transitions to patrolling when reassigned"""
         state = "recovered"
         operational = False
-        battery = 100.0
+        # battery = 100.0 (context - fully charged)
 
         # Reassigned zones
         assigned_zones = [1, 2]
@@ -329,12 +325,11 @@ class TestInvalidStateTransitions:
     def test_cannot_transition_from_crashed_to_operational(self):
         """Crashed UAVs cannot become operational"""
         state = "crashed"
-        battery = 0.0
+        # battery = 0.0 (context - depleted)
 
         # Even if we try to assign task, should stay crashed
-        assigned_task = "zone_1"
         if state == "crashed":
-            # Ignore assignment
+            # Ignore assignment - task "zone_1" would be ignored
             pass
         else:
             state = "patrolling"
@@ -345,7 +340,7 @@ class TestInvalidStateTransitions:
         """UAVs can only charge when at home base"""
         state = "patrolling"
         distance_to_home = 50.0
-        battery = 15.0
+        # battery = 15.0 (context - low battery)
 
         # Cannot start charging if far from home
         if distance_to_home < 2.0:

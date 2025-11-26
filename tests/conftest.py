@@ -4,23 +4,19 @@ Pytest fixtures and configuration for UAV system tests
 This file contains shared fixtures used across all test modules.
 """
 
-import pytest
-import numpy as np
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from visualization.config import (
+import pytest  # noqa: E402
+import numpy as np  # noqa: E402
+
+from visualization.config import (  # noqa: E402
     BASE_BATTERY_DRAIN,
     BASE_CRUISE_SPEED,
     BASE_RETURN_SPEED,
-    BATTERY_LOW_THRESHOLD,
-    HOME_ARRIVAL_THRESHOLD,
-    DELIVERY_ARRIVAL_THRESHOLD,
-    SAR_VISIBILITY_RADIUS,
-    SAR_DETECTION_RADIUS,
     LOOP_REAL_INTERVAL,
 )
 

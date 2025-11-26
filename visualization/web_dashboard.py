@@ -12,7 +12,6 @@ from flask_socketio import SocketIO, emit
 import threading
 import time
 import numpy as np
-from collections import defaultdict
 import logging
 
 # Import configuration constants
@@ -95,7 +94,7 @@ try:
     )
 except ImportError:
     # When run as script: python visualization/web_dashboard.py
-    from config import (
+    from config import (  # noqa: F401
         # Simulation timing
         LOOP_REAL_INTERVAL,
         TELEMETRY_INTERVAL,
@@ -307,7 +306,9 @@ class WorkloadBalancer:
         self.last_rebalance_time = 0
         self.rebalance_interval = REBALANCE_INTERVAL
 
-    def compute_zone_contour(self, zone_ids, tasks, pattern=None, mode=None):
+    def compute_zone_contour(  # noqa: C901
+        self, zone_ids, tasks, pattern=None, mode=None
+    ):
         """
         Compute a patrol path based on the selected pattern and mode.
         Patterns: perimeter, lawnmower, spiral, creeping, random, figure8, sector
@@ -498,7 +499,7 @@ class WorkloadBalancer:
 
         return segments
 
-    def _generate_grouped_pattern(
+    def _generate_grouped_pattern(  # noqa: C901
         self, pattern, zone_bounds, min_x, max_x, min_y, max_y
     ):
         """Generate pattern for grouped zones, clipped to actual zone areas."""
@@ -828,7 +829,7 @@ class WorkloadBalancer:
 
         return assignments
 
-    def reassign_recovered_uav(self, uav_id, uavs, tasks):
+    def reassign_recovered_uav(self, uav_id, uavs, tasks):  # noqa: C901
         """
         Re-assigns a recovered UAV to ALL unassigned zones first,
         then steals from overloaded UAVs if needed for balance.
@@ -1028,7 +1029,9 @@ class WorkloadBalancer:
 
         return assignments
 
-    def get_current_assignments(self, uavs, tasks=None, scenario_type="surveillance"):
+    def get_current_assignments(  # noqa: C901
+        self, uavs, tasks=None, scenario_type="surveillance"
+    ):
         """Get formatted assignments for display"""
         assignments = []
 
@@ -1101,7 +1104,7 @@ class WorkloadBalancer:
 
         return assignments
 
-    def ensure_full_coverage(self, uavs, tasks):
+    def ensure_full_coverage(self, uavs, tasks):  # noqa: C901
         """
         Ensures ALL zones are assigned to at least one operational UAV.
         Called periodically to fix any orphaned zones.
@@ -1179,7 +1182,7 @@ class WorkloadBalancer:
 workload_balancer = WorkloadBalancer()
 
 
-def init_scenario(scenario, custom_home=None):
+def init_scenario(scenario, custom_home=None):  # noqa: C901
     """Initialize mission - ALL UAVs deployed from home base"""
     global uavs, tasks, scenario_type, home_base, mission_start_time, mission_metrics
     scenario_type = scenario
@@ -1466,7 +1469,7 @@ def init_scenario(scenario, custom_home=None):
     )
 
 
-def simulation_loop():
+def simulation_loop():  # noqa: C901
     """Main simulation loop"""
     global mission_active, simulation_speed, last_reassignment_time, ooda_count, last_telemetry_time, LOOP_REAL_INTERVAL
 
@@ -1903,7 +1906,6 @@ def simulation_loop():
                             waypoint_idx = uav.get("waypoint_idx", 0) % len(
                                 uav["circle_waypoints"]
                             )
-                            prev_waypoint_idx = waypoint_idx
                             target_wp = uav["circle_waypoints"][waypoint_idx]
                             target = [target_wp[0], target_wp[1], 15]
 
@@ -2177,7 +2179,6 @@ def simulation_loop():
                     search_reduction_rate = SCENARIOS["search_rescue"][
                         "search_reduction_rate"
                     ]
-                    consensus_required = mission_metrics["consensus_required"]
 
                     # Process each asset
                     for asset_id, asset in tasks.items():
@@ -2974,7 +2975,7 @@ def index():
 
 
 @socketio.on("start_mission")
-def handle_start(data):
+def handle_start(data):  # noqa: C901
     global mission_active, scenario_type, SCENARIOS
     logger.info(f"DEBUG: Received start_mission event with data: {data}")  # DEBUG
     scenario_type = data["scenario"]
@@ -3142,7 +3143,7 @@ def handle_pattern_mode(data):
 
 
 @socketio.on("inject_failure")
-def handle_failure(data):
+def handle_failure(data):  # noqa: C901
     global ooda_count
     uav_id = data["uav_id"]
 
@@ -3180,7 +3181,7 @@ def handle_failure(data):
 
     if operational and failed_zones:
         logger.info(f"Redistributing zones {failed_zones} from {uav_id}")
-        assignments = workload_balancer.redistribute_failed_zones(
+        workload_balancer.redistribute_failed_zones(
             failed_zones, operational, uavs, tasks
         )
 

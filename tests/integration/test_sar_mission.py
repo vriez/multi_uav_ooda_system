@@ -10,17 +10,17 @@ Tests cover:
 - Mission completion criteria
 """
 
-import pytest
-import numpy as np
 import sys
 import os
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from visualization.config import (
+import pytest  # noqa: E402
+import numpy as np  # noqa: E402
+
+from visualization.config import (  # noqa: E402
     SAR_VISIBILITY_RADIUS,
-    SAR_DETECTION_RADIUS,
     SAR_CONSENSUS_REQUIRED,
     SAR_IDENTIFICATION_CIRCLES,
     SAR_GUARDIAN_MONITORING_CIRCLES,
@@ -152,7 +152,7 @@ class TestOutOfGridPursuit:
         """UAV should stop at boundary and await permission"""
         uav_position = [59, 0]
         boundary_position = [60, 0]
-        asset_position = [80, 0]
+        # asset_position = [80, 0] - Asset outside grid (unused, for context only)
 
         distance_to_boundary = np.linalg.norm(
             np.array(boundary_position) - np.array(uav_position)
@@ -281,7 +281,7 @@ class TestMissionCompletion:
     def test_guardians_continue_monitoring(self):
         """Guardians should continue monitoring after mission objectives met"""
         guardian_role = "guardian"
-        objectives_complete = True
+        # Objectives are complete but guardian continues
 
         # Guardian continues even after objectives complete
         guardian_active = guardian_role == "guardian"
@@ -291,7 +291,7 @@ class TestMissionCompletion:
     def test_non_guardians_continue_patrol(self):
         """Non-guardian UAVs continue area patrol"""
         uav_role = "patrolling"
-        objectives_complete = True
+        # Objectives are complete but patrol continues
 
         # Continue patrolling for potential additional assets
         continues_patrol = uav_role == "patrolling"
@@ -445,8 +445,8 @@ class TestSAREdgeCases:
         asset1_last_known = [50, 50]
         asset2_last_known = [30, 30]
 
-        asset1_real = [80, 80]  # Moved
-        asset2_real = [30, 30]  # Didn't move
+        # Real positions: asset1 at [80, 80] (moved), asset2 at [30, 30] (same)
+        # But UAVs only know last_known positions
 
         # Last known positions are independent
         assert asset1_last_known != asset2_last_known
@@ -484,7 +484,7 @@ class TestOrthogonalDistanceIndicator:
     def test_indicator_appears_for_outside_asset(self):
         """Orange indicator should appear for assets outside grid"""
         asset_x = 80
-        asset_y = 0
+        # asset_y = 0 - Y coordinate (unused, for context only)
         grid_max = 60
 
         is_outside = asset_x > grid_max

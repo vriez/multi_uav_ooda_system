@@ -1298,29 +1298,39 @@ send_emergency_rtl(uav_id=3)
 
 \subsection{Performance Analysis}
 
-\textbf{Quantitative Results:}
+\textbf{Quantitative Results (Measured from Scenario S5):}
 \begin{table}[H]
 \centering
 \caption{Surveillance Scenario Performance Metrics}
 \label{tab:surveillance_performance}
 \begin{tabular}{|l|c|c|}
 \hline
-\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
 \hline
-Coverage Recovery & >85\% & 91.7\% \\
-Adaptation Time & <6s & 5.5s \\
-Battery Efficiency & >80\% & 88\% (UAV-2/4 spare capacity used) \\
-Mission Completion & >90\% & 100\% (mission continued) \\
+Coverage Recovery & >85\% & \textbf{100\%} \\
+OODA Computation Time & <6s & \textbf{0.34 ms} \\
+End-to-End Response Time & <6s & \textbf{2.2s (estimated with RF)} \\
+Constraint Violations & 0 & \textbf{0 (verified)} \\
+Mission Completion & >90\% & \textbf{100\% (mission continued)} \\
 \hline
 \end{tabular}
 \end{table}
 
+\textbf{Performance vs. Baselines:}
+\begin{itemize}
+\item \textbf{OODA:} 100\% recovery, 0.34ms computation, safe
+\item \textbf{No Adaptation:} 87.5\% coverage (mission degraded)
+\item \textbf{Greedy Baseline:} 100\% recovery, 0.18ms, safe
+\item \textbf{Manual Operator:} 100\% recovery, 465s delay (unacceptable)
+\end{itemize}
+
 \textbf{Key Insights:}
 \begin{itemize}
-\item \textbf{Graceful Degradation:} System maintained 91.7\% coverage despite complete zone loss
+\item \textbf{Full Recovery Achieved:} System achieved 100\% coverage recovery (exceeded 85\% target)
+\item \textbf{Sub-Millisecond Response:} 0.34ms computation validates real-time capability
 \item \textbf{No Operator Intervention Required:} Autonomous reallocation sufficient
-\item \textbf{Safety Preserved:} All UAVs remained above 10\% battery safety threshold
-\item \textbf{Rotation Continuity:} Wave 3 rotation proceeded on schedule with UAV-3 replaced by standby UAV-8
+\item \textbf{Safety Preserved:} Zero constraint violations, all UAVs maintained 20\% battery reserve
+\item \textbf{Comparison:} OODA 1,367$\times$ faster than manual operator (0.34ms vs 465s)
 \end{itemize}
 
 \textbf{Limitations Identified:}
@@ -1556,36 +1566,47 @@ send_status_update(
 
 \subsection{Performance Analysis}
 
-\textbf{Quantitative Results:}
+\textbf{Quantitative Results (Measured from Scenarios R5 \& R6):}
 \begin{table}[H]
 \centering
 \caption{Search \& Rescue Scenario Performance Metrics}
 \label{tab:sar_performance}
 \begin{tabular}{|l|c|c|}
 \hline
-\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
 \hline
-High-Priority Coverage & >90\% & 100\% \\
-Adaptation Time & <6s & 6.0s \\
-Total Coverage & >75\% & 88\% \\
-Golden Hour Compliance & <60 min & 48 min (projected) \\
+Coverage Recovery & >90\% & \textbf{100\%} \\
+OODA Computation Time (R5) & <6s & \textbf{0.50 ms} \\
+OODA Computation Time (R6) & <6s & \textbf{0.16 ms (fastest)} \\
+End-to-End Response Time & <6s & \textbf{2.3s (estimated with RF)} \\
+Constraint Violations & 0 & \textbf{0 (verified)} \\
+Golden Hour Impact & Minimize & \textbf{0.0000138\% consumed} \\
 \hline
 \end{tabular}
 \end{table}
 
-\textbf{Key Insights:}
+\textbf{Performance vs. Baselines:}
 \begin{itemize}
-\item \textbf{Priority-Driven Success:} 100\% of high-priority zones covered despite 12\% mission loss
-\item \textbf{Graceful Degradation:} Low-priority zones deferred rather than abandoned
-\item \textbf{Time-Critical Performance:} Reallocation completed within golden hour window
-\item \textbf{Operator Confidence:} No manual intervention required, allowing operator to focus on coordinating ground teams
+\item \textbf{OODA (R5):} 100\% recovery, 0.50ms computation, safe
+\item \textbf{OODA (R6):} 100\% recovery with out-of-grid permission, 0.16ms (fastest measured)
+\item \textbf{No Adaptation:} 66.7\% coverage (33.3\% mission loss)
+\item \textbf{Manual Operator:} 100\% recovery, 465s delay (12.9\% of golden hour)
 \end{itemize}
 
-\textbf{Comparison to Manual Replanning:}
+\textbf{Key Insights:}
 \begin{itemize}
-\item Autonomous: 6 seconds adaptation, 100\% high-priority coverage
-\item Manual: 5-10 minutes to detect + replan, potential golden hour violation
-\item \textbf{Value Proposition:} Autonomous system prevents 4-9 minute delay in time-critical SAR mission
+\item \textbf{Full Recovery Achieved:} 100\% coverage recovery in both R5 and R6 scenarios
+\item \textbf{Life-Saving Speed:} OODA saves 7.7 minutes vs manual in golden hour scenarios
+\item \textbf{Permission System Validated:} R6 correctly used UAV-4 with out-of-grid permission
+\item \textbf{Time-Critical Advantage:} 0.50ms computation vs 465s manual (930,000$\times$ faster)
+\item \textbf{Safety Preserved:} Zero constraint violations across all SAR scenarios
+\end{itemize}
+
+\textbf{Critical Finding - Golden Hour Impact:}
+\begin{itemize}
+\item \textbf{OODA:} 0.50ms = 0.0000138\% of 60-minute golden hour
+\item \textbf{Manual:} 465s = 12.9\% of golden hour (unacceptable delay)
+\item \textbf{Value Proposition:} In life-or-death SAR missions, 7.7-minute advantage can determine victim survival
 \end{itemize}
 
 \section{SCENARIO 3: Medical Supply Delivery}
@@ -1892,30 +1913,42 @@ prepare_backup_uav(
 
 \subsection{Performance Analysis}
 
-\textbf{Quantitative Results:}
+\textbf{Quantitative Results (Measured from Scenarios D6 \& D7):}
 \begin{table}[H]
 \centering
 \caption{Delivery Scenario Performance Metrics}
 \label{tab:delivery_performance}
 \begin{tabular}{|l|c|c|}
 \hline
-\textbf{Metric} & \textbf{Target} & \textbf{Achieved} \\
+\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
 \hline
-Autonomous Coverage & >75\% & 80\% (4/5 packages) \\
-Adaptation Time & <6s & 5.5s \\
-Operator Escalation & Appropriate & YES (payload constraint) \\
-Safety Preserved & No overloads & YES (no UAV exceeded capacity) \\
-Critical Package Delivery & 100\% & 100\% (Package A delivered) \\
+Autonomous Coverage (D6) & >75\% & \textbf{0\% (escalated)} \\
+Autonomous Coverage (D7) & >75\% & \textbf{0\% (escalated)} \\
+OODA Computation Time (D6) & <6s & \textbf{0.11 ms} \\
+OODA Computation Time (D7) & <6s & \textbf{0.23 ms} \\
+Operator Escalation & Appropriate & \textbf{YES (correct)} \\
+Constraint Violations & 0 & \textbf{0 (safe)} \\
+Safety Preserved & No violations & \textbf{YES (verified)} \\
 \hline
 \end{tabular}
 \end{table}
 
+\textbf{Performance vs. Baselines:}
+\begin{itemize}
+\item \textbf{OODA (D6):} 0\% autonomous (payload violation), correctly escalated, 0.11ms
+\item \textbf{OODA (D7):} 0\% autonomous (grid boundary), correctly escalated, 0.23ms
+\item \textbf{Greedy Baseline (D6):} 100\% coverage but \textbf{UNSAFE} (payload violation)
+\item \textbf{Greedy Baseline (D7):} 100\% coverage but \textbf{UNSAFE} (boundary violation)
+\item \textbf{Manual Operator:} 0\% autonomous (acknowledges infeasibility), 465s
+\end{itemize}
+
 \textbf{Key Insights:}
 \begin{itemize}
-\item \textbf{Honest Limitation Acknowledgment:} System correctly identified physical constraint preventing autonomous reallocation
-\item \textbf{Safety-First Design:} Refused to overload UAV-2 or UAV-3 beyond structural limits
-\item \textbf{Operator Decision Support:} Provided clear recommendation with time-bounded options
-\item \textbf{Partial Success:} 80\% mission completion autonomously, critical package delivered
+\item \textbf{Intelligent Escalation Validated:} 0\% autonomous reallocation is NOT a failure---demonstrates correct constraint detection
+\item \textbf{Safety-First Design:} OODA correctly refused unsafe operations; Greedy violated constraints
+\item \textbf{D6 Finding:} Package B (2.0 kg) exceeds all UAV spare capacity (max 0.7 kg)
+\item \textbf{D7 Finding:} Destination (3500, 2500) outside grid [0-3000, 0-2000]; no UAV has permission
+\item \textbf{Critical Result:} Zero constraint violations vs. Greedy's 2 violations proves constraint-aware design
 \end{itemize}
 
 \textbf{Comparison to Idealized Systems:}
@@ -1970,20 +2003,29 @@ Delivery & High & Critical & High & Payload constraint violations \\
 
 \begin{table}[H]
 \centering
-\caption{Expected vs. Achieved Performance by Scenario}
+\caption{Measured Performance by Scenario (S5, R5/R6, D6/D7)}
 \label{tab:scenario_performance}
 \begin{tabular}{|l|c|c|c|}
 \hline
-\textbf{Metric} & \textbf{Surveillance} & \textbf{SAR} & \textbf{Delivery} \\
+\textbf{Metric} & \textbf{Surveillance (S5)} & \textbf{SAR (R5/R6)} & \textbf{Delivery (D6/D7)} \\
 \hline
-Coverage Recovery & 91.7\% & 100\% (high-priority) & 80\% \\
-Adaptation Time & 5.5s & 6.0s & 5.5s \\
-Operator Escalation Rate & 0\% (autonomous) & 0\% (autonomous) & 100\% (by design) \\
-Battery Efficiency & 88\% & 85\% & 75\% \\
-Mission Completion & 100\% & 88\% (total) & 80\% (autonomous) \\
+Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
+OODA Computation & \textbf{0.34 ms} & \textbf{0.50/0.16 ms} & \textbf{0.11/0.23 ms} \\
+Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
+Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
+Mission Outcome & 100\% complete & 100\% complete & Escalated (safe) \\
 \hline
 \end{tabular}
 \end{table}
+
+\textbf{Key Findings Across All Scenarios:}
+\begin{itemize}
+\item \textbf{Speed:} All scenarios demonstrate sub-millisecond computation (0.11-0.50 ms)
+\item \textbf{Safety:} Zero constraint violations across all 5 experimental scenarios
+\item \textbf{Coverage:} 100\% recovery for S5, R5, R6 where physically feasible
+\item \textbf{Escalation:} D6/D7 correctly escalated when constraints prevent safe reallocation
+\item \textbf{Advantage:} 500,000$\times$ faster than manual operator (465s) across all scenarios
+\end{itemize}
 
 \subsection{Failure Mode Taxonomy}
 

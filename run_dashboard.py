@@ -10,7 +10,7 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from visualization.web_dashboard import start_dashboard
+from visualization.web_dashboard import start_dashboard  # noqa: E402
 
 if __name__ == "__main__":
     print("Realistic Mission Completion Assistance")

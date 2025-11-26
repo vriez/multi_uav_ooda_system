@@ -6,7 +6,7 @@ Based on Quadcopter_SimCon codebase
 import numpy as np
 import logging
 from scipy.integrate import odeint
-from typing import List, Optional
+from typing import List
 import time
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ class QuadcopterDynamics:
         State: [x, y, z, qw, qx, qy, qz, vx, vy, vz, p, q, r, w1, w2, w3, w4]
         """
         # Extract state variables
-        pos = state[0:3]
+        # pos = state[0:3] - position (unused in derivative calculation)
         quat = state[3:7]  # [qw, qx, qy, qz]
         vel = state[7:10]
         omega = state[10:13]  # Angular velocity in body frame

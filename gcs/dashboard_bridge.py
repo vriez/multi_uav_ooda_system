@@ -2,9 +2,7 @@
 Dashboard Bridge - Streams GCS telemetry to web dashboard
 """
 
-import socket
 import threading
-import json
 import logging
 from flask_socketio import SocketIO
 

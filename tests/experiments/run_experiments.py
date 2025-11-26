@@ -15,28 +15,30 @@ Options:
 import argparse
 import sys
 import os
-import time
-import json
-from datetime import datetime
-from dataclasses import dataclass, asdict
-from typing import Dict, List, Optional
-import numpy as np
 
 # Add project root to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from tests.experiments.baseline_strategies import (
-    StrategyType,
+import time  # noqa: E402
+import json  # noqa: E402
+from datetime import datetime  # noqa: E402
+from dataclasses import dataclass, asdict  # noqa: E402
+from typing import Dict, List  # noqa: E402
+import numpy as np  # noqa: E402
+
+from tests.experiments.baseline_strategies import (  # noqa: E402
     NoAdaptationStrategy,
     GreedyNearestStrategy,
     ManualOperatorStrategy,
     OODAStrategy,
-    ReallocationResult,
 )
-from tests.experiments.experiment_fixtures import MockMissionDatabase, FleetState
-from gcs.ooda_engine import OODAEngine
-from gcs.constraint_validator import ConstraintValidator
-from gcs.objective_function import MissionContext, MissionType
+from tests.experiments.experiment_fixtures import (  # noqa: E402
+    MockMissionDatabase,
+    FleetState,
+)
+from gcs.ooda_engine import OODAEngine  # noqa: E402
+from gcs.constraint_validator import ConstraintValidator  # noqa: E402
+from gcs.objective_function import MissionContext  # noqa: E402
 
 
 @dataclass
@@ -178,7 +180,6 @@ class ExperimentRunner:
         # Validate thesis claims
         ooda = strategy_results["OODA"]
         manual = strategy_results["Manual Operator"]
-        greedy = strategy_results["Greedy Nearest"]
 
         speedup = manual["time_sec"] / max(ooda["time_sec"], 0.001)
 
@@ -427,7 +428,6 @@ class ExperimentRunner:
             )
 
         ooda = strategy_results["OODA"]
-        greedy = strategy_results["Greedy Nearest"]
         manual = strategy_results["Manual Operator"]
 
         time_saved_min = (manual["time_sec"] - ooda["time_sec"]) / 60
@@ -703,7 +703,7 @@ class ExperimentRunner:
 
         return self.results
 
-    def generate_report(self) -> str:
+    def generate_report(self) -> str:  # noqa: C901
         """Generate markdown report"""
         lines = [
             "# Thesis Validation Experiment Results",
