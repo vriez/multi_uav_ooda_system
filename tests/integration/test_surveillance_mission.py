@@ -8,12 +8,13 @@ Tests cover:
 - Continuous mission operation
 - Workload balancing
 """
+
 import pytest
 import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class TestSurveillanceZoneAssignment:
@@ -26,20 +27,20 @@ class TestSurveillanceZoneAssignment:
 
         # Expected spatial contiguity pattern
         expected_assignments = {
-            'uav_1': [1, 2],
-            'uav_2': [3, 6],
-            'uav_3': [4, 5],
-            'uav_4': [7, 8],
-            'uav_5': [9]
+            "uav_1": [1, 2],
+            "uav_2": [3, 6],
+            "uav_3": [4, 5],
+            "uav_4": [7, 8],
+            "uav_5": [9],
         }
 
         # Simulate zone allocation
         zone_groups = [
-            [1, 2],      # UAV 1: Top left-middle
-            [3, 6],      # UAV 2: Right column
-            [4, 5],      # UAV 3: Middle left-center
-            [7, 8],      # UAV 4: Bottom left-middle
-            [9]          # UAV 5: Bottom right
+            [1, 2],  # UAV 1: Top left-middle
+            [3, 6],  # UAV 2: Right column
+            [4, 5],  # UAV 3: Middle left-center
+            [7, 8],  # UAV 4: Bottom left-middle
+            [9],  # UAV 5: Bottom right
         ]
 
         assert len(zone_groups) == num_uavs
@@ -52,11 +53,11 @@ class TestSurveillanceZoneAssignment:
     def test_all_zones_covered(self):
         """All zones should be assigned to at least one UAV"""
         assigned_zones = {
-            'uav_1': [1, 2],
-            'uav_2': [3, 6],
-            'uav_3': [4, 5],
-            'uav_4': [7, 8],
-            'uav_5': [9]
+            "uav_1": [1, 2],
+            "uav_2": [3, 6],
+            "uav_3": [4, 5],
+            "uav_4": [7, 8],
+            "uav_5": [9],
         }
 
         all_assigned = set()
@@ -68,11 +69,11 @@ class TestSurveillanceZoneAssignment:
     def test_balanced_workload_distribution(self):
         """Zone assignments should be relatively balanced"""
         assigned_zones = {
-            'uav_1': [1, 2],
-            'uav_2': [3, 6],
-            'uav_3': [4, 5],
-            'uav_4': [7, 8],
-            'uav_5': [9]
+            "uav_1": [1, 2],
+            "uav_2": [3, 6],
+            "uav_3": [4, 5],
+            "uav_4": [7, 8],
+            "uav_5": [9],
         }
 
         zone_counts = [len(zones) for zones in assigned_zones.values()]
@@ -91,7 +92,7 @@ class TestZoneRedistribution:
         """Zones from returning UAV should be redistributed"""
         # UAV 1 returns with zones [1, 2]
         abandoned_zones = [1, 2]
-        operational_uavs = ['uav_2', 'uav_3', 'uav_4', 'uav_5']
+        operational_uavs = ["uav_2", "uav_3", "uav_4", "uav_5"]
 
         # Simulate redistribution
         # These zones should be reassigned to operational UAVs
@@ -104,11 +105,11 @@ class TestZoneRedistribution:
 
     def test_returning_uav_zones_cleared(self):
         """Returning UAV should have zones cleared"""
-        uav_state = 'returning'
+        uav_state = "returning"
         assigned_zones = [1, 2]
 
         # Clear zones when returning
-        if uav_state == 'returning':
+        if uav_state == "returning":
             assigned_zones = []
 
         assert len(assigned_zones) == 0
@@ -133,12 +134,12 @@ class TestRecoveredUAVReassignment:
 
     def test_recovered_uav_gets_reassigned(self):
         """Recovered UAV should receive zone assignments"""
-        uav_state = 'recovered'
+        uav_state = "recovered"
         battery = 100.0
         assigned_zones = []
 
         # Simulate reassignment
-        if uav_state == 'recovered' and not assigned_zones:
+        if uav_state == "recovered" and not assigned_zones:
             # Should be assigned zones
             can_be_reassigned = True
         else:
@@ -148,15 +149,15 @@ class TestRecoveredUAVReassignment:
 
     def test_recovered_uav_transitions_to_deploying(self):
         """Recovered UAV transitions to deploying when assigned"""
-        state = 'recovered'
+        state = "recovered"
         assigned_zones = []
 
         # Assign zones
         assigned_zones = [1, 2]
         if assigned_zones:
-            state = 'deploying'
+            state = "deploying"
 
-        assert state == 'deploying'
+        assert state == "deploying"
         assert len(assigned_zones) > 0
 
 
@@ -165,7 +166,7 @@ class TestContinuousMissionOperation:
 
     def test_mission_runs_until_manually_stopped(self):
         """Surveillance mission should run indefinitely"""
-        mission_type = 'surveillance'
+        mission_type = "surveillance"
         auto_stop = False  # No auto-stop for surveillance
 
         assert not auto_stop
@@ -177,24 +178,24 @@ class TestContinuousMissionOperation:
         # Simulate multiple cycles
         for i in range(3):
             # UAV deploys
-            state = 'deploying'
-            cycles.append(('deploy', i))
+            state = "deploying"
+            cycles.append(("deploy", i))
 
             # UAV patrols
-            state = 'patrolling'
-            cycles.append(('patrol', i))
+            state = "patrolling"
+            cycles.append(("patrol", i))
 
             # Battery low, returns
-            state = 'returning'
-            cycles.append(('return', i))
+            state = "returning"
+            cycles.append(("return", i))
 
             # Charges
-            state = 'charging'
-            cycles.append(('charge', i))
+            state = "charging"
+            cycles.append(("charge", i))
 
             # Recovers
-            state = 'recovered'
-            cycles.append(('recover', i))
+            state = "recovered"
+            cycles.append(("recover", i))
 
         # Should have 5 events × 3 cycles = 15 events
         assert len(cycles) == 15
@@ -236,11 +237,11 @@ class TestWorkloadBalancing:
         """System should detect zones with no assigned UAVs"""
         all_zones = {1, 2, 3, 4, 5, 6, 7, 8, 9}
         assigned_zones = {
-            'uav_1': [],  # Returning
-            'uav_2': [3, 6],
-            'uav_3': [4, 5],
-            'uav_4': [7, 8],
-            'uav_5': [9]
+            "uav_1": [],  # Returning
+            "uav_2": [3, 6],
+            "uav_3": [4, 5],
+            "uav_4": [7, 8],
+            "uav_5": [9],
         }
 
         covered_zones = set()
@@ -253,11 +254,11 @@ class TestWorkloadBalancing:
 
     def test_idle_uavs_receive_assignments(self):
         """Idle UAVs should receive zone assignments"""
-        uav_state = 'idle'
+        uav_state = "idle"
         assigned_zones = []
 
         # Should be ready for assignment
-        ready_for_assignment = uav_state in ['idle', 'recovered'] and not assigned_zones
+        ready_for_assignment = uav_state in ["idle", "recovered"] and not assigned_zones
 
         assert ready_for_assignment
 
@@ -268,27 +269,29 @@ class TestSurveillanceEdgeCases:
     def test_all_uavs_crashed_scenario(self):
         """Mission should handle all UAVs crashing"""
         uav_states = {
-            'uav_1': 'crashed',
-            'uav_2': 'crashed',
-            'uav_3': 'crashed',
-            'uav_4': 'crashed',
-            'uav_5': 'crashed'
+            "uav_1": "crashed",
+            "uav_2": "crashed",
+            "uav_3": "crashed",
+            "uav_4": "crashed",
+            "uav_5": "crashed",
         }
 
-        operational_count = sum(1 for state in uav_states.values() if state != 'crashed')
+        operational_count = sum(
+            1 for state in uav_states.values() if state != "crashed"
+        )
 
         assert operational_count == 0
         # Mission should continue even with no operational UAVs
 
     def test_single_uav_covers_all_zones(self):
         """Single operational UAV should cover all zones"""
-        operational_uavs = ['uav_1']
+        operational_uavs = ["uav_1"]
         all_zones = [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         # All zones assigned to single UAV
-        assigned_zones = {'uav_1': all_zones}
+        assigned_zones = {"uav_1": all_zones}
 
-        assert len(assigned_zones['uav_1']) == 9
+        assert len(assigned_zones["uav_1"]) == 9
 
     def test_uneven_zone_count(self):
         """System should handle non-standard zone counts"""
@@ -303,5 +306,5 @@ class TestSurveillanceEdgeCases:
         assert zones_per_uav * num_uavs + extra_zones == num_zones
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

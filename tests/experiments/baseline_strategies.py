@@ -11,6 +11,7 @@ system is compared:
 
 Reference: TCC Chapter 5 - Baseline Comparisons
 """
+
 import time
 import logging
 import numpy as np
@@ -24,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class StrategyType(Enum):
     """Reallocation strategy types"""
+
     NO_ADAPTATION = "no_adaptation"
     GREEDY_NEAREST = "greedy_nearest"
     MANUAL_OPERATOR = "manual_operator"
@@ -33,6 +35,7 @@ class StrategyType(Enum):
 @dataclass
 class ReallocationResult:
     """Result of a reallocation strategy execution"""
+
     strategy: StrategyType
     allocation: Dict[int, List[int]]  # UAV ID -> Task IDs
     coverage_percentage: float
@@ -52,8 +55,9 @@ class BaselineStrategy(ABC):
         self.strategy_type = strategy_type
 
     @abstractmethod
-    def reallocate(self, fleet_state, lost_tasks: List,
-                   mission_db, constraint_validator) -> ReallocationResult:
+    def reallocate(
+        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
+    ) -> ReallocationResult:
         """Execute the reallocation strategy"""
         pass
 
@@ -74,15 +78,18 @@ class NoAdaptationStrategy(BaselineStrategy):
     def __init__(self):
         super().__init__(StrategyType.NO_ADAPTATION)
 
-    def reallocate(self, fleet_state, lost_tasks: List,
-                   mission_db, constraint_validator) -> ReallocationResult:
+    def reallocate(
+        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
+    ) -> ReallocationResult:
         """No reallocation - all lost tasks remain unallocated"""
 
-        total_tasks = len(mission_db.tasks) if hasattr(mission_db, 'tasks') else 1
+        total_tasks = len(mission_db.tasks) if hasattr(mission_db, "tasks") else 1
         tasks_lost = len(lost_tasks)
 
         # Coverage is what remains after losing the tasks
-        coverage = ((total_tasks - tasks_lost) / total_tasks * 100) if total_tasks > 0 else 0
+        coverage = (
+            ((total_tasks - tasks_lost) / total_tasks * 100) if total_tasks > 0 else 0
+        )
 
         return ReallocationResult(
             strategy=self.strategy_type,
@@ -94,10 +101,7 @@ class NoAdaptationStrategy(BaselineStrategy):
             tasks_reallocated=0,
             tasks_lost=tasks_lost,
             rationale="No adaptation: All lost tasks abandoned",
-            metrics={
-                'coverage_loss': 100 - coverage,
-                'recovery_rate': 0.0
-            }
+            metrics={"coverage_loss": 100 - coverage, "recovery_rate": 0.0},
         )
 
 
@@ -119,8 +123,9 @@ class GreedyNearestStrategy(BaselineStrategy):
     def __init__(self):
         super().__init__(StrategyType.GREEDY_NEAREST)
 
-    def reallocate(self, fleet_state, lost_tasks: List,
-                   mission_db, constraint_validator) -> ReallocationResult:
+    def reallocate(
+        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
+    ) -> ReallocationResult:
         """Assign to nearest UAV ignoring constraints"""
 
         start_time = time.time()
@@ -130,14 +135,14 @@ class GreedyNearestStrategy(BaselineStrategy):
 
         for task_ref in lost_tasks:
             task = mission_db.get_task(
-                task_ref.id if hasattr(task_ref, 'id') else task_ref
+                task_ref.id if hasattr(task_ref, "id") else task_ref
             )
             if task is None:
                 continue
 
             # Find nearest UAV (ignoring constraints!)
             best_uav = None
-            min_dist = float('inf')
+            min_dist = float("inf")
 
             for uav_id in fleet_state.operational_uavs:
                 uav_pos = fleet_state.uav_positions[uav_id]
@@ -170,7 +175,7 @@ class GreedyNearestStrategy(BaselineStrategy):
                         safety_violations.append(
                             f"UAV {best_uav}: Battery constraint violated for task {task.id}"
                         )
-                    if hasattr(task, 'payload_kg') and task.payload_kg:
+                    if hasattr(task, "payload_kg") and task.payload_kg:
                         if not constraint_validator.check_payload_constraint(
                             best_uav, task.id, fleet_state, mission_db
                         ):
@@ -182,7 +187,11 @@ class GreedyNearestStrategy(BaselineStrategy):
 
         tasks_reallocated = sum(len(tasks) for tasks in allocation.values())
         tasks_lost_count = len(lost_tasks)
-        coverage = (tasks_reallocated / tasks_lost_count * 100) if tasks_lost_count > 0 else 100
+        coverage = (
+            (tasks_reallocated / tasks_lost_count * 100)
+            if tasks_lost_count > 0
+            else 100
+        )
 
         return ReallocationResult(
             strategy=self.strategy_type,
@@ -194,12 +203,12 @@ class GreedyNearestStrategy(BaselineStrategy):
             tasks_reallocated=tasks_reallocated,
             tasks_lost=tasks_lost_count - tasks_reallocated,
             rationale=f"Greedy nearest: {tasks_reallocated} tasks assigned, "
-                     f"{constraint_violations} constraint violations",
+            f"{constraint_violations} constraint violations",
             metrics={
-                'constraint_violations': constraint_violations,
-                'recovery_rate': coverage,
-                'is_safe': len(safety_violations) == 0
-            }
+                "constraint_violations": constraint_violations,
+                "recovery_rate": coverage,
+                "is_safe": len(safety_violations) == 0,
+            },
         )
 
 
@@ -220,14 +229,16 @@ class ManualOperatorStrategy(BaselineStrategy):
     This baseline shows that OODA achieves similar coverage 75-150x faster.
     """
 
-    def __init__(self, detection_delay_sec: float = 45.0,
-                 decision_delay_sec: float = 420.0):  # 7 minutes default
+    def __init__(
+        self, detection_delay_sec: float = 45.0, decision_delay_sec: float = 420.0
+    ):  # 7 minutes default
         super().__init__(StrategyType.MANUAL_OPERATOR)
         self.detection_delay = detection_delay_sec
         self.decision_delay = decision_delay_sec
 
-    def reallocate(self, fleet_state, lost_tasks: List,
-                   mission_db, constraint_validator) -> ReallocationResult:
+    def reallocate(
+        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
+    ) -> ReallocationResult:
         """Simulate manual operator with delay + optimal allocation"""
 
         # Simulate operator delay (for timing comparison)
@@ -241,7 +252,7 @@ class ManualOperatorStrategy(BaselineStrategy):
         tasks_with_priority = []
         for task_ref in lost_tasks:
             task = mission_db.get_task(
-                task_ref.id if hasattr(task_ref, 'id') else task_ref
+                task_ref.id if hasattr(task_ref, "id") else task_ref
             )
             if task:
                 tasks_with_priority.append((task, task.priority))
@@ -256,7 +267,7 @@ class ManualOperatorStrategy(BaselineStrategy):
 
         for task, priority in tasks_with_priority:
             best_uav = None
-            best_score = float('-inf')
+            best_score = float("-inf")
 
             # Find best UAV considering constraints AND load balancing
             for uav_id in fleet_state.operational_uavs:
@@ -288,7 +299,11 @@ class ManualOperatorStrategy(BaselineStrategy):
 
         tasks_reallocated = sum(len(tasks) for tasks in allocation.values())
         tasks_lost_count = len(lost_tasks)
-        coverage = (tasks_reallocated / tasks_lost_count * 100) if tasks_lost_count > 0 else 100
+        coverage = (
+            (tasks_reallocated / tasks_lost_count * 100)
+            if tasks_lost_count > 0
+            else 100
+        )
 
         return ReallocationResult(
             strategy=self.strategy_type,
@@ -300,14 +315,14 @@ class ManualOperatorStrategy(BaselineStrategy):
             tasks_reallocated=tasks_reallocated,
             tasks_lost=len(unallocated),
             rationale=f"Manual operator: {tasks_reallocated} tasks allocated after "
-                     f"{total_delay:.0f}s delay ({self.decision_delay/60:.1f} min decision time)",
+            f"{total_delay:.0f}s delay ({self.decision_delay/60:.1f} min decision time)",
             metrics={
-                'detection_delay_sec': self.detection_delay,
-                'decision_delay_sec': self.decision_delay,
-                'total_delay_sec': total_delay,
-                'recovery_rate': coverage,
-                'unallocated_tasks': len(unallocated)
-            }
+                "detection_delay_sec": self.detection_delay,
+                "decision_delay_sec": self.decision_delay,
+                "total_delay_sec": total_delay,
+                "recovery_rate": coverage,
+                "unallocated_tasks": len(unallocated),
+            },
         )
 
 
@@ -328,8 +343,9 @@ class OODAStrategy(BaselineStrategy):
         super().__init__(StrategyType.OODA)
         self.ooda_engine = ooda_engine
 
-    def reallocate(self, fleet_state, lost_tasks: List,
-                   mission_db, constraint_validator) -> ReallocationResult:
+    def reallocate(
+        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
+    ) -> ReallocationResult:
         """Execute OODA cycle for reallocation"""
 
         start_time = time.time()
@@ -346,7 +362,11 @@ class OODAStrategy(BaselineStrategy):
             len(tasks) for tasks in decision.reallocation_plan.values()
         )
         tasks_lost_count = len(lost_tasks)
-        coverage = (tasks_reallocated / tasks_lost_count * 100) if tasks_lost_count > 0 else 100
+        coverage = (
+            (tasks_reallocated / tasks_lost_count * 100)
+            if tasks_lost_count > 0
+            else 100
+        )
 
         return ReallocationResult(
             strategy=self.strategy_type,
@@ -359,18 +379,20 @@ class OODAStrategy(BaselineStrategy):
             tasks_lost=tasks_lost_count - tasks_reallocated,
             rationale=decision.rationale,
             metrics={
-                'ooda_strategy': decision.strategy.value,
-                'recovery_rate': decision.metrics.get('recovery_rate', coverage),
-                'objective_score': decision.metrics.get('objective_score', 0),
-                'optimization_iterations': decision.metrics.get('optimization_iterations', 0),
-                'optimality_gap': decision.metrics.get('optimality_gap_estimate', 0)
-            }
+                "ooda_strategy": decision.strategy.value,
+                "recovery_rate": decision.metrics.get("recovery_rate", coverage),
+                "objective_score": decision.metrics.get("objective_score", 0),
+                "optimization_iterations": decision.metrics.get(
+                    "optimization_iterations", 0
+                ),
+                "optimality_gap": decision.metrics.get("optimality_gap_estimate", 0),
+            },
         )
 
 
-def create_strategy(strategy_type: StrategyType,
-                    ooda_engine=None,
-                    operator_delay_sec: float = 420.0) -> BaselineStrategy:
+def create_strategy(
+    strategy_type: StrategyType, ooda_engine=None, operator_delay_sec: float = 420.0
+) -> BaselineStrategy:
     """
     Factory function to create strategy instances.
 

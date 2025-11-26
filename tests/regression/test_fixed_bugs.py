@@ -4,13 +4,14 @@ Regression tests for fixed bugs
 These tests ensure that previously fixed bugs do not reappear.
 Each test is documented with the original bug report and fix location.
 """
+
 import pytest
 import numpy as np
 import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 class TestBatteryFreezeBugs:
@@ -42,7 +43,7 @@ class TestBatteryFreezeBugs:
         """
         battery = 45.0
         awaiting_permission = True
-        mission_type = 'search_rescue'
+        mission_type = "search_rescue"
         dt = 0.05
         drain_rate = 0.3
 
@@ -59,12 +60,12 @@ class TestBatteryFreezeBugs:
                      on their way back, and their battery level remains constant"
         """
         battery = 30.0
-        state = 'returning'
+        state = "returning"
         distance_to_home = 50.0
         dt = 0.05
         drain_rate = 0.3
 
-        if state == 'returning' and distance_to_home > 2.0:
+        if state == "returning" and distance_to_home > 2.0:
             # Moving toward home
             battery -= drain_rate * dt
 
@@ -135,11 +136,11 @@ class TestZoneAssignmentBugs:
         """
         # Expected balanced spatial assignment
         expected = {
-            'uav_1': [1, 2],
-            'uav_2': [3, 6],
-            'uav_3': [4, 5],
-            'uav_4': [7, 8],
-            'uav_5': [9]
+            "uav_1": [1, 2],
+            "uav_2": [3, 6],
+            "uav_3": [4, 5],
+            "uav_4": [7, 8],
+            "uav_5": [9],
         }
 
         # Verify balance
@@ -152,11 +153,11 @@ class TestZoneAssignmentBugs:
         FIX: Disabled auto-reassignment for SAR (web_dashboard.py:1925)
         USER REPORT: "uav_4 → Zones [7, 8, 9, 5, 1, 2, 3, 4, 6]"
         """
-        mission_type = 'search_rescue'
+        mission_type = "search_rescue"
         initial_zones = [7, 8]
 
         # Reassignment logic should NOT run for SAR
-        reassignment_enabled = mission_type == 'surveillance'
+        reassignment_enabled = mission_type == "surveillance"
 
         if reassignment_enabled:
             # This should NOT happen for SAR
@@ -184,19 +185,16 @@ class TestMissionCompletionBugs:
         total_packages = 12
 
         # UAVs have returned and transitioned to charging
-        uav_states = ['charging', 'charging', 'charging', 'charging', 'charging']
+        uav_states = ["charging", "charging", "charging", "charging", "charging"]
 
         # OLD BUG: Checked for 'returning' AND close to home (never true)
         # NEW FIX: Only check for 'charging' or 'crashed'
         all_home_old = all(
-            state == 'returning' and False  # This condition never met!
+            state == "returning" and False  # This condition never met!
             for state in uav_states
         )
 
-        all_home_fixed = all(
-            state in ['charging', 'crashed']
-            for state in uav_states
-        )
+        all_home_fixed = all(state in ["charging", "crashed"] for state in uav_states)
 
         packages_complete = deliveries_completed >= total_packages
 
@@ -220,7 +218,7 @@ class TestUIBugs:
         mission_started = True
 
         # Should emit all 4 phases on start
-        ooda_phases_emitted = ['observe', 'orient', 'decide', 'act']
+        ooda_phases_emitted = ["observe", "orient", "decide", "act"]
 
         assert mission_started
         assert len(ooda_phases_emitted) == 4
@@ -263,17 +261,19 @@ class TestPermissionBugs:
         """
         # Pickup phase
         permission_granted_for_target = (80, 20)
-        task_status = 'assigned'
+        task_status = "assigned"
 
         # Complete pickup
-        task_status = 'picked_up'
+        task_status = "picked_up"
         permission_granted_for_target = None  # Must clear
 
         # Now at dropoff phase
         dropoff_target = (-80, -20)
 
         # Should need new permission for dropoff
-        has_permission_for_dropoff = permission_granted_for_target == tuple(dropoff_target)
+        has_permission_for_dropoff = permission_granted_for_target == tuple(
+            dropoff_target
+        )
 
         assert not has_permission_for_dropoff
         assert permission_granted_for_target is None
@@ -288,10 +288,10 @@ class TestEdgeCaseRegressions:
         FIX: Reset battery_warning flag when recovered (web_dashboard.py:1353)
         """
         battery = 100.0
-        state = 'recovered'
+        state = "recovered"
         battery_warning = True  # Was set during low battery
 
-        if state == 'recovered':
+        if state == "recovered":
             battery_warning = False  # Must reset
 
         assert not battery_warning
@@ -301,16 +301,16 @@ class TestEdgeCaseRegressions:
         BUG: Operational flag could be inconsistent with state
         FIX: Clear operational flag when entering returning state (web_dashboard.py:1292)
         """
-        state = 'patrolling'
+        state = "patrolling"
         operational = True
         battery = 14.0
 
         # Trigger return
         if battery <= 15:
-            state = 'returning'
+            state = "returning"
             operational = False  # Must set to False
 
-        assert state == 'returning'
+        assert state == "returning"
         assert not operational
 
     def test_bug_returning_flag_not_cleared_after_recovery(self):
@@ -319,14 +319,14 @@ class TestEdgeCaseRegressions:
         FIX: Clear returning flag when transitioning to recovered (web_dashboard.py:1351)
         """
         battery = 100.0
-        state = 'charging'
+        state = "charging"
         returning = True
 
         if battery >= 100:
-            state = 'recovered'
+            state = "recovered"
             returning = False  # Must clear
 
-        assert state == 'recovered'
+        assert state == "recovered"
         assert not returning
 
 
@@ -357,5 +357,5 @@ class TestCriticalBugRegression:
         assert battery < 40.0  # MUST decrease
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

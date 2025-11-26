@@ -9,20 +9,21 @@ Tests cover:
 - Guardian assignment
 - Mission completion criteria
 """
+
 import pytest
 import numpy as np
 import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from visualization.config import (
     SAR_VISIBILITY_RADIUS,
     SAR_DETECTION_RADIUS,
     SAR_CONSENSUS_REQUIRED,
     SAR_IDENTIFICATION_CIRCLES,
-    SAR_GUARDIAN_MONITORING_CIRCLES
+    SAR_GUARDIAN_MONITORING_CIRCLES,
 )
 
 
@@ -105,11 +106,11 @@ class TestSARZoneAssignment:
     def test_spatial_contiguity_maintained(self):
         """SAR missions should use same spatial contiguity as surveillance"""
         zone_groups = [
-            [1, 2],      # UAV 1
-            [3, 6],      # UAV 2
-            [4, 5],      # UAV 3
-            [7, 8],      # UAV 4
-            [9]          # UAV 5
+            [1, 2],  # UAV 1
+            [3, 6],  # UAV 2
+            [4, 5],  # UAV 3
+            [7, 8],  # UAV 4
+            [9],  # UAV 5
         ]
 
         # Verify spatial pattern
@@ -119,8 +120,8 @@ class TestSARZoneAssignment:
 
     def test_no_auto_reassignment_during_sar(self):
         """Auto-reassignment should be disabled for SAR missions"""
-        mission_type = 'search_rescue'
-        reassignment_enabled = mission_type == 'surveillance'  # Only surveillance
+        mission_type = "search_rescue"
+        reassignment_enabled = mission_type == "surveillance"  # Only surveillance
 
         assert not reassignment_enabled
 
@@ -177,10 +178,10 @@ class TestOutOfGridPursuit:
         battery = 40.0
         dt = 0.05
         drain_rate = 0.3
-        state = 'returning'
+        state = "returning"
 
         # Returning from out-of-grid location
-        if state == 'returning':
+        if state == "returning":
             battery -= drain_rate * dt
 
         assert battery < 40.0
@@ -196,14 +197,14 @@ class TestConsensusIdentification:
 
     def test_single_uav_cannot_confirm(self):
         """Single UAV detection is insufficient"""
-        detecting_uavs = ['uav_1']
+        detecting_uavs = ["uav_1"]
         consensus_reached = len(detecting_uavs) >= SAR_CONSENSUS_REQUIRED
 
         assert not consensus_reached
 
     def test_two_uavs_reach_consensus(self):
         """Two UAVs can confirm asset"""
-        detecting_uavs = ['uav_1', 'uav_2']
+        detecting_uavs = ["uav_1", "uav_2"]
         consensus_reached = len(detecting_uavs) >= SAR_CONSENSUS_REQUIRED
 
         assert consensus_reached
@@ -228,11 +229,11 @@ class TestGuardianBehavior:
         asset_identified = circles_completed >= SAR_IDENTIFICATION_CIRCLES
 
         if asset_identified:
-            role = 'guardian'
+            role = "guardian"
         else:
-            role = 'searching'
+            role = "searching"
 
-        assert role == 'guardian'
+        assert role == "guardian"
 
     def test_guardian_monitors_with_circles(self):
         """Guardian should circle asset for monitoring"""
@@ -279,21 +280,21 @@ class TestMissionCompletion:
 
     def test_guardians_continue_monitoring(self):
         """Guardians should continue monitoring after mission objectives met"""
-        guardian_role = 'guardian'
+        guardian_role = "guardian"
         objectives_complete = True
 
         # Guardian continues even after objectives complete
-        guardian_active = guardian_role == 'guardian'
+        guardian_active = guardian_role == "guardian"
 
         assert guardian_active
 
     def test_non_guardians_continue_patrol(self):
         """Non-guardian UAVs continue area patrol"""
-        uav_role = 'patrolling'
+        uav_role = "patrolling"
         objectives_complete = True
 
         # Continue patrolling for potential additional assets
-        continues_patrol = uav_role == 'patrolling'
+        continues_patrol = uav_role == "patrolling"
 
         assert continues_patrol
 
@@ -308,9 +309,9 @@ class TestSAREndToEndWorkflows:
         """
         # Initial setup
         asset_position = np.array([80, 20, 0])  # Outside grid
-        uav_position = np.array([70, 20, 10])   # Just outside, pursuing
+        uav_position = np.array([70, 20, 10])  # Just outside, pursuing
         uav_battery = 14.0  # Below 15% threshold - will trigger return
-        uav_state = 'searching'
+        uav_state = "searching"
 
         # Step 1: Verify asset is outside grid
         grid_max = 60
@@ -338,9 +339,9 @@ class TestSAREndToEndWorkflows:
         should_return_home = uav_battery <= battery_threshold
 
         if should_return_home:
-            uav_state = 'returning'
+            uav_state = "returning"
 
-        assert uav_state == 'returning'
+        assert uav_state == "returning"
         assert uav_battery <= 15.0
 
         # Step 6: UAV moves back toward grid boundary
@@ -366,7 +367,7 @@ class TestSAREndToEndWorkflows:
         uav_battery -= drain_rate * dt
 
         assert uav_battery < 14.0  # Battery has drained
-        assert uav_state == 'returning'
+        assert uav_state == "returning"
         assert distance_to_home > 2.0  # Not home yet, still returning
 
     def test_outside_asset_detection_radius_boundary_case(self):
@@ -374,7 +375,7 @@ class TestSAREndToEndWorkflows:
         Test detection at exact boundary of visibility radius for outside asset
         """
         asset_position = np.array([75, 0, 0])  # Outside grid
-        uav_position = np.array([50, 0, 10])   # Inside grid
+        uav_position = np.array([50, 0, 10])  # Inside grid
 
         # Distance is 25m exactly
         distance = np.linalg.norm(asset_position[:2] - uav_position[:2])
@@ -406,7 +407,7 @@ class TestSAREndToEndWorkflows:
         assert uav2_detects
 
         # Both UAVs within radius, consensus reached
-        detecting_uavs = ['uav_1', 'uav_2']
+        detecting_uavs = ["uav_1", "uav_2"]
         consensus_reached = len(detecting_uavs) >= SAR_CONSENSUS_REQUIRED
 
         assert consensus_reached
@@ -424,9 +425,9 @@ class TestSAREdgeCases:
     def test_asset_moves_outside_then_inside_grid(self):
         """Asset moving in and out of grid should be tracked correctly"""
         positions = [
-            [50, 50],   # Inside
-            [80, 80],   # Outside
-            [30, 30],   # Back inside
+            [50, 50],  # Inside
+            [80, 80],  # Outside
+            [30, 30],  # Back inside
         ]
 
         for pos in positions:
@@ -452,26 +453,26 @@ class TestSAREdgeCases:
 
     def test_uav_switches_assets_mid_mission(self):
         """UAV should be able to switch from one asset to another"""
-        current_target = 'asset_1'
+        current_target = "asset_1"
 
         # Asset 1 rescued, switch to asset 2
-        asset_1_status = 'rescued'
-        if asset_1_status == 'rescued':
-            current_target = 'asset_2'
+        asset_1_status = "rescued"
+        if asset_1_status == "rescued":
+            current_target = "asset_2"
 
-        assert current_target == 'asset_2'
+        assert current_target == "asset_2"
 
     def test_all_uavs_as_guardians_scenario(self):
         """Handle scenario where all UAVs are guardians"""
         uav_roles = {
-            'uav_1': 'guardian',
-            'uav_2': 'guardian',
-            'uav_3': 'guardian',
-            'uav_4': 'guardian',
-            'uav_5': 'guardian'
+            "uav_1": "guardian",
+            "uav_2": "guardian",
+            "uav_3": "guardian",
+            "uav_4": "guardian",
+            "uav_5": "guardian",
         }
 
-        guardian_count = sum(1 for role in uav_roles.values() if role == 'guardian')
+        guardian_count = sum(1 for role in uav_roles.values() if role == "guardian")
 
         assert guardian_count == 5
         # No UAVs left for patrol, but that's valid
@@ -508,5 +509,5 @@ class TestOrthogonalDistanceIndicator:
         assert label == "25.7m"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

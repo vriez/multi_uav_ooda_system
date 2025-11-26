@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from visualization.web_dashboard import start_dashboard
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Realistic Mission Completion Assistance")
     print("Author: Vítor EULÁLIO REIS")
     print("=" * 50)

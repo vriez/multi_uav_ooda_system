@@ -19,16 +19,22 @@ Key Thesis Claims Validated:
 2. Golden hour compliance (speed matters for life-critical missions)
 3. Autonomous beats manual when time is critical
 """
+
 import pytest
 import time
 import numpy as np
 
 from tests.experiments.baseline_strategies import (
-    StrategyType, NoAdaptationStrategy, GreedyNearestStrategy,
-    ManualOperatorStrategy, OODAStrategy
+    StrategyType,
+    NoAdaptationStrategy,
+    GreedyNearestStrategy,
+    ManualOperatorStrategy,
+    OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
-    MockMissionDatabase, FleetState, ExperimentResults
+    MockMissionDatabase,
+    FleetState,
+    ExperimentResults,
 )
 from gcs.ooda_engine import OODAEngine
 from gcs.constraint_validator import ConstraintValidator
@@ -63,7 +69,7 @@ class TestR5SARBaseline:
             # (x, y, priority, description, is_high_priority)
             (200, 200, 90, "Zone 1 - LKP radius", True),
             (400, 200, 85, "Zone 2 - Water sources", True),
-            (600, 400, 80, "Zone 3 - Shelters", True),       # UAV-2's zone (lost)
+            (600, 400, 80, "Zone 3 - Shelters", True),  # UAV-2's zone (lost)
             (200, 600, 75, "Zone 4 - More shelters", True),  # UAV-2's zone (lost)
             (400, 600, 60, "Zone 5 - Trails", False),
             (800, 800, 30, "Zone 6 - Dense forest", False),
@@ -77,7 +83,7 @@ class TestR5SARBaseline:
                 zone_id=i,
                 task_type="search",
                 deadline=golden_hour_deadline,
-                duration_sec=300.0  # 5 min per zone
+                duration_sec=300.0,  # 5 min per zone
             )
             if is_high:
                 high_priority_tasks.append(task.id)
@@ -108,7 +114,7 @@ class TestR5SARBaseline:
                 4: 78.0,  # 30% spare
             },
             uav_payloads={},
-            lost_tasks=[3, 4]  # Zones 3 and 4 (high priority shelters)
+            lost_tasks=[3, 4],  # Zones 3 and 4 (high priority shelters)
         )
 
         # OODA engine with SAR context
@@ -118,14 +124,14 @@ class TestR5SARBaseline:
         )
 
         return {
-            'mission_db': db,
-            'fleet_state': fleet_state,
-            'constraint_validator': constraint_validator,
-            'ooda_engine': ooda_engine,
-            'lost_tasks': [db.get_task(3), db.get_task(4)],
-            'high_priority_tasks': high_priority_tasks,
-            'golden_hour_deadline': golden_hour_deadline,
-            'time_remaining': time_remaining
+            "mission_db": db,
+            "fleet_state": fleet_state,
+            "constraint_validator": constraint_validator,
+            "ooda_engine": ooda_engine,
+            "lost_tasks": [db.get_task(3), db.get_task(4)],
+            "high_priority_tasks": high_priority_tasks,
+            "golden_hour_deadline": golden_hour_deadline,
+            "time_remaining": time_remaining,
         }
 
     def test_no_adaptation_sar(self, sar_setup):
@@ -138,15 +144,17 @@ class TestR5SARBaseline:
         strategy = NoAdaptationStrategy()
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[SAR No Adaptation] Coverage: {result.coverage_percentage:.1f}%")
         print(f"[SAR No Adaptation] High-priority tasks lost: 2 (Zones 3, 4)")
-        print(f"[SAR No Adaptation] Golden hour status: Coverage gaps in critical areas")
+        print(
+            f"[SAR No Adaptation] Golden hour status: Coverage gaps in critical areas"
+        )
 
         # 2 of 6 zones lost
         assert result.tasks_lost == 2
@@ -161,10 +169,10 @@ class TestR5SARBaseline:
         strategy = GreedyNearestStrategy()
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[SAR Greedy] Coverage: {result.coverage_percentage:.1f}%")
@@ -182,25 +190,26 @@ class TestR5SARBaseline:
         """
         setup = sar_setup
         strategy = ManualOperatorStrategy(
-            detection_delay_sec=45.0,
-            decision_delay_sec=420.0  # 7 minutes
+            detection_delay_sec=45.0, decision_delay_sec=420.0  # 7 minutes
         )
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         # Calculate golden hour impact
         delay_minutes = result.adaptation_time_sec / 60
-        time_remaining_min = setup['time_remaining'] / 60
+        time_remaining_min = setup["time_remaining"] / 60
 
         print(f"\n[SAR Manual] Coverage: {result.coverage_percentage:.1f}%")
         print(f"[SAR Manual] Decision delay: {delay_minutes:.1f} minutes")
         print(f"[SAR Manual] Time remaining before delay: {time_remaining_min:.1f} min")
-        print(f"[SAR Manual] Time remaining after delay: {time_remaining_min - delay_minutes:.1f} min")
+        print(
+            f"[SAR Manual] Time remaining after delay: {time_remaining_min - delay_minutes:.1f} min"
+        )
 
         # Key insight: Manual operator delay reduces golden hour margin
         # In time-critical SAR, this delay could be the difference between
@@ -219,17 +228,17 @@ class TestR5SARBaseline:
         Expected: 100% high-priority coverage in <6 seconds
         """
         setup = sar_setup
-        strategy = OODAStrategy(setup['ooda_engine'])
+        strategy = OODAStrategy(setup["ooda_engine"])
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         # Calculate time metrics
-        time_remaining_min = setup['time_remaining'] / 60
+        time_remaining_min = setup["time_remaining"] / 60
         delay_seconds = result.adaptation_time_sec
 
         print(f"\n[SAR OODA] Coverage: {result.coverage_percentage:.1f}%")
@@ -244,7 +253,7 @@ class TestR5SARBaseline:
         assert len(result.safety_violations) == 0
 
         # Golden hour preserved (minimal delay)
-        golden_hour_impact = delay_seconds / setup['time_remaining'] * 100
+        golden_hour_impact = delay_seconds / setup["time_remaining"] * 100
         print(f"[SAR OODA] Golden hour consumed: {golden_hour_impact:.2f}%")
         assert golden_hour_impact < 1.0, "OODA should consume <1% of golden hour"
 
@@ -260,14 +269,16 @@ class TestR5SARBaseline:
         strategies = [
             ("No Adaptation", NoAdaptationStrategy()),
             ("Greedy Nearest", GreedyNearestStrategy()),
-            ("Manual Operator", ManualOperatorStrategy(
-                detection_delay_sec=45.0,
-                decision_delay_sec=420.0
-            )),
-            ("OODA", OODAStrategy(setup['ooda_engine'])),
+            (
+                "Manual Operator",
+                ManualOperatorStrategy(
+                    detection_delay_sec=45.0, decision_delay_sec=420.0
+                ),
+            ),
+            ("OODA", OODAStrategy(setup["ooda_engine"])),
         ]
 
-        time_remaining = setup['time_remaining']
+        time_remaining = setup["time_remaining"]
 
         print("\n" + "=" * 70)
         print("R5: SAR GOLDEN HOUR IMPACT ANALYSIS")
@@ -279,10 +290,10 @@ class TestR5SARBaseline:
 
         for name, strategy in strategies:
             result = strategy.reallocate(
-                setup['fleet_state'],
-                setup['lost_tasks'],
-                setup['mission_db'],
-                setup['constraint_validator']
+                setup["fleet_state"],
+                setup["lost_tasks"],
+                setup["mission_db"],
+                setup["constraint_validator"],
             )
             results.add_result(name, result)
 
@@ -290,16 +301,20 @@ class TestR5SARBaseline:
             delay_pct = result.adaptation_time_sec / time_remaining * 100
             time_after = time_remaining - result.adaptation_time_sec
 
-            golden_hour_data.append({
-                'name': name,
-                'delay_sec': result.adaptation_time_sec,
-                'delay_pct': delay_pct,
-                'time_after_min': time_after / 60,
-                'coverage': result.coverage_percentage
-            })
+            golden_hour_data.append(
+                {
+                    "name": name,
+                    "delay_sec": result.adaptation_time_sec,
+                    "delay_pct": delay_pct,
+                    "time_after_min": time_after / 60,
+                    "coverage": result.coverage_percentage,
+                }
+            )
 
             print(f"{name}:")
-            print(f"  Delay: {result.adaptation_time_sec:.1f}s ({delay_pct:.1f}% of golden hour)")
+            print(
+                f"  Delay: {result.adaptation_time_sec:.1f}s ({delay_pct:.1f}% of golden hour)"
+            )
             print(f"  Time remaining after: {time_after/60:.1f} min")
             print(f"  Coverage: {result.coverage_percentage:.1f}%")
             print()
@@ -318,7 +333,9 @@ class TestR5SARBaseline:
         print("\n[THESIS VALIDATION]")
         print(f"OODA delay: {ooda_delay:.1f}s")
         print(f"Manual delay: {manual_delay:.1f}s")
-        print(f"Time saved: {manual_delay - ooda_delay:.1f}s ({(manual_delay - ooda_delay)/60:.1f} min)")
+        print(
+            f"Time saved: {manual_delay - ooda_delay:.1f}s ({(manual_delay - ooda_delay)/60:.1f} min)"
+        )
 
         # In SAR, those 7+ minutes could be the difference between
         # life and death
@@ -346,9 +363,9 @@ class TestR5HighPriorityFocus:
         # Mix of high and low priority tasks
         # UAV-2 failure loses one high and one low priority task
         tasks_config = [
-            (100, 100, 95, True),   # High - UAV 1
-            (200, 100, 90, True),   # High - UAV 1
-            (300, 200, 85, True),   # High - UAV 2 (LOST)
+            (100, 100, 95, True),  # High - UAV 1
+            (200, 100, 90, True),  # High - UAV 1
+            (300, 200, 85, True),  # High - UAV 2 (LOST)
             (400, 200, 25, False),  # Low - UAV 2 (LOST)
             (500, 300, 30, False),  # Low - UAV 3
             (600, 300, 20, False),  # Low - UAV 4
@@ -361,7 +378,7 @@ class TestR5HighPriorityFocus:
                 zone_id=i,
                 task_type="search",
                 deadline=deadline,
-                duration_sec=300.0
+                duration_sec=300.0,
             )
 
         db.assign_task(1, 1)
@@ -388,20 +405,20 @@ class TestR5HighPriorityFocus:
                 4: 65.0,
             },
             uav_payloads={},
-            lost_tasks=[3, 4]  # One high (3), one low (4) priority
+            lost_tasks=[3, 4],  # One high (3), one low (4) priority
         )
 
         ooda_engine = OODAEngine(gcs_config)
         ooda_engine.set_mission_context(MissionContext.for_search_rescue())
 
         return {
-            'mission_db': db,
-            'fleet_state': fleet_state,
-            'constraint_validator': constraint_validator,
-            'ooda_engine': ooda_engine,
-            'lost_tasks': [db.get_task(3), db.get_task(4)],
-            'high_priority_lost': [3],
-            'low_priority_lost': [4]
+            "mission_db": db,
+            "fleet_state": fleet_state,
+            "constraint_validator": constraint_validator,
+            "ooda_engine": ooda_engine,
+            "lost_tasks": [db.get_task(3), db.get_task(4)],
+            "high_priority_lost": [3],
+            "low_priority_lost": [4],
         }
 
     def test_high_priority_first(self, priority_test_setup):
@@ -411,13 +428,13 @@ class TestR5HighPriorityFocus:
         If only one task can be reallocated, it MUST be the high-priority one.
         """
         setup = priority_test_setup
-        strategy = OODAStrategy(setup['ooda_engine'])
+        strategy = OODAStrategy(setup["ooda_engine"])
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Priority Test] Tasks reallocated: {result.tasks_reallocated}")
@@ -431,14 +448,19 @@ class TestR5HighPriorityFocus:
         high_priority_allocated = 3 in allocated_tasks
         low_priority_allocated = 4 in allocated_tasks
 
-        print(f"[Priority Test] High-priority (task 3) allocated: {high_priority_allocated}")
-        print(f"[Priority Test] Low-priority (task 4) allocated: {low_priority_allocated}")
+        print(
+            f"[Priority Test] High-priority (task 3) allocated: {high_priority_allocated}"
+        )
+        print(
+            f"[Priority Test] Low-priority (task 4) allocated: {low_priority_allocated}"
+        )
 
         # If capacity is limited and only one can be allocated,
         # it MUST be the high-priority one
         if result.tasks_reallocated == 1:
-            assert high_priority_allocated, \
-                "When capacity limited, high-priority task must be allocated first"
+            assert (
+                high_priority_allocated
+            ), "When capacity limited, high-priority task must be allocated first"
             print("[Priority Test] PASS: High-priority task correctly prioritized")
 
         # If both allocated, that's also fine

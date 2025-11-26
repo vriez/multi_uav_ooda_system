@@ -870,71 +870,6 @@
                 </div>
             </div>
 
-            <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Mission Configuration</h3>
-            <div class="section-content">
-                <!-- Surveillance Configuration -->
-                <div id="surveillance-config" class="mission-config-section" style="display: block;">
-                    <div class="home-base-inputs">
-                        <div class="input-group">
-                            <label>Patrol Pattern:</label>
-                            <select id="patrolPattern" style="padding: 6px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                                <option value="lawnmower">Lawnmower</option>
-                                <option value="perimeter">Perimeter</option>
-                                <option value="spiral">Spiral</option>
-                                <option value="creeping">Creeping</option>
-                                <option value="random">Random</option>
-                                <option value="figure8">Figure 8</option>
-                                <option value="sector">Sector</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label>Pattern Mode:</label>
-                            <select id="patternMode" style="padding: 6px; background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px;">
-                                <option value="per_zone">Per Zone</option>
-                                <option value="grouped">Grouped</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
-                        Pattern Mode: Apply pattern to each zone independently or across combined area
-                    </div>
-                </div>
-
-                <!-- SAR Configuration -->
-                <div id="sar-config" class="mission-config-section" style="display: none;">
-                    <div class="home-base-inputs">
-                        <div class="input-group">
-                            <label>Assets:</label>
-                            <input type="number" id="numAssets" value="3" min="1" max="10" step="1">
-                        </div>
-                        <div class="input-group">
-                            <label>Consensus:</label>
-                            <input type="number" id="consensusRequired" value="2" min="1" max="5" step="1">
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
-                        Consensus: Number of UAVs required to confirm asset rescue
-                    </div>
-                </div>
-
-                <!-- Delivery Configuration -->
-                <div id="delivery-config" class="mission-config-section" style="display: none;">
-                    <div class="home-base-inputs">
-                        <div class="input-group">
-                            <label>Packages:</label>
-                            <input type="number" id="numPackages" value="12" min="1" max="20" step="1">
-                        </div>
-                        <div class="input-group">
-                            <label>Time Window (s):</label>
-                            <input type="number" id="timeWindow" value="600" min="60" max="1800" step="60">
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;">
-                        Time Window: Delivery deadline in seconds (affects priority calculations)
-                    </div>
-                </div>
-            </div>
-
             <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Playback</h3>
             <div class="section-content">
                 <button class="btn btn-primary" id="btn-start">Start Mission</button>
@@ -1561,13 +1496,17 @@
                 section.style.display = 'none';
             });
 
-            // Show the appropriate mission configuration section
-            if (scenarioName === 'surveillance') {
-                document.getElementById('surveillance-config').style.display = 'block';
-            } else if (scenarioName === 'search_rescue') {
-                document.getElementById('sar-config').style.display = 'block';
-            } else if (scenarioName === 'delivery') {
-                document.getElementById('delivery-config').style.display = 'block';
+            // Show the appropriate mission configuration section (if elements exist)
+            const surveillanceConfig = document.getElementById('surveillance-config');
+            const sarConfig = document.getElementById('sar-config');
+            const deliveryConfig = document.getElementById('delivery-config');
+
+            if (scenarioName === 'surveillance' && surveillanceConfig) {
+                surveillanceConfig.style.display = 'block';
+            } else if (scenarioName === 'search_rescue' && sarConfig) {
+                sarConfig.style.display = 'block';
+            } else if (scenarioName === 'delivery' && deliveryConfig) {
+                deliveryConfig.style.display = 'block';
             }
 
             // Show/hide scenario-specific metrics
@@ -2211,20 +2150,26 @@
 
             // Add Surveillance-specific configuration
             if (scenario === 'surveillance') {
-                missionData.patrol_pattern = document.getElementById('patrolPattern').value || 'lawnmower';
-                missionData.pattern_mode = document.getElementById('patternMode').value || 'per_zone';
+                const patrolPatternEl = document.getElementById('patrolPattern');
+                const patternModeEl = document.getElementById('patternMode');
+                missionData.patrol_pattern = patrolPatternEl ? patrolPatternEl.value : 'lawnmower';
+                missionData.pattern_mode = patternModeEl ? patternModeEl.value : 'per_zone';
             }
 
             // Add SAR-specific configuration
             if (scenario === 'search_rescue') {
-                missionData.num_assets = parseInt(document.getElementById('numAssets').value) || 3;
-                missionData.consensus_required = parseInt(document.getElementById('consensusRequired').value) || 2;
+                const numAssetsEl = document.getElementById('numAssets');
+                const consensusEl = document.getElementById('consensusRequired');
+                missionData.num_assets = numAssetsEl ? parseInt(numAssetsEl.value) : 3;
+                missionData.consensus_required = consensusEl ? parseInt(consensusEl.value) : 2;
             }
 
             // Add Delivery-specific configuration
             if (scenario === 'delivery') {
-                missionData.num_packages = parseInt(document.getElementById('numPackages').value) || 12;
-                missionData.time_window = parseInt(document.getElementById('timeWindow').value) || 600;
+                const numPackagesEl = document.getElementById('numPackages');
+                const timeWindowEl = document.getElementById('timeWindow');
+                missionData.num_packages = numPackagesEl ? parseInt(numPackagesEl.value) : 12;
+                missionData.time_window = timeWindowEl ? parseInt(timeWindowEl.value) : 600;
             }
 
             console.log('Sending start_mission event with data:', missionData);

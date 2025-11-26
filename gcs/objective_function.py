@@ -6,6 +6,7 @@ allocation quality and the two-stage optimization strategy (greedy + local searc
 
 Reference: TCC Section 3.5 - Objective Function and Optimization Strategy
 """
+
 import time
 import logging
 from dataclasses import dataclass
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class MissionType(Enum):
     """Mission types with distinct optimization priorities"""
+
     SURVEILLANCE = "surveillance"
     SEARCH_RESCUE = "search_rescue"
     DELIVERY = "delivery"
@@ -29,6 +31,7 @@ class MissionContext:
     Mission-specific configuration injected into the OODA loop.
     Determines objective function weights and optimization behavior.
     """
+
     mission_type: MissionType
 
     # Priority weights for Algorithm 1 (task scoring)
@@ -39,19 +42,19 @@ class MissionContext:
     # Objective function parameters
     lambda_unallocated: float = 0.3  # Penalty for unallocated tasks
     gamma_coverage_gap: float = 0.2  # Coverage gap weight (surveillance)
-    beta_golden_hour: float = 0.5    # Golden hour bonus (SAR)
+    beta_golden_hour: float = 0.5  # Golden hour bonus (SAR)
 
     # Mission-specific parameters
     golden_hour_sec: Optional[float] = None  # SAR golden hour deadline
-    uav_max_range: float = 2000.0            # Max UAV range in meters
+    uav_max_range: float = 2000.0  # Max UAV range in meters
 
     # Optimization budget
-    optimization_budget_ms: float = 1200.0   # Total DECIDE phase budget
+    optimization_budget_ms: float = 1200.0  # Total DECIDE phase budget
     local_search_enabled: bool = True
     max_local_search_iterations: int = 50
 
     @classmethod
-    def for_surveillance(cls) -> 'MissionContext':
+    def for_surveillance(cls) -> "MissionContext":
         """Factory for surveillance mission context"""
         return cls(
             mission_type=MissionType.SURVEILLANCE,
@@ -63,7 +66,7 @@ class MissionContext:
         )
 
     @classmethod
-    def for_search_rescue(cls, golden_hour_sec: float = 3600.0) -> 'MissionContext':
+    def for_search_rescue(cls, golden_hour_sec: float = 3600.0) -> "MissionContext":
         """Factory for SAR mission context"""
         return cls(
             mission_type=MissionType.SEARCH_RESCUE,
@@ -76,7 +79,7 @@ class MissionContext:
         )
 
     @classmethod
-    def for_delivery(cls) -> 'MissionContext':
+    def for_delivery(cls) -> "MissionContext":
         """Factory for delivery mission context"""
         return cls(
             mission_type=MissionType.DELIVERY,
@@ -90,6 +93,7 @@ class MissionContext:
 @dataclass
 class AllocationResult:
     """Result of optimization containing allocation and metrics"""
+
     allocation: Dict[int, List[int]]  # UAV ID -> Task IDs
     objective_score: float
     coverage_percentage: float
@@ -135,7 +139,7 @@ class ObjectiveFunction:
         criticality = self._get_criticality_weight(task)
 
         # 3. SPATIAL COST (distance to nearest UAV)
-        min_distance = float('inf')
+        min_distance = float("inf")
         for uav_id in fleet_state.operational_uavs:
             uav_pos = fleet_state.uav_positions[uav_id]
             dist = np.linalg.norm(uav_pos[:2] - task.position[:2])
@@ -145,9 +149,9 @@ class ObjectiveFunction:
 
         # 4. COMBINED SCORE
         priority = (
-            self.context.w_temporal * temporal_urgency +
-            self.context.w_criticality * criticality -
-            self.context.w_spatial * spatial_cost
+            self.context.w_temporal * temporal_urgency
+            + self.context.w_criticality * criticality
+            - self.context.w_spatial * spatial_cost
         )
 
         return max(0.0, min(1.0, priority))
@@ -180,16 +184,22 @@ class ObjectiveFunction:
         elif self.context.mission_type == MissionType.SEARCH_RESCUE:
             # Bonus for completing before golden hour
             if self.context.golden_hour_sec:
-                completion_time = self._estimate_completion_time(task, uav_id, fleet_state)
+                completion_time = self._estimate_completion_time(
+                    task, uav_id, fleet_state
+                )
                 time_remaining = self.context.golden_hour_sec - completion_time
-                bonus = self.context.beta_golden_hour * max(0, time_remaining / self.context.golden_hour_sec)
+                bonus = self.context.beta_golden_hour * max(
+                    0, time_remaining / self.context.golden_hour_sec
+                )
                 return 1.0 + bonus
             return 1.0
 
         elif self.context.mission_type == MissionType.DELIVERY:
             # Binary penalty for deadline violation
             if task.deadline:
-                completion_time = self._estimate_completion_time(task, uav_id, fleet_state)
+                completion_time = self._estimate_completion_time(
+                    task, uav_id, fleet_state
+                )
                 if completion_time <= task.deadline:
                     return 1.0
                 else:
@@ -209,8 +219,9 @@ class ObjectiveFunction:
 
         return time.time() + travel_time + execution_time
 
-    def compute_objective(self, allocation: Dict[int, List[int]],
-                         fleet_state, lost_tasks: List) -> float:
+    def compute_objective(
+        self, allocation: Dict[int, List[int]], fleet_state, lost_tasks: List
+    ) -> float:
         """
         Compute objective function J(A)
 
@@ -237,7 +248,7 @@ class ObjectiveFunction:
                 score += priority * modifier
 
         # Penalty for unallocated tasks
-        all_lost_ids = {t.id if hasattr(t, 'id') else t for t in lost_tasks}
+        all_lost_ids = {t.id if hasattr(t, "id") else t for t in lost_tasks}
         unallocated_count = len(all_lost_ids - allocated_task_ids)
         score -= self.context.lambda_unallocated * unallocated_count
 
@@ -256,8 +267,9 @@ class AllocationOptimizer:
         self.objective_fn = objective_fn
         self.context = context
 
-    def optimize(self, fleet_state, lost_tasks: List,
-                constraint_validator) -> AllocationResult:
+    def optimize(
+        self, fleet_state, lost_tasks: List, constraint_validator
+    ) -> AllocationResult:
         """
         Execute two-stage optimization within time budget.
 
@@ -267,8 +279,12 @@ class AllocationOptimizer:
         t_start = time.time()
 
         # Stage 1: Greedy initialization
-        allocation = self._greedy_allocate(fleet_state, lost_tasks, constraint_validator)
-        initial_score = self.objective_fn.compute_objective(allocation, fleet_state, lost_tasks)
+        allocation = self._greedy_allocate(
+            fleet_state, lost_tasks, constraint_validator
+        )
+        initial_score = self.objective_fn.compute_objective(
+            allocation, fleet_state, lost_tasks
+        )
 
         iterations = 1
         best_allocation = allocation
@@ -276,22 +292,29 @@ class AllocationOptimizer:
 
         # Stage 2: Local search refinement (if time permits)
         elapsed_ms = (time.time() - t_start) * 1000
-        remaining_ms = self.context.optimization_budget_ms - elapsed_ms - 200  # Reserve 200ms
+        remaining_ms = (
+            self.context.optimization_budget_ms - elapsed_ms - 200
+        )  # Reserve 200ms
 
         if self.context.local_search_enabled and remaining_ms > 100:
             best_allocation, best_score, search_iters = self._local_search(
-                allocation, fleet_state, lost_tasks, constraint_validator,
-                max_time_ms=remaining_ms
+                allocation,
+                fleet_state,
+                lost_tasks,
+                constraint_validator,
+                max_time_ms=remaining_ms,
             )
             iterations += search_iters
 
         # Compute result metrics
         elapsed_ms = (time.time() - t_start) * 1000
         allocated_ids = {tid for tids in best_allocation.values() for tid in tids}
-        all_lost_ids = {t.id if hasattr(t, 'id') else t for t in lost_tasks}
+        all_lost_ids = {t.id if hasattr(t, "id") else t for t in lost_tasks}
         unallocated = list(all_lost_ids - allocated_ids)
 
-        coverage = (len(allocated_ids) / len(all_lost_ids) * 100) if all_lost_ids else 100.0
+        coverage = (
+            (len(allocated_ids) / len(all_lost_ids) * 100) if all_lost_ids else 100.0
+        )
 
         # Estimate optimality gap (rough heuristic)
         optimality_gap = self._estimate_optimality_gap(initial_score, best_score)
@@ -303,23 +326,26 @@ class AllocationOptimizer:
             unallocated_tasks=unallocated,
             optimization_time_ms=elapsed_ms,
             iterations=iterations,
-            optimality_gap_estimate=optimality_gap
+            optimality_gap_estimate=optimality_gap,
         )
 
-    def _greedy_allocate(self, fleet_state, lost_tasks: List,
-                        constraint_validator) -> Dict[int, List[int]]:
+    def _greedy_allocate(
+        self, fleet_state, lost_tasks: List, constraint_validator
+    ) -> Dict[int, List[int]]:
         """
         Stage 1: Greedy allocation (Algorithm 2)
 
         Assigns tasks in priority order to nearest feasible UAV.
         """
-        allocation: Dict[int, List[int]] = {uav_id: [] for uav_id in fleet_state.operational_uavs}
+        allocation: Dict[int, List[int]] = {
+            uav_id: [] for uav_id in fleet_state.operational_uavs
+        }
 
         # Sort tasks by priority (descending)
         tasks_with_priority = []
         for task_ref in lost_tasks:
             task = self.objective_fn.mission_db.get_task(
-                task_ref.id if hasattr(task_ref, 'id') else task_ref
+                task_ref.id if hasattr(task_ref, "id") else task_ref
             )
             if task:
                 priority = self.objective_fn.compute_task_priority(task, fleet_state)
@@ -328,11 +354,13 @@ class AllocationOptimizer:
         tasks_with_priority.sort(key=lambda x: x[1], reverse=True)
 
         # Track remaining capacity (simplified)
-        uav_load: Dict[int, int] = {uav_id: 0 for uav_id in fleet_state.operational_uavs}
+        uav_load: Dict[int, int] = {
+            uav_id: 0 for uav_id in fleet_state.operational_uavs
+        }
 
         for task, priority in tasks_with_priority:
             best_uav = None
-            min_dist = float('inf')
+            min_dist = float("inf")
 
             # Find nearest UAV that satisfies constraints
             for uav_id in fleet_state.operational_uavs:
@@ -354,9 +382,14 @@ class AllocationOptimizer:
         # Remove empty entries
         return {k: v for k, v in allocation.items() if v}
 
-    def _local_search(self, initial_allocation: Dict[int, List[int]],
-                     fleet_state, lost_tasks: List, constraint_validator,
-                     max_time_ms: float) -> Tuple[Dict[int, List[int]], float, int]:
+    def _local_search(
+        self,
+        initial_allocation: Dict[int, List[int]],
+        fleet_state,
+        lost_tasks: List,
+        constraint_validator,
+        max_time_ms: float,
+    ) -> Tuple[Dict[int, List[int]], float, int]:
         """
         Stage 2: Local search refinement
 
@@ -410,7 +443,9 @@ class AllocationOptimizer:
                         candidate = {k: v for k, v in candidate.items() if v}
 
                         # Evaluate
-                        score = self.objective_fn.compute_objective(candidate, fleet_state, lost_tasks)
+                        score = self.objective_fn.compute_objective(
+                            candidate, fleet_state, lost_tasks
+                        )
 
                         if score > best_score:
                             best = candidate
@@ -424,7 +459,9 @@ class AllocationOptimizer:
 
         return best, best_score, iterations
 
-    def _estimate_optimality_gap(self, initial_score: float, final_score: float) -> float:
+    def _estimate_optimality_gap(
+        self, initial_score: float, final_score: float
+    ) -> float:
         """
         Estimate optimality gap as percentage.
 
@@ -442,8 +479,9 @@ class AllocationOptimizer:
         return max(0, min(30, estimated_remaining))  # Cap at 30%
 
 
-def create_optimizer(mission_type: str, mission_db, constraint_validator,
-                    **kwargs) -> Tuple[ObjectiveFunction, AllocationOptimizer]:
+def create_optimizer(
+    mission_type: str, mission_db, constraint_validator, **kwargs
+) -> Tuple[ObjectiveFunction, AllocationOptimizer]:
     """
     Factory function to create optimizer for given mission type.
 
@@ -458,16 +496,18 @@ def create_optimizer(mission_type: str, mission_db, constraint_validator,
     """
     mission_type_lower = mission_type.lower()
 
-    if mission_type_lower in ['surveillance', 'patrol']:
+    if mission_type_lower in ["surveillance", "patrol"]:
         context = MissionContext.for_surveillance()
-    elif mission_type_lower in ['search_rescue', 'sar', 'search']:
-        golden_hour = kwargs.get('golden_hour_sec', 3600.0)
+    elif mission_type_lower in ["search_rescue", "sar", "search"]:
+        golden_hour = kwargs.get("golden_hour_sec", 3600.0)
         context = MissionContext.for_search_rescue(golden_hour)
-    elif mission_type_lower in ['delivery', 'cargo']:
+    elif mission_type_lower in ["delivery", "cargo"]:
         context = MissionContext.for_delivery()
     else:
         # Default to surveillance
-        logger.warning(f"Unknown mission type '{mission_type}', defaulting to surveillance")
+        logger.warning(
+            f"Unknown mission type '{mission_type}', defaulting to surveillance"
+        )
         context = MissionContext.for_surveillance()
 
     # Apply any override parameters

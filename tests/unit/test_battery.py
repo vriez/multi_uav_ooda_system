@@ -9,6 +9,7 @@ Tests cover:
 - Battery depletion crash scenarios
 - Battery charging at home base
 """
+
 import pytest
 import numpy as np
 from unittest.mock import Mock, patch
@@ -16,14 +17,14 @@ import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from visualization.config import (
     BASE_BATTERY_DRAIN,
     BATTERY_LOW_THRESHOLD,
     BATTERY_CHARGE_RATE,
     HOME_ARRIVAL_THRESHOLD,
-    LOOP_REAL_INTERVAL
+    LOOP_REAL_INTERVAL,
 )
 
 
@@ -85,10 +86,10 @@ class TestBatteryDepletion:
         """UAV should crash when battery reaches 0%"""
         battery = 0.0
         operational = battery > 0
-        state = 'crashed' if battery <= 0 else 'patrolling'
+        state = "crashed" if battery <= 0 else "patrolling"
 
         assert not operational
-        assert state == 'crashed'
+        assert state == "crashed"
 
     def test_uav_crashes_if_battery_depletes_during_return(self):
         """UAV should crash if battery runs out during return flight"""
@@ -183,9 +184,9 @@ class TestBatteryCharging:
         """UAV should transition to 'recovered' state when fully charged"""
         battery = 100.0
         recovery_threshold = 100.0
-        state = 'recovered' if battery >= recovery_threshold else 'charging'
+        state = "recovered" if battery >= recovery_threshold else "charging"
 
-        assert state == 'recovered'
+        assert state == "recovered"
 
 
 class TestBatteryEdgeCases:
@@ -228,5 +229,5 @@ class TestBatteryEdgeCases:
         assert uav2_final == pytest.approx(50.0 - drain)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

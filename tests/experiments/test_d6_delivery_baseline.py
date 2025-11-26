@@ -21,16 +21,22 @@ Key Thesis Claims Validated:
 2. Operator escalation is appropriate (not a failure)
 3. 80% autonomous + 20% supervised > 100% unsafe
 """
+
 import pytest
 import time
 import numpy as np
 
 from tests.experiments.baseline_strategies import (
-    StrategyType, NoAdaptationStrategy, GreedyNearestStrategy,
-    ManualOperatorStrategy, OODAStrategy
+    StrategyType,
+    NoAdaptationStrategy,
+    GreedyNearestStrategy,
+    ManualOperatorStrategy,
+    OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
-    MockMissionDatabase, FleetState, ExperimentResults
+    MockMissionDatabase,
+    FleetState,
+    ExperimentResults,
 )
 from gcs.ooda_engine import OODAEngine
 from gcs.constraint_validator import ConstraintValidator
@@ -71,7 +77,7 @@ class TestD6DeliveryBaseline:
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
                 task_type="delivery",
-                duration_sec=120.0
+                duration_sec=120.0,
             )
 
         # Assign packages to UAVs
@@ -91,9 +97,9 @@ class TestD6DeliveryBaseline:
             operational_uavs=[2, 3],  # UAV-1 partially failed
             failed_uavs=[1],
             uav_positions={
-                1: np.array([600.0, 1000.0, 50.0]),   # Near Clinic 1
+                1: np.array([600.0, 1000.0, 50.0]),  # Near Clinic 1
                 2: np.array([1800.0, 1400.0, 50.0]),  # En route
-                3: np.array([1000.0, 500.0, 50.0]),   # En route
+                3: np.array([1000.0, 500.0, 50.0]),  # En route
             },
             uav_battery={
                 1: 40.0,  # Low - can only complete current delivery
@@ -104,11 +110,11 @@ class TestD6DeliveryBaseline:
             # UAV-2: 2.5 - 2.2 = 0.3kg spare (Package B needs 2.0kg - IMPOSSIBLE)
             # UAV-3: 2.5 - 1.8 = 0.7kg spare (Package B needs 2.0kg - IMPOSSIBLE)
             uav_payloads={
-                1: 0.5,   # 5.0 - 4.5 = 0.5kg spare
-                2: 0.3,   # 2.5 - 2.2 = 0.3kg spare
-                3: 0.7,   # 2.5 - 1.8 = 0.7kg spare
+                1: 0.5,  # 5.0 - 4.5 = 0.5kg spare
+                2: 0.3,  # 2.5 - 2.2 = 0.3kg spare
+                3: 0.7,  # 2.5 - 1.8 = 0.7kg spare
             },
-            lost_tasks=[2]  # Package B (2.0kg) cannot be delivered
+            lost_tasks=[2],  # Package B (2.0kg) cannot be delivered
         )
 
         # OODA engine with delivery context
@@ -116,13 +122,13 @@ class TestD6DeliveryBaseline:
         ooda_engine.set_mission_context(MissionContext.for_delivery())
 
         return {
-            'mission_db': db,
-            'fleet_state': fleet_state,
-            'constraint_validator': constraint_validator,
-            'ooda_engine': ooda_engine,
-            'lost_tasks': [db.get_task(2)],  # Package B
-            'package_b_weight': 2.0,
-            'max_spare_capacity': 0.7  # UAV-3's spare
+            "mission_db": db,
+            "fleet_state": fleet_state,
+            "constraint_validator": constraint_validator,
+            "ooda_engine": ooda_engine,
+            "lost_tasks": [db.get_task(2)],  # Package B
+            "package_b_weight": 2.0,
+            "max_spare_capacity": 0.7,  # UAV-3's spare
         }
 
     def test_no_adaptation_delivery(self, delivery_setup):
@@ -135,10 +141,10 @@ class TestD6DeliveryBaseline:
         strategy = NoAdaptationStrategy()
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Delivery No Adaptation] Coverage: {result.coverage_percentage:.1f}%")
@@ -158,14 +164,16 @@ class TestD6DeliveryBaseline:
         strategy = GreedyNearestStrategy()
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Delivery Greedy] Coverage: {result.coverage_percentage:.1f}%")
-        print(f"[Delivery Greedy] Constraint violations: {result.constraint_violations}")
+        print(
+            f"[Delivery Greedy] Constraint violations: {result.constraint_violations}"
+        )
         print(f"[Delivery Greedy] Safety violations: {result.safety_violations}")
 
         # Greedy WILL try to assign (ignoring constraints)
@@ -180,8 +188,9 @@ class TestD6DeliveryBaseline:
             print("This would cause UAV overload in real deployment!")
 
             # The constraint violation should be detected
-            assert result.constraint_violations > 0 or len(result.safety_violations) > 0, \
-                "Greedy should report constraint violation for payload overload"
+            assert (
+                result.constraint_violations > 0 or len(result.safety_violations) > 0
+            ), "Greedy should report constraint violation for payload overload"
 
     def test_manual_operator_delivery(self, delivery_setup):
         """
@@ -194,15 +203,14 @@ class TestD6DeliveryBaseline:
         """
         setup = delivery_setup
         strategy = ManualOperatorStrategy(
-            detection_delay_sec=45.0,
-            decision_delay_sec=420.0
+            detection_delay_sec=45.0, decision_delay_sec=420.0
         )
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Delivery Manual] Coverage: {result.coverage_percentage:.1f}%")
@@ -215,8 +223,12 @@ class TestD6DeliveryBaseline:
         # But may not be able to reallocate either (same constraint)
         # The key difference is the operator would KNOW to deploy backup
         if result.tasks_reallocated == 0:
-            print("[Delivery Manual] Operator correctly identified infeasible reallocation")
-            print("[Delivery Manual] Would recommend: Deploy backup UAV or ground vehicle")
+            print(
+                "[Delivery Manual] Operator correctly identified infeasible reallocation"
+            )
+            print(
+                "[Delivery Manual] Would recommend: Deploy backup UAV or ground vehicle"
+            )
 
     def test_ooda_delivery(self, delivery_setup):
         """
@@ -225,13 +237,13 @@ class TestD6DeliveryBaseline:
         Expected: OODA should detect payload constraint and escalate
         """
         setup = delivery_setup
-        strategy = OODAStrategy(setup['ooda_engine'])
+        strategy = OODAStrategy(setup["ooda_engine"])
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Delivery OODA] Coverage: {result.coverage_percentage:.1f}%")
@@ -259,8 +271,8 @@ class TestD6DeliveryBaseline:
             print("[Delivery OODA] Escalation to operator appropriate")
 
             # Check if strategy indicates escalation
-            ooda_strategy = result.metrics.get('ooda_strategy', '')
-            if 'escalation' in ooda_strategy.lower() or result.tasks_reallocated == 0:
+            ooda_strategy = result.metrics.get("ooda_strategy", "")
+            if "escalation" in ooda_strategy.lower() or result.tasks_reallocated == 0:
                 print("[Delivery OODA] PASS: Operator escalation triggered")
         else:
             # If somehow allocated, verify constraints were actually met
@@ -284,13 +296,17 @@ class TestD6DeliveryBaseline:
         print(f"  Priority: 70 (HIGH - Antibiotics)")
 
         print("\nAvailable UAV spare capacity:")
-        for uav_id, spare in setup['fleet_state'].uav_payloads.items():
-            if uav_id in setup['fleet_state'].operational_uavs:
-                can_carry = "YES" if spare >= setup['package_b_weight'] else "NO"
-                print(f"  UAV-{uav_id}: {spare:.1f} kg spare - Can carry Package B? {can_carry}")
+        for uav_id, spare in setup["fleet_state"].uav_payloads.items():
+            if uav_id in setup["fleet_state"].operational_uavs:
+                can_carry = "YES" if spare >= setup["package_b_weight"] else "NO"
+                print(
+                    f"  UAV-{uav_id}: {spare:.1f} kg spare - Can carry Package B? {can_carry}"
+                )
 
         print(f"\nConclusion: Package B ({setup['package_b_weight']}kg) CANNOT be")
-        print(f"            carried by any UAV (max spare: {setup['max_spare_capacity']}kg)")
+        print(
+            f"            carried by any UAV (max spare: {setup['max_spare_capacity']}kg)"
+        )
         print("\n" + "-" * 70)
 
         # Run all strategies
@@ -299,19 +315,21 @@ class TestD6DeliveryBaseline:
         strategies = [
             ("No Adaptation", NoAdaptationStrategy()),
             ("Greedy Nearest", GreedyNearestStrategy()),
-            ("Manual Operator", ManualOperatorStrategy(
-                detection_delay_sec=45.0,
-                decision_delay_sec=420.0
-            )),
-            ("OODA", OODAStrategy(setup['ooda_engine'])),
+            (
+                "Manual Operator",
+                ManualOperatorStrategy(
+                    detection_delay_sec=45.0, decision_delay_sec=420.0
+                ),
+            ),
+            ("OODA", OODAStrategy(setup["ooda_engine"])),
         ]
 
         for name, strategy in strategies:
             result = strategy.reallocate(
-                setup['fleet_state'],
-                setup['lost_tasks'],
-                setup['mission_db'],
-                setup['constraint_validator']
+                setup["fleet_state"],
+                setup["lost_tasks"],
+                setup["mission_db"],
+                setup["constraint_validator"],
             )
             results.add_result(name, result)
 
@@ -333,7 +351,9 @@ class TestD6DeliveryBaseline:
         print(f"  Package B allocated: {ooda.tasks_reallocated > 0}")
         print(f"  Constraint violations: {ooda.constraint_violations}")
         print(f"  Safety: {'UNSAFE' if len(ooda.safety_violations) > 0 else 'Safe'}")
-        print(f"  Action: {'Escalate to operator' if ooda.tasks_reallocated == 0 else 'Allocated'}")
+        print(
+            f"  Action: {'Escalate to operator' if ooda.tasks_reallocated == 0 else 'Allocated'}"
+        )
 
         # Generate table
         print("\n" + results.generate_comparison_table())
@@ -390,7 +410,7 @@ class TestD6EscalationAppropriate:
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
                 task_type="delivery",
-                duration_sec=120.0
+                duration_sec=120.0,
             )
 
         db.assign_task(1, 1)
@@ -418,18 +438,18 @@ class TestD6EscalationAppropriate:
                 2: 0.3,  # Can take Package F (0.5kg)? No, only 0.3kg spare
                 3: 0.7,  # Can take Package F (0.5kg)? Yes!
             },
-            lost_tasks=[2, 5]  # Package B (2.0kg) and Package F (0.5kg)
+            lost_tasks=[2, 5],  # Package B (2.0kg) and Package F (0.5kg)
         )
 
         ooda_engine = OODAEngine(gcs_config)
         ooda_engine.set_mission_context(MissionContext.for_delivery())
 
         return {
-            'mission_db': db,
-            'fleet_state': fleet_state,
-            'constraint_validator': constraint_validator,
-            'ooda_engine': ooda_engine,
-            'lost_tasks': [db.get_task(2), db.get_task(5)]
+            "mission_db": db,
+            "fleet_state": fleet_state,
+            "constraint_validator": constraint_validator,
+            "ooda_engine": ooda_engine,
+            "lost_tasks": [db.get_task(2), db.get_task(5)],
         }
 
     def test_partial_reallocation(self, partial_feasible_setup):
@@ -439,13 +459,13 @@ class TestD6EscalationAppropriate:
         Expected: Package F reallocated, Package B escalated
         """
         setup = partial_feasible_setup
-        strategy = OODAStrategy(setup['ooda_engine'])
+        strategy = OODAStrategy(setup["ooda_engine"])
 
         result = strategy.reallocate(
-            setup['fleet_state'],
-            setup['lost_tasks'],
-            setup['mission_db'],
-            setup['constraint_validator']
+            setup["fleet_state"],
+            setup["lost_tasks"],
+            setup["mission_db"],
+            setup["constraint_validator"],
         )
 
         print(f"\n[Partial Reallocation Test]")

@@ -9,13 +9,14 @@ Tests cover:
 - Permission tracking per target
 - Boundary clearing after task completion
 """
+
 import pytest
 import numpy as np
 import sys
 import os
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 # Grid boundaries
@@ -80,10 +81,9 @@ def calculate_boundary_intersection(start_pos, target_pos):
         return np.array([t_values[0][1], t_values[0][2]])
 
     # Fallback: clamp to boundary
-    return np.array([
-        max(GRID_MIN, min(GRID_MAX, x1)),
-        max(GRID_MIN, min(GRID_MAX, y1))
-    ])
+    return np.array(
+        [max(GRID_MIN, min(GRID_MAX, x1)), max(GRID_MIN, min(GRID_MAX, y1))]
+    )
 
 
 class TestBoundaryDetection:
@@ -177,8 +177,9 @@ class TestBoundaryIntersection:
         intersection = calculate_boundary_intersection(start, target)
 
         # Should hit boundary at x=60 or y=60 (whichever comes first)
-        assert (intersection[0] == pytest.approx(60) or
-                intersection[1] == pytest.approx(60))
+        assert intersection[0] == pytest.approx(60) or intersection[1] == pytest.approx(
+            60
+        )
 
     def test_intersection_from_inside_to_corner(self):
         """Calculate intersection when targeting outside corner"""
@@ -187,8 +188,9 @@ class TestBoundaryIntersection:
         intersection = calculate_boundary_intersection(start, target)
 
         # Should hit one of the boundaries
-        assert (intersection[0] == pytest.approx(60) or
-                intersection[1] == pytest.approx(60))
+        assert intersection[0] == pytest.approx(60) or intersection[1] == pytest.approx(
+            60
+        )
 
     def test_no_intersection_target_inside(self):
         """When target is inside, return clamped position"""
@@ -222,10 +224,10 @@ class TestAwaitingPermissionState:
 
     def test_uav_enters_awaiting_permission_state(self):
         """UAV should enter awaiting_permission state at boundary"""
-        state = 'awaiting_permission'
+        state = "awaiting_permission"
         awaiting_permission = True
 
-        assert state == 'awaiting_permission'
+        assert state == "awaiting_permission"
         assert awaiting_permission
 
     def test_permission_granted_allows_continuation(self):
@@ -257,7 +259,9 @@ class TestPermissionTracking:
         permission_granted_for_target = (80, 20)
 
         # Permission for pickup doesn't apply to dropoff
-        has_permission_for_dropoff = permission_granted_for_target == tuple(dropoff_target)
+        has_permission_for_dropoff = permission_granted_for_target == tuple(
+            dropoff_target
+        )
 
         assert not has_permission_for_dropoff
 
@@ -326,5 +330,5 @@ class TestBoundaryEdgeCases:
         assert dropoff_outside
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

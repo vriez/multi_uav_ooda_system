@@ -7,6 +7,7 @@ Provides:
 - Constraint validator configuration
 - OODA engine setup for experiments
 """
+
 import pytest
 import time
 import numpy as np
@@ -16,7 +17,8 @@ from enum import Enum
 
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from gcs.ooda_engine import OODAEngine, FleetState, OODAPhase, RecoveryStrategy
 from gcs.constraint_validator import ConstraintValidator
@@ -26,6 +28,7 @@ from gcs.objective_function import MissionContext, MissionType
 # =============================================================================
 # Task and Mission Data Structures
 # =============================================================================
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -38,6 +41,7 @@ class TaskStatus(Enum):
 @dataclass
 class MockTask:
     """Mock task for testing"""
+
     id: int
     position: np.ndarray
     priority: float  # 0-100
@@ -58,12 +62,16 @@ class MockMissionDatabase:
         self.uav_assignments: Dict[int, List[int]] = {}
         self._next_task_id = 1
 
-    def add_task(self, position: np.ndarray, priority: float,
-                 deadline: Optional[float] = None,
-                 payload_kg: Optional[float] = None,
-                 zone_id: Optional[int] = None,
-                 task_type: str = "patrol",
-                 duration_sec: float = 60.0) -> MockTask:
+    def add_task(
+        self,
+        position: np.ndarray,
+        priority: float,
+        deadline: Optional[float] = None,
+        payload_kg: Optional[float] = None,
+        zone_id: Optional[int] = None,
+        task_type: str = "patrol",
+        duration_sec: float = 60.0,
+    ) -> MockTask:
         """Add a task to the database"""
         task = MockTask(
             id=self._next_task_id,
@@ -73,7 +81,7 @@ class MockMissionDatabase:
             payload_kg=payload_kg,
             zone_id=zone_id,
             task_type=task_type,
-            duration_sec=duration_sec
+            duration_sec=duration_sec,
         )
         self.tasks[task.id] = task
         self._next_task_id += 1
@@ -117,9 +125,11 @@ class MockMissionDatabase:
 # Scenario Configurations
 # =============================================================================
 
+
 @dataclass
 class FailureScenario:
     """Configuration for a failure scenario"""
+
     name: str
     failed_uav_id: int
     failure_time_percent: float  # 0-100, percent of mission progress
@@ -130,6 +140,7 @@ class FailureScenario:
 @dataclass
 class ExperimentScenario:
     """Complete experiment scenario configuration"""
+
     name: str
     mission_type: MissionType
     num_uavs: int
@@ -142,35 +153,34 @@ class ExperimentScenario:
 # Pytest Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def gcs_config():
     """Standard GCS configuration for experiments"""
     return {
-        'ooda_engine': {
-            'telemetry_rate_hz': 2.0,
-            'timeout_threshold_sec': 1.5,
-            'phase_timeouts': {
-                'observe': 1.5,
-                'orient': 1.5,
-                'decide': 1.5,
-                'act': 1.0
-            }
+        "ooda_engine": {
+            "telemetry_rate_hz": 2.0,
+            "timeout_threshold_sec": 1.5,
+            "phase_timeouts": {
+                "observe": 1.5,
+                "orient": 1.5,
+                "decide": 1.5,
+                "act": 1.0,
+            },
         },
-        'constraints': {
-            'battery_safety_reserve_percent': 20.0,
-            'anomaly_thresholds': {
-                'battery_discharge_rate': 5.0,
-                'position_discontinuity': 100.0,
-                'altitude_deviation': 50.0
-            }
+        "constraints": {
+            "battery_safety_reserve_percent": 20.0,
+            "anomaly_thresholds": {
+                "battery_discharge_rate": 5.0,
+                "position_discontinuity": 100.0,
+                "altitude_deviation": 50.0,
+            },
         },
-        'collision_avoidance': {
-            'safety_buffer_meters': 15.0,
-            'temporal_buffer_seconds': 10.0
+        "collision_avoidance": {
+            "safety_buffer_meters": 15.0,
+            "temporal_buffer_seconds": 10.0,
         },
-        'mission_context': {
-            'mission_type': 'surveillance'
-        }
+        "mission_context": {"mission_type": "surveillance"},
     }
 
 
@@ -190,6 +200,7 @@ def ooda_engine(gcs_config):
 # Surveillance Scenario (S5)
 # =============================================================================
 
+
 @pytest.fixture
 def surveillance_scenario():
     """S5: Surveillance baseline comparison scenario"""
@@ -203,15 +214,15 @@ def surveillance_scenario():
             failed_uav_id=3,
             failure_time_percent=50.0,
             failure_type="battery",
-            description="UAV-3 battery anomaly at t=45min, Zone C"
+            description="UAV-3 battery anomaly at t=45min, Zone C",
         ),
         expected_results={
-            'no_adaptation_coverage': 83.3,
-            'greedy_coverage': 95.0,
-            'manual_coverage': 95.0,
-            'ooda_coverage': 91.7,
-            'ooda_time_sec': 5.5
-        }
+            "no_adaptation_coverage": 83.3,
+            "greedy_coverage": 95.0,
+            "manual_coverage": 95.0,
+            "ooda_coverage": 91.7,
+            "ooda_time_sec": 5.5,
+        },
     )
 
 
@@ -223,21 +234,21 @@ def surveillance_fleet_state():
         operational_uavs=[1, 2, 4, 5],  # UAV-3 has failed
         failed_uavs=[3],
         uav_positions={
-            1: np.array([100.0, 100.0, 50.0]),   # Zone A
-            2: np.array([300.0, 100.0, 50.0]),   # Zone B
-            3: np.array([500.0, 100.0, 50.0]),   # Zone C (failed)
-            4: np.array([100.0, 300.0, 50.0]),   # Zone D
-            5: np.array([300.0, 300.0, 50.0]),   # Zone E
+            1: np.array([100.0, 100.0, 50.0]),  # Zone A
+            2: np.array([300.0, 100.0, 50.0]),  # Zone B
+            3: np.array([500.0, 100.0, 50.0]),  # Zone C (failed)
+            4: np.array([100.0, 300.0, 50.0]),  # Zone D
+            5: np.array([300.0, 300.0, 50.0]),  # Zone E
         },
         uav_battery={
             1: 75.0,
             2: 45.0,  # 15% spare
-            3: 8.0,   # Failed - below threshold
+            3: 8.0,  # Failed - below threshold
             4: 40.0,  # 12% spare
             5: 80.0,
         },
         uav_payloads={},  # No payload for surveillance
-        lost_tasks=[5, 6]  # Zone C tasks
+        lost_tasks=[5, 6],  # Zone C tasks
     )
 
 
@@ -263,7 +274,7 @@ def surveillance_mission_db():
             position=np.array([x, y, 50.0]),
             priority=priority,
             zone_id=i,
-            task_type="patrol"
+            task_type="patrol",
         )
 
     # Assign tasks to UAVs
@@ -283,6 +294,7 @@ def surveillance_mission_db():
 # SAR Scenario (R5)
 # =============================================================================
 
+
 @pytest.fixture
 def sar_scenario():
     """R5: Search & Rescue baseline comparison scenario"""
@@ -296,16 +308,16 @@ def sar_scenario():
             failed_uav_id=2,
             failure_time_percent=13.3,  # 8 min into 60 min mission
             failure_type="gps",
-            description="UAV-2 GPS signal loss at t=8min"
+            description="UAV-2 GPS signal loss at t=8min",
         ),
         expected_results={
-            'no_adaptation_coverage': 70.0,
-            'greedy_coverage': 90.0,
-            'manual_coverage': 100.0,  # But violates golden hour!
-            'ooda_coverage': 100.0,    # High-priority coverage
-            'ooda_time_sec': 6.0,
-            'golden_hour_sec': 3600.0
-        }
+            "no_adaptation_coverage": 70.0,
+            "greedy_coverage": 90.0,
+            "manual_coverage": 100.0,  # But violates golden hour!
+            "ooda_coverage": 100.0,  # High-priority coverage
+            "ooda_time_sec": 6.0,
+            "golden_hour_sec": 3600.0,
+        },
     )
 
 
@@ -317,10 +329,10 @@ def sar_fleet_state():
         operational_uavs=[1, 3, 4],  # UAV-2 has failed
         failed_uavs=[2],
         uav_positions={
-            1: np.array([200.0, 200.0, 50.0]),   # Zone 1 - LKP
-            2: np.array([600.0, 400.0, 50.0]),   # Zone 2 - Water (failed)
-            3: np.array([400.0, 600.0, 50.0]),   # Zone 4 - Trails
-            4: np.array([800.0, 800.0, 50.0]),   # Zone 6 - Dense forest
+            1: np.array([200.0, 200.0, 50.0]),  # Zone 1 - LKP
+            2: np.array([600.0, 400.0, 50.0]),  # Zone 2 - Water (failed)
+            3: np.array([400.0, 600.0, 50.0]),  # Zone 4 - Trails
+            4: np.array([800.0, 800.0, 50.0]),  # Zone 6 - Dense forest
         },
         uav_battery={
             1: 75.0,  # 20% spare
@@ -329,7 +341,7 @@ def sar_fleet_state():
             4: 78.0,  # 30% spare
         },
         uav_payloads={},
-        lost_tasks=[3, 4]  # Water source + shelter tasks
+        lost_tasks=[3, 4],  # Water source + shelter tasks
     )
 
 
@@ -344,8 +356,8 @@ def sar_mission_db():
     zones = [
         (200, 200, 90, "Zone 1 - LKP radius"),
         (400, 200, 80, "Zone 2 - Water sources"),
-        (600, 400, 80, "Zone 3 - Shelters"),      # Lost task
-        (200, 600, 75, "Zone 3b - More shelters"), # Lost task
+        (600, 400, 80, "Zone 3 - Shelters"),  # Lost task
+        (200, 600, 75, "Zone 3b - More shelters"),  # Lost task
         (400, 600, 60, "Zone 4 - Trails"),
         (800, 800, 30, "Zone 6 - Dense forest"),
     ]
@@ -357,7 +369,7 @@ def sar_mission_db():
             zone_id=i,
             task_type="search",
             deadline=golden_hour_deadline,
-            duration_sec=300.0  # 5 min per zone
+            duration_sec=300.0,  # 5 min per zone
         )
 
     # Assign tasks
@@ -375,6 +387,7 @@ def sar_mission_db():
 # Delivery Scenario (D6)
 # =============================================================================
 
+
 @pytest.fixture
 def delivery_scenario():
     """D6: Delivery baseline comparison scenario"""
@@ -388,15 +401,15 @@ def delivery_scenario():
             failed_uav_id=1,
             failure_time_percent=25.0,  # 15 min into 60 min mission
             failure_type="battery",
-            description="UAV-1 (heavy lifter) battery anomaly at t=15min"
+            description="UAV-1 (heavy lifter) battery anomaly at t=15min",
         ),
         expected_results={
-            'no_adaptation_coverage': 60.0,  # 3/5 packages
-            'greedy_coverage': 100.0,        # But UNSAFE!
-            'manual_coverage': 100.0,
-            'ooda_coverage': 80.0,           # 4/5, escalates for package B
-            'ooda_time_sec': 5.5
-        }
+            "no_adaptation_coverage": 60.0,  # 3/5 packages
+            "greedy_coverage": 100.0,  # But UNSAFE!
+            "manual_coverage": 100.0,
+            "ooda_coverage": 80.0,  # 4/5, escalates for package B
+            "ooda_time_sec": 5.5,
+        },
     )
 
 
@@ -406,10 +419,10 @@ def delivery_fleet_state():
     return FleetState(
         timestamp=time.time(),
         operational_uavs=[2, 3],  # UAV-1 can only complete package A
-        failed_uavs=[1],         # Partially failed - can finish current task
+        failed_uavs=[1],  # Partially failed - can finish current task
         uav_positions={
             1: np.array([600.0, 1000.0, 50.0]),  # Near Clinic 1
-            2: np.array([1800.0, 1400.0, 50.0]), # En route to Clinic 3
+            2: np.array([1800.0, 1400.0, 50.0]),  # En route to Clinic 3
             3: np.array([1000.0, 500.0, 50.0]),  # En route to Clinic 5
         },
         uav_battery={
@@ -418,11 +431,11 @@ def delivery_fleet_state():
             3: 75.0,
         },
         uav_payloads={
-            1: 0.5,   # Only 0.5kg spare (was carrying 4.5kg)
-            2: 0.3,   # 2.2kg loaded, 0.3kg spare
-            3: 0.7,   # 1.8kg loaded, 0.7kg spare
+            1: 0.5,  # Only 0.5kg spare (was carrying 4.5kg)
+            2: 0.3,  # 2.2kg loaded, 0.3kg spare
+            3: 0.7,  # 1.8kg loaded, 0.7kg spare
         },
-        lost_tasks=[2]  # Package B (2.0kg) cannot be delivered by UAV-1
+        lost_tasks=[2],  # Package B (2.0kg) cannot be delivered by UAV-1
     )
 
 
@@ -436,7 +449,7 @@ def delivery_mission_db():
     packages = [
         # (x, y, priority, payload_kg, deadline_min, description)
         (800, 1200, 100, 2.5, 30, "Package A - Insulin (CRITICAL)"),
-        (1500, 800, 70, 2.0, 45, "Package B - Antibiotics (HIGH)"),   # Lost task
+        (1500, 800, 70, 2.0, 45, "Package B - Antibiotics (HIGH)"),  # Lost task
         (2200, 1500, 40, 1.2, 60, "Package C - Bandages"),
         (2800, 600, 40, 1.0, 60, "Package D - Gauze"),
         (1200, 300, 20, 1.8, 90, "Package E - Vitamins"),
@@ -449,7 +462,7 @@ def delivery_mission_db():
             payload_kg=payload,
             deadline=current_time + deadline_min * 60,
             task_type="delivery",
-            duration_sec=120.0  # 2 min per delivery
+            duration_sec=120.0,  # 2 min per delivery
         )
 
     # Assign packages
@@ -466,12 +479,14 @@ def delivery_mission_db():
 # Experiment Results Collection
 # =============================================================================
 
+
 @dataclass
 class ExperimentResults:
     """Collection of results from running all strategies"""
+
     scenario_name: str
     mission_type: MissionType
-    results: Dict[str, 'ReallocationResult'] = field(default_factory=dict)
+    results: Dict[str, "ReallocationResult"] = field(default_factory=dict)
     comparison_table: Optional[str] = None
 
     def add_result(self, strategy_name: str, result):
@@ -502,6 +517,8 @@ class ExperimentResults:
 @pytest.fixture
 def experiment_results():
     """Factory fixture for creating experiment results collectors"""
+
     def _create(scenario_name: str, mission_type: MissionType):
         return ExperimentResults(scenario_name, mission_type)
+
     return _create
