@@ -2037,11 +2037,11 @@ These three scenarios validate the OODA-based hybrid autonomy architecture acros
 
 Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce systematically. This research therefore employs software-in-the-loop simulation (SOARES et al., 2025), implementing physically-grounded vehicle dynamics within a controlled computational environment where failures can be injected deterministically and experiments repeated indefinitely.
 
-The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 2.5 kg maximum payload) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
+The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 2.5 kg maximum payload) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase (QUAD SIMCON, 2020) serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
 
 Communication between simulated UAVs and the Ground Control Station employs TCP/IP transport with JSON-RPC 2.0 protocol, mirroring the request-response patterns of real telemetry systems. The GCS server (port 5555) aggregates fleet state at 2 Hz, while a Flask-based web dashboard (port 8085) provides real-time visualization through WebSocket streaming via SocketIO.
 
-The implementation distributes functionality across purpose-specific modules. The OODA engine (\texttt{gcs/ooda\_engine.py}) orchestrates phase timing and state transitions. Fleet monitoring (\texttt{gcs/fleet\_monitor.py}) implements multi-modal failure detection. Constraint validation (\texttt{gcs/constraint\_validator.py}) enforces battery, payload, and collision safety margins. The mission manager (\texttt{gcs/mission\_manager.py}) maintains the task database with assignment tracking, while the objective function module (\texttt{gcs/objective\_function.py}) implements the two-stage optimization strategy. Vehicle dynamics reside in \texttt{uav/simulation.py}, with GCS communication handled by \texttt{uav/client.py}. The complete source is available at \url{https://github.com/vriesz/fuse}.
+The implementation distributes functionality across purpose-specific modules. The OODA engine (\texttt{gcs/ooda\_engine.py}) orchestrates phase timing and state transitions. Fleet monitoring (\texttt{gcs/fleet\_monitor.py}) implements multi-modal failure detection. Constraint validation (\texttt{gcs/constraint\_validator.py}) enforces battery, payload, and collision safety margins. The mission manager (\texttt{gcs/mission\_manager.py}) maintains the task database with assignment tracking, while the objective function module (\texttt{gcs/objective\_function.py}) implements the two-stage optimization strategy. Vehicle dynamics reside in \texttt{uav/simulation.py}, with GCS communication handled by \texttt{uav/client.py}. The complete source is publicly available (EULÁLIO REIS, 2025).
 
 \section{Validation Metrics}
 
@@ -2461,7 +2461,7 @@ Parker, L. E. (1998). ALLIANCE: An architecture for fault tolerant multirobot co
 Eulálio Reis, V. (2025). \textit{FUSE: Fault-tolerant UAV System Environment - OODA-based Multi-Agent Coordination with Constraint-Aware Recovery}. GitHub repository. \url{https://github.com/vriesz/fuse}
 
 \bibitem{quadref}
-Quad SimCon Reference: \url{https://github.com/bobzwik/Quadcopter_SimCon}
+QUAD SIMCON. (2020). \textit{Quadcopter Simulation and Control}. GitHub repository. \url{https://github.com/bobzwik/Quadcopter_SimCon}
 
 % \bibitem{repo}
 % Project Repository: \url{https://github.com/vriesz/fuse}
