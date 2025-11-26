@@ -1,0 +1,53 @@
+[flake8]
+# --- Core Settings ---
+
+# Set a max line length of 120 (a common standard when using Black)
+max-line-length = 120 
+
+# Set the maximum allowed complexity for a function (using the McCabe checker C901)
+max-complexity = 10 
+
+# --- Exclusions ---
+
+# Define directories and files that Flake8 should ignore completely.
+# This is crucial for fast runtime!
+exclude =
+    .git,
+    __pycache__,
+    docs,
+    venv,
+    .venv,
+    migrations/*,
+    build/*,
+    # If using Django, you might add settings/local.py, etc.
+
+# --- Ignoring/Selecting Specific Rules ---
+
+# Define the error codes to ignore globally. Be selective.
+ignore =
+    # E501: Line too long (Ignored because we explicitly set max-line-length above, 
+    #       but sometimes kept in 'ignore' if a tool like Black handles it)
+    E501, 
+    # W503: Line break before a binary operator (Ignored because Black puts breaks before operators)
+    W503, 
+    # E203: Whitespace before ':' (Ignored because Black uses PEP 8's stance on this)
+    E203,
+    # D100, D104: Missing docstrings (Uncomment to disable docstring checks)
+    # D100, D104,
+
+# --- Optional Plugin Settings ---
+
+# If you install the 'pep8-naming' plugin (prefix N), you can customize it:
+# You can allow certain non-PEP-8 names here if necessary
+# N802: function name should be lowercase
+# N806: variable name should be lowercase
+# N803: argument name should be lowercase
+# N804: first argument to a class method should be named cls
+# N805: first argument to a method should be named self
+# N815: constants should be uppercase
+# N817: variable names must be descriptive
+# N818: exception name should end with 'Error'
+
+# If you install the 'flake8-docstrings' plugin (prefix D), you can select a style:
+# Style is usually numpy, google, or pep257.
+# docstring-convention = numpy
