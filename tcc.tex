@@ -1156,33 +1156,11 @@ Operator Action & None required (autonomous recovery successful) \\
 \item No operator escalation required
 \end{itemize}
 
-\subsection{Performance Analysis}
+\subsection{Scenario Outcome}
 
-\textbf{Quantitative Results (Measured from Scenario S5):}
-\begin{table}[H]
-\centering
-\caption{Surveillance Scenario Performance Metrics}
-\label{tab:surveillance_performance}
-\begin{tabular}{|l|c|c|}
-\hline
-\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
-\hline
-Coverage Recovery & >85\% & \textbf{100\%} \\
-OODA Computation Time & <6s & \textbf{0.34 ms} \\
-End-to-End Response Time & <6s & \textbf{2.2s (estimated with RF)} \\
-Constraint Violations & 0 & \textbf{0 (verified)} \\
-Mission Completion & >90\% & \textbf{100\% (mission continued)} \\
-\hline
-\end{tabular}
-\end{table}
+The OODA system achieved complete coverage recovery in 0.34 milliseconds while maintaining all safety constraints. Without adaptation, Zone C would remain unmonitored for the mission's remainder---an 87.5\% coverage degradation. Manual operator intervention could achieve equivalent recovery but requires 465 seconds, leaving Zone C exposed for nearly eight minutes.
 
-Comparing the OODA system against baseline approaches reveals the value of constraint-aware autonomy. The OODA framework achieved complete coverage recovery with 0.34ms computation time while maintaining all safety constraints. A greedy baseline matched the recovery percentage with marginally faster computation (0.18ms), though this scenario's simplicity did not expose the greedy approach's constraint-violation tendencies observed in more complex missions. Without any adaptation, mission coverage would have degraded to 87.5\%—Zone C would remain unmonitored for the remainder of the mission, creating a persistent security gap.
-
-The most striking comparison involves manual operator response. Human intervention could theoretically achieve the same 100\% recovery, but with a 465-second delay—nearly eight minutes during which Zone C remains unmonitored. The OODA system's response is 1,367$\times$ faster, transforming what would be a significant coverage gap into a momentary transition measured in milliseconds.
-
-Several insights emerge from this scenario. First, the system exceeded its 85\% recovery target by achieving complete coverage restoration, demonstrating that conservative targets leave room for exceptional performance. Second, the sub-millisecond computation time validates the algorithmic design for real-time deployment; even accounting for communication latency, the end-to-end response remains well within acceptable bounds. Third, zero constraint violations confirm that speed does not compromise safety—all UAVs maintained the 20\% battery reserve throughout the recovery process.
-
-The scenario also exposes limitations inherent to the recovery strategy. Merging Zone C into adjacent patrol circuits reduces waypoint density, potentially degrading detection probability for that region. The system remains vulnerable to cascading failures; if UAV-2 or UAV-4 experienced subsequent failures, the remaining fleet would lack capacity for full compensation. Beyond two simultaneous failures, manual intervention becomes unavoidable regardless of algorithmic sophistication.
+Two limitations emerge from this scenario. First, merging Zone C into adjacent patrol circuits reduces waypoint density, potentially degrading detection probability for that region. Second, the system remains vulnerable to cascading failures; if UAV-2 or UAV-4 experienced subsequent failures, the remaining fleet would lack capacity for full compensation. Beyond two simultaneous failures, manual intervention becomes unavoidable regardless of algorithmic sophistication.
 
 \section{SCENARIO 2: Emergency Search \& Rescue}
 
@@ -1489,50 +1467,13 @@ Overall Mission Completion & 90\% of total area (acceptable for SAR) \\
 \item No operator escalation required (autonomous recovery successful)
 \end{itemize}
 
-\subsection{Performance Analysis}
+\subsection{Scenario Outcome}
 
-\textbf{Quantitative Results (Measured from Scenarios R5 \& R6):}
-\begin{table}[H]
-\centering
-\caption{Search \& Rescue Scenario Performance Metrics}
-\label{tab:sar_performance}
-\begin{tabular}{|l|c|c|}
-\hline
-\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
-\hline
-Coverage Recovery & >90\% & \textbf{100\%} \\
-OODA Computation Time (R5) & <6s & \textbf{0.50 ms} \\
-OODA Computation Time (R6) & <6s & \textbf{0.16 ms (fastest)} \\
-End-to-End Response Time & <6s & \textbf{2.3s (estimated with RF)} \\
-Constraint Violations & 0 & \textbf{0 (verified)} \\
-Golden Hour Impact & Minimize & \textbf{0.0000138\% consumed} \\
-\hline
-\end{tabular}
-\end{table}
+The OODA system achieved 100\% high-priority zone coverage recovery in 0.50 milliseconds (R5) and 0.16 milliseconds (R6)---the fastest computation times measured across all scenarios. Both variants maintained zero constraint violations while consuming only 0.0000138\% of the golden hour. Without adaptation, coverage would degrade to 66.7\%, leaving critical water features and shelter areas unsearched during the most survivable window.
 
-\textbf{Performance vs. Baselines:}
-\begin{itemize}
-\item \textbf{OODA (R5):} 100\% recovery, 0.50ms computation, safe
-\item \textbf{OODA (R6):} 100\% recovery with out-of-grid permission, 0.16ms (fastest measured)
-\item \textbf{No Adaptation:} 66.7\% coverage (33.3\% mission loss)
-\item \textbf{Manual Operator:} 100\% recovery, 465s delay (12.9\% of golden hour)
-\end{itemize}
+The golden hour calculus reveals the stakes: manual operator intervention requires 465 seconds (7.75 minutes), consuming 12.9\% of the critical window before any remedial action begins. In wilderness search operations where survival probability decays exponentially with time, this 7.7-minute advantage is not merely operational efficiency---it represents the difference between rescue and recovery.
 
-\textbf{Key Insights:}
-\begin{itemize}
-\item \textbf{Full Recovery Achieved:} 100\% coverage recovery in both R5 and R6 scenarios
-\item \textbf{Life-Saving Speed:} OODA saves 7.7 minutes vs manual in golden hour scenarios
-\item \textbf{Permission System Validated:} R6 correctly used UAV-4 with out-of-grid permission
-\item \textbf{Time-Critical Advantage:} 0.50ms computation vs 465s manual (930,000$\times$ faster)
-\item \textbf{Safety Preserved:} Zero constraint violations across all SAR scenarios
-\end{itemize}
-
-\textbf{Critical Finding - Golden Hour Impact:}
-\begin{itemize}
-\item \textbf{OODA:} 0.50ms = 0.0000138\% of 60-minute golden hour
-\item \textbf{Manual:} 465s = 12.9\% of golden hour (unacceptable delay)
-\item \textbf{Value Proposition:} In life-or-death SAR missions, 7.7-minute advantage can determine victim survival
-\end{itemize}
+Scenario R6 validates the permission system's flexibility. When the optimal reallocation requires UAV-4's out-of-grid capability, the system correctly identifies and leverages this permission, achieving the fastest computation time while respecting each vehicle's authorized operational envelope. This demonstrates that constraint awareness need not sacrifice performance when permissions are properly modeled.
 
 \section{SCENARIO 3: Medical Supply Delivery}
 
@@ -1807,49 +1748,11 @@ Auto-Failsafe & Deploy UAV-4 after 30-second countdown if no operator response \
 \label{tab:delivery_alert_config}
 \end{table}
 
-\textbf{Autonomous Actions Executed Without Operator Approval:}
+\textbf{Autonomous Actions and Command Dispatch:}
 
-The system autonomously executes safety-preserving actions while awaiting operator decision on Package B recovery strategy.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|l|}
-\hline
-\textbf{UAV} & \textbf{Autonomous Action} \\
-\hline
-UAV-1 & Complete Package A delivery to Clinic 1, then RTL (skip Clinic 2) \\
-UAV-2 & No changes (continue Packages C+D delivery as planned) \\
-UAV-3 & No changes (continue Package E delivery as planned) \\
-\hline
-\end{tabular}
-\caption{Autonomous Mission Adjustments}
-\label{tab:delivery_autonomous_actions}
-\end{table}
+The system executes safety-preserving actions without awaiting operator approval for the feasible portion of the mission. UAV-1 receives a modified route: complete Package A delivery to Clinic 1, then return to launch (skipping Clinic 2 and its now-undeliverable Package B). UAV-2 and UAV-3 continue their planned routes unchanged---Packages C, D, and E remain on schedule. Meanwhile, UAV-4 enters standby mode, prepared for rapid deployment pending operator decision.
 
 \subsubsection{ACT Phase (T+4.5s to T+5.5s)}
-
-	extbf{Command Dispatch:}
-
-The system dispatches mission modifications and presents a critical decision interface.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|l|p{6.5cm}|}
-\hline
-\textbf{Target} & \textbf{Command} & \textbf{Action} \\
-\hline
-UAV-1 & Mission Update & Modified route: Clinic 1 only, then RTL (remove Package B) \\
-UAV-2 & Status Check & No changes \\
-UAV-3 & Status Check & No changes \\
-Operator & Critical Alert & Package B escalation required \\
-UAV-4 & Standby & Prepared for deployment (pending approval) \\
-\hline
-\end{tabular}
-\caption{Delivery Command Dispatch Summary}
-\label{tab:delivery_commands}
-\end{table}
 
 \textbf{Operator Alert Interface:}
 
@@ -1892,74 +1795,13 @@ Safety Preserved & \cellcolor{green!25}YES \\
 \label{tab:delivery_status}
 \end{table}
 
-\subsection{Performance Analysis}
+\subsection{Scenario Outcome}
 
-\textbf{Quantitative Results (Measured from Scenarios D6 \& D7):}
-\begin{table}[H]
-\centering
-\caption{Delivery Scenario Performance Metrics}
-\label{tab:delivery_performance}
-\begin{tabular}{|l|c|c|}
-\hline
-\textbf{Metric} & \textbf{Target} & \textbf{Measured} \\
-\hline
-Autonomous Coverage (D6) & >75\% & \textbf{0\% (escalated)} \\
-Autonomous Coverage (D7) & >75\% & \textbf{0\% (escalated)} \\
-OODA Computation Time (D6) & <6s & \textbf{0.11 ms} \\
-OODA Computation Time (D7) & <6s & \textbf{0.23 ms} \\
-Operator Escalation & Appropriate & \textbf{YES (correct)} \\
-Constraint Violations & 0 & \textbf{0 (safe)} \\
-Safety Preserved & No violations & \textbf{YES (verified)} \\
-\hline
-\end{tabular}
-\end{table}
+The delivery scenarios (D6 and D7) demonstrate what constraint-aware design looks like when physical reality defeats autonomous recovery. In D6, Package B (2.0 kg antibiotics) exceeds every available UAV's spare payload capacity---the maximum available is 0.7 kg. In D7, the destination coordinates (3500, 2500) lie outside the operational grid boundary, and no UAV holds out-of-grid permission. The OODA system correctly identified both situations as autonomously infeasible in 0.11 ms and 0.23 ms respectively, escalating to operators while preserving zero constraint violations.
 
-\textbf{Performance vs. Baselines:}
-\begin{itemize}
-\item \textbf{OODA (D6):} 0\% autonomous (payload violation), correctly escalated, 0.11ms
-\item \textbf{OODA (D7):} 0\% autonomous (grid boundary), correctly escalated, 0.23ms
-\item \textbf{Greedy Baseline (D6):} 100\% coverage but \textbf{UNSAFE} (payload violation)
-\item \textbf{Greedy Baseline (D7):} 100\% coverage but \textbf{UNSAFE} (boundary violation)
-\item \textbf{Manual Operator:} 0\% autonomous (acknowledges infeasibility), 465s
-\end{itemize}
+This outcome inverts the usual success metric. A greedy baseline algorithm would report 100\% coverage by assigning Package B to UAV-2---overloading a 2.5 kg capacity vehicle to 4.2 kg. Such ``success'' would ground the vehicle or cause mid-flight failure. The OODA system's 0\% autonomous coverage in these scenarios is not failure; it is constraint-aware intelligence refusing to generate plans that physics cannot execute.
 
-\textbf{Key Insights:}
-\begin{itemize}
-\item \textbf{Intelligent Escalation Validated:} 0\% autonomous reallocation is NOT a failure---demonstrates correct constraint detection
-\item \textbf{Safety-First Design:} OODA correctly refused unsafe operations; Greedy violated constraints
-\item \textbf{D6 Finding:} Package B (2.0 kg) exceeds all UAV spare capacity (max 0.7 kg)
-\item \textbf{D7 Finding:} Destination (3500, 2500) outside grid [0-3000, 0-2000]; no UAV has permission
-\item \textbf{Critical Result:} Zero constraint violations vs. Greedy's 2 violations proves constraint-aware design
-\end{itemize}
-
-\textbf{Comparison to Idealized Systems:}
-
-\begin{table}[H]
-\centering
-\caption{Comparison with Alternative Approaches}
-\label{tab:delivery_comparison}
-\begin{tabular}{|p{4cm}|p{3cm}|p{3cm}|p{3cm}|}
-\hline
-\textbf{Approach} & \textbf{Coverage} & \textbf{Safety} & \textbf{Deployability} \\
-\hline
-No Adaptation (Abort) & 60\% (3/5) & Safe & Simple \\
-\hline
-Greedy Nearest-Neighbor & 100\% (claims) & \textbf{UNSAFE} (UAV-2 overloaded to 4.2kg / 2.5kg max) & Not deployable \\
-\hline
-Idealized Full Autonomy & 100\% (claims) & Assumes unlimited resources & Not deployable \\
-\hline
-\textbf{Hybrid OODA (This Work)} & \textbf{80\% autonomous + operator support for remaining 20\%} & \textbf{Safe (no overloads)} & \textbf{Deployable with operator oversight} \\
-\hline
-\end{tabular}
-\end{table}
-
-\textbf{Value Proposition:}
-\begin{itemize}
-\item \textbf{Avoided Mission Failure:} Package A (critical insulin) delivered successfully
-\item \textbf{Operator Workload Reduction:} System autonomously handled 80\%, requiring intervention only for payload-constrained Package B
-\item \textbf{Regulatory Compliance:} Operator-in-loop design satisfies BVLOS supervision requirements
-\item \textbf{Honest Performance:} 80\% autonomous + 20\% supervised is more valuable than 100\% claims that cannot be deployed
-\end{itemize}
+The system autonomously handles what it can: Package A (critical insulin, priority 1.0) proceeds to Clinic 1 via UAV-1's abbreviated route. The operator receives a structured escalation alert with recommended actions and a 30-second auto-failsafe timer. This hybrid approach---80\% autonomous plus 20\% supervised---proves more deployable than systems claiming 100\% autonomy while ignoring physical constraints. Honest capability assessment satisfies BVLOS regulatory requirements while avoiding mission-critical failures.
 
 \section{Cross-Scenario Comparative Analysis}
 
