@@ -1235,237 +1235,17 @@ The GPS signal vanished when the drone descended into a narrow ravine, blocked b
 
 With the golden hour already ticking, these cells represent the areas most likely to contain the missing person. The remaining fleet must absorb this loss immediately.
 
-\subsubsection{OBSERVE Phase (T+0 to T+1.5s)}
+\subsubsection{OODA Cycle Execution}
 
-\textbf{Failure Detection:}
+The OODA cycle for SAR follows the same four-phase structure demonstrated in the surveillance scenario, adapted for time-critical search operations where the golden hour constraint dominates all decisions.
 
-GPS signal loss triggers autonomous failsafe behavior after exceeding the 90-second timeout threshold, forcing UAV-2 into return-to-launch mode.
+\textbf{OBSERVE (T+0 to T+1.5s):} GPS signal loss triggers UAV-2's autonomous failsafe after exceeding the 90-second timeout threshold. Fleet state aggregation reveals: UAV-1 at 75\% battery in Zone 1 (20\% spare capacity), UAV-3 at 80\% in Zone 4 (35\% spare), and UAV-4 at 78\% in Zone 7 (30\% spare). The failure leaves 48 high-priority cells unsearched---water sources and shelters representing the highest-probability areas for locating the missing person.
 
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|l|}
-\hline
-\textbf{Event} & \textbf{Timestamp} & \textbf{Status} \\
-\hline
-GPS Signal Timeout & t=8:00 & \cellcolor{yellow!25}WARNING \\
-RTL Mode Activated & t=8:01:30 & \cellcolor{red!25}CRITICAL \\
-OODA Cycle Triggered & t=8:01:30 & \cellcolor{blue!25}ACTIVE \\
-\hline
-\multicolumn{3}{|l|}{\textit{Lost Coverage: 48 cells in high-priority zones (water + shelters)}} \\
-\hline
-\end{tabular}
-\caption{UAV-2 GPS Failure Event Timeline}
-\label{tab:sar_failure_timeline}
-\end{table}
+\textbf{ORIENT (T+1.5s to T+3.0s):} Impact assessment quantifies 30\% degradation in critical zone coverage with 52 minutes remaining in the golden hour. Capacity analysis confirms the fleet can absorb 76 cells total (20 + 32 + 24), exceeding the 48-cell requirement by 58\%. The system formulates a priority-based strategy: UAV-1 absorbs 20 water cells (already nearby, zero transit cost), UAV-3 redirects to 20 shelter cells before continuing reduced trail coverage, and UAV-4 maintains standby status as backup.
 
-\textbf{Fleet State at Failure:}
+\textbf{DECIDE (T+3.0s to T+4.5s):} Strategy selection yields full reallocation with priority optimization. The reallocation plan assigns UAV-1 an expanded 105-cell coverage (original 85 plus 20 water), UAV-3 receives 80 cells (20 shelters plus reduced 60 trails), and UAV-4 continues its 100-cell assignment with 8-cell backup designation. Constraint verification confirms both active UAVs maintain battery reserves above 20\%: UAV-1 projects 23\% remaining (3\% margin), UAV-3 projects 37\% (17\% margin). Collision avoidance passes with 600-meter spatial separation and sequential zone entry.
 
-The system aggregates current progress, battery levels, and spare capacity across all operational UAVs to assess reallocation feasibility.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{UAV} & \textbf{Progress} & \textbf{Battery} & \textbf{Position} & \textbf{Spare Capacity} \\
-\hline
-UAV-1 & 15/100 (15\%) & 75\% & Zone 1 (LKP) & 20\% \\
-UAV-2 & 12/60 (20\%) & Unknown & \cellcolor{red!25}RTL (GPS LOSS) & 0\% \\
-UAV-3 & 10/140 (7\%) & 80\% & Zone 4 (Trails) & 35\% \\
-UAV-4 & 8/100 (8\%) & 78\% & Zone 7 (Steep) & 30\% \\
-\hline
-\multicolumn{5}{|l|}{\textit{Lost Tasks: 48 high-priority cells (UAV-2 incomplete assignment)}} \\
-\hline
-\end{tabular}
-\caption{Fleet State Snapshot at Failure Detection}
-\label{tab:sar_fleet_state}
-\end{table}
-
-\subsubsection{ORIENT Phase (T+1.5s to T+3.0s)}
-
-\textbf{Mission Impact Assessment:}
-
-The golden hour constraint dominates this scenario---with only 52 minutes remaining, every second of delay reduces victim survival probability.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|}
-\hline
-\textbf{Impact Dimension} & \textbf{Value} & \textbf{Severity} \\
-\hline
-Total Mission Degradation & 12\% (48/400 cells) & \cellcolor{yellow!25}MODERATE \\
-Critical Zone Degradation & 30\% (48/160 high-priority) & \cellcolor{red!25}HIGH \\
-Golden Hour Remaining & 52 minutes (87\%) & \cellcolor{red!25}CRITICAL \\
-Temporal Urgency & Time-to-survival deadline & \cellcolor{red!25}MAXIMUM \\
-\hline
-\end{tabular}
-\caption{Search \& Rescue Mission Impact Assessment}
-\label{tab:sar_impact}
-\end{table}
-
-\textbf{Capacity Analysis:}
-
-The system evaluates three reallocation options, calculating spare capacity after accounting for transit costs and existing commitments.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{UAV} & \textbf{Spare Battery} & \textbf{Transit Cost} & \textbf{Net Capacity} & \textbf{Cell Absorption} \\
-\hline
-UAV-1 & 20\% & 0\% (in zone) & 20\% & 20 cells (5 min) \\
-UAV-3 & 35\% & 3\% (800m) & 32\% & 32 cells (8 min) \\
-UAV-4 & 30\% & 5\% (1200m) & 25\% & 24 cells (6 min) \\
-\hline
-\multicolumn{4}{|r|}{\textbf{Total Capacity:}} & \textbf{76 cells} \\
-\multicolumn{4}{|r|}{\textit{Required Coverage:}} & \textit{48 cells} \\
-\hline
-\end{tabular}
-\caption{Reallocation Capacity Analysis for 48 Lost Cells}
-\label{tab:sar_capacity}
-\end{table}
-
-\textbf{Feasibility Determination:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Metric} & \textbf{Result} \\
-\hline
-Available Capacity & 76 cells \\
-Required Coverage & 48 cells \\
-Surplus Margin & +28 cells (58\% excess) \\
-Feasibility Status & \cellcolor{green!25}\textbf{FULL REALLOCATION POSSIBLE} \\
-\hline
-\end{tabular}
-\caption{Coverage Feasibility Check}
-\label{tab:sar_feasibility}
-\end{table}
-
-\textbf{Priority-Based Allocation Strategy:}
-\begin{enumerate}
-\item Assign 20 water source cells to UAV-1 (already nearby, minimal diversion)
-\item Assign 20 shelter cells to UAV-3 (highest spare capacity, redirect from trails)
-\item Keep 8 remaining shelter cells for UAV-4 if UAV-3 runs low on battery
-\item Defer UAV-4's low-priority zone 7 to secondary search phase
-\end{enumerate}
-
-\subsubsection{DECIDE Phase (T+3.0s to T+4.5s)}
-
-\textbf{Strategy Selection:} Full Reallocation with Priority Optimization
-
-\textbf{Task Reallocation Plan:}
-
-The system redistributes the 48 lost high-priority cells across UAV-1 and UAV-3, maintaining constraint satisfaction while maximizing golden hour utilization.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{UAV} & \textbf{Original Tasks} & \textbf{Added Tasks} & \textbf{Total Cells} & \textbf{Est. Time} \\
-\hline
-UAV-1 & Zone 1 (85 cells) & Zone 2 water (20 cells) & 105 cells & 26 min \\
-UAV-3 & Zones 4-5 (140 cells) & Zone 3 shelters (20 cells) & 80 cells & 20 min \\
-UAV-4 & Zones 6-7 (100 cells) & Standby (8 cells backup) & 100 cells & 25 min \\
-\hline
-\end{tabular}
-\caption{SAR Task Reallocation Plan}
-\label{tab:sar_reallocation}
-\end{table}
-
-\textbf{Constraint Verification:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{UAV} & \textbf{Battery Before} & \textbf{Battery After} & \textbf{Safety Margin} \\
-\hline
-UAV-1 & 75\% & 23\% (26 min usage) & \cellcolor{green!25}PASS (3\% margin) \\
-UAV-3 & 80\% & 37\% (20 min + 3\% transit) & \cellcolor{green!25}PASS (17\% margin) \\
-\hline
-\end{tabular}
-\caption{Battery Safety Constraint Verification}
-\label{tab:sar_battery_check}
-\end{table}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Collision Check} & \textbf{Result} \\
-\hline
-Spatial Separation (UAV-1 / UAV-3) & \cellcolor{green!25}PASS (600m distance) \\
-Temporal Deconfliction & \cellcolor{green!25}PASS (sequential zone entry) \\
-Zone Overlap Detection & \cellcolor{green!25}PASS (no conflicts) \\
-\hline
-\end{tabular}
-\caption{Collision Avoidance Verification}
-\label{tab:sar_collision}
-\end{table}
-
-\subsubsection{ACT Phase (T+4.5s to T+6.0s)}
-
-\textbf{Command Dispatch:}
-
-The system dispatches time-critical mission updates to affected UAVs, prioritizing high-probability search zones to maximize golden hour effectiveness.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|l|p{7cm}|}
-\hline
-\textbf{Target} & \textbf{Command} & \textbf{Mission Update} \\
-\hline
-UAV-1 & Mission Update & Add Zone 2 water cells (20 cells) to Zone 1 assignment \\
- & & Priority: CRITICAL | Reason: Golden hour coverage \\
-\hline
-UAV-3 & Major Reroute & Redirect to Zone 3 shelters (20 cells) before Zone 4 \\
- & & Priority: CRITICAL | Reason: High-priority reallocation \\
-\hline
-UAV-4 & Status Update & Continue Zone 7. Standby for Zone 3 backup (8 cells) \\
-\hline
-\end{tabular}
-\caption{SAR Command Dispatch Summary}
-\label{tab:sar_commands}
-\end{table}
-
-\textbf{System State Update:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Status Dimension} & \textbf{Value} \\
-\hline
-Mission Status & ADAPTED -- Full Reallocation \\
-High-Priority Coverage & 100\% (all 48 cells reallocated) \\
-Medium-Priority Coverage & 57\% (Zone 4 reduced: 60/140 cells) \\
-Low-Priority Coverage & 100\% (Zone 7 continues as planned) \\
-Golden Hour Impact & \cellcolor{green!25}0.50ms (0.0000138\% consumed) \\
-Overall Mission Completion & 90\% of total area (acceptable for SAR) \\
-\hline
-\end{tabular}
-\caption{Post-Adaptation SAR Mission Status}
-\label{tab:sar_status}
-\end{table}
-
-\textbf{Impact Summary:}
-\begin{itemize}
-\item High-priority zones: 100\% coverage recovered (water + shelters)
-\item Medium-priority degradation: Zone 4 (trails) reduced to 57\% coverage
-\item Golden hour preservation: 7.7-minute advantage over manual operator response
-\item No operator escalation required (autonomous recovery successful)
-\end{itemize}
+\textbf{ACT (T+4.5s to T+6.0s):} Command dispatch prioritizes golden hour utilization with critical-priority mission updates. Post-adaptation status: 100\% high-priority coverage recovered, medium-priority trails reduced to 57\%, overall mission completion at 90\%---acceptable for SAR where high-probability areas take precedence over exhaustive coverage.
 
 \subsection{Scenario Outcome}
 
@@ -1552,162 +1332,17 @@ The numbers tell a sobering story: 40\% battery remaining instead of the project
 % \label{fig:delivery_loop}
 % \end{figure}
 
-\subsubsection{OBSERVE Phase (T+0 to T+1.5s)}
+\subsubsection{OODA Cycle Execution}
 
-\textbf{Failure Detection:}
+The delivery scenario demonstrates the OODA system's intelligent escalation capability---recognizing when autonomous recovery is physically impossible and deferring appropriately to human operators.
 
-Battery degradation due to headwind and heavy payload triggers the anomaly detection system, revealing UAV-1 cannot complete its full delivery route safely.
+\textbf{OBSERVE (T+0 to T+1.5s):} Battery anomaly detection triggers when UAV-1's discharge rate (5\%/min) exceeds baseline (3\%/min) by 1.5$\times$. Battery projection analysis reveals the current 40\% charge cannot support the full route: completing Package A delivery (200m) leaves 38.6\%, but continuing to Package B (1100m additional) and returning to depot (1500m) would deplete to 16.6\%---below the 20\% safety threshold. Package A (insulin, priority 1.0) remains deliverable; Package B (antibiotics, priority 0.7) becomes infeasible.
 
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Parameter} & \textbf{Expected} & \textbf{Observed} & \textbf{Status} \\
-\hline
-Discharge Rate & 3\%/min & 5\%/min & \cellcolor{red!25}ANOMALY \\
-Current Battery & 55\% & 40\% & \cellcolor{red!25}DEGRADED \\
-Anomaly Threshold & --- & 1.5$\times$ exceeded & \cellcolor{red!25}TRIGGERED \\
-\hline
-\end{tabular}
-\caption{UAV-1 Battery Degradation Detection}
-\label{tab:delivery_anomaly}
-\end{table}
+\textbf{ORIENT (T+1.5s to T+3.0s):} Fleet capacity analysis reveals no autonomous solution exists. UAV-2 carries 2.2 kg (packages C+D) against 2.5 kg capacity, leaving 0.3 kg spare. UAV-3 carries 1.8 kg (package E), leaving 0.7 kg spare. Neither can absorb Package B's 2.0 kg weight---a 1.3 kg (65\%) capacity deficit. The system evaluates alternatives: return-to-base swap (10--15 min, marginal), backup UAV-4 deployment (13 min, recommended), and ground vehicle (20--30 min, deadline violation).
 
-\textbf{Battery Projection Analysis:}
+\textbf{DECIDE (T+3.0s to T+4.5s):} Algorithm 4 (Operator Escalation Decision) determines autonomous recovery is infeasible. The decision matrix evaluates: coverage recovery at 80\% (passes >75\% threshold), but one critical task lost (Package B, $P=0.7$) and one constraint violation (payload). The system selects operator escalation with backup UAV recommendation, configuring a 30-second auto-failsafe timer. Autonomous actions proceed immediately: UAV-1 receives modified route (Package A only, then RTL), while UAV-2 and UAV-3 continue unchanged.
 
-The system projects battery consumption across the remaining route, revealing insufficient margin to reach Clinic 2.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Segment} & \textbf{Distance} & \textbf{Battery Cost} & \textbf{Remaining} \\
-\hline
-Current State & --- & --- & 40.0\% \\
-To Clinic 1 & 200m & 1.4\% & 38.6\% \\
-Landing/Takeoff & --- & 2.0\% & 36.6\% \\
-To Clinic 2 & 1100m & 7.7\% & \cellcolor{yellow!25}28.9\% \\
-Landing & --- & 2.0\% & \cellcolor{yellow!25}26.9\% \\
-Return to Depot & 1500m & 10.3\% & \cellcolor{red!25}\textbf{16.6\%} \\
-\hline
-\multicolumn{3}{|r|}{\textbf{Safety Threshold:}} & \textbf{20\%} \\
-\multicolumn{3}{|r|}{\textit{Safety Violation:}} & \cellcolor{red!25}\textit{-3.4\%} \\
-\hline
-\end{tabular}
-\caption{Battery Projection with Safety Constraint Violation}
-\label{tab:delivery_battery_projection}
-\end{table}
-
-\textbf{Package Status Assessment:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|c|c|c|c|}
-\hline
-\textbf{Package} & \textbf{Priority} & \textbf{Distance} & \textbf{Deliverable?} \\
-\hline
-A (Insulin) & 1.0 (CRITICAL) & 200m & \cellcolor{green!25}YES \\
-B (Antibiotics) & 0.7 (HIGH) & 1300m & \cellcolor{red!25}\textbf{NO (safety violation)} \\
-\hline
-\end{tabular}
-\caption{Package Deliverability After Battery Failure}
-\label{tab:delivery_package_status}
-\end{table}
-
-\subsubsection{ORIENT Phase (T+1.5s to T+3.0s)}
-
-\textbf{Impact Assessment:}
-
-The system evaluates the mission degradation caused by losing Package B delivery capability, determining that autonomous reallocation is impossible due to hard payload constraints.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Impact Dimension} & \textbf{Assessment} \\
-\hline
-Mission Degradation & 20\% (1 of 5 packages undeliverable) \\
-Critical Package (A) Status & \cellcolor{green!25}Deliverable (200m, within battery) \\
-High-Priority Package (B) Status & \cellcolor{red!25}At Risk (1300m, battery insufficient) \\
-Autonomous Recovery Feasibility & \cellcolor{red!25}INFEASIBLE (payload constraint) \\
-\hline
-\end{tabular}
-\caption{Delivery Mission Impact Assessment}
-\label{tab:delivery_impact}
-\end{table}
-
-\textbf{Fleet Capacity Analysis:}
-
-The system evaluates spare payload capacity across operational UAVs to determine if Package B (2.0 kg) can be autonomously reallocated.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{UAV} & \textbf{Current Load} & \textbf{Max Capacity} & \textbf{Spare Capacity} & \textbf{Can Carry B (2.0kg)?} \\
-\hline
-UAV-2 & 2.2 kg (C+D) & 2.5 kg & 0.3 kg & \cellcolor{red!25}\textbf{NO} (1.7 kg short) \\
-UAV-3 & 1.8 kg (E) & 2.5 kg & 0.7 kg & \cellcolor{red!25}\textbf{NO} (1.3 kg short) \\
-\hline
-\multicolumn{5}{|l|}{\textit{Maximum available spare capacity: 0.7 kg | Package B weight: 2.0 kg}} \\
-\hline
-\end{tabular}
-\caption{Payload Constraint Violation Analysis}
-\label{tab:delivery_payload_constraint}
-\end{table}
-
-\textbf{Constraint Violation Summary:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Constraint Check} & \textbf{Result} \\
-\hline
-Package B Weight Required & 2.0 kg \\
-Maximum Available Spare Capacity & 0.7 kg (UAV-3) \\
-Capacity Deficit & \cellcolor{red!25}-1.3 kg (65\% shortfall) \\
-Autonomous Reallocation & \cellcolor{red!25}\textbf{IMPOSSIBLE} \\
-Operator Escalation Required & \cellcolor{yellow!25}\textbf{YES} \\
-\hline
-\end{tabular}
-\caption{Feasibility Determination: Payload Constraint Failure}
-\label{tab:delivery_feasibility}
-\end{table}
-
-\textbf{Alternative Strategy Analysis:}
-
-The system evaluates three operator-supervised alternatives when autonomous reallocation proves infeasible.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Strategy} & \textbf{Time Cost} & \textbf{Deadline Margin} & \textbf{Feasibility} \\
-\hline
-Return-to-Base Swap & 10--15 min & 0 min (45/45) & \cellcolor{yellow!25}MARGINAL \\
-Backup UAV-4 Deploy & 13 min & 2 min (43/45) & \cellcolor{green!25}\textbf{RECOMMENDED} \\
-Ground Vehicle & 20--30 min & -15 min (60/45) & \cellcolor{red!25}DEADLINE VIOLATION \\
-\hline
-\end{tabular}
-\caption{Alternative Strategy Evaluation}
-\label{tab:delivery_alternatives}
-\end{table}
-
-\subsubsection{DECIDE Phase (T+3.0s to T+4.5s)}
-
-\textbf{Strategy Selection:} Operator Escalation with Backup UAV Recommendation
-
-\textbf{Escalation Decision Criteria:}
-
-The system applies Algorithm 4 (Operator Escalation Decision) to determine when autonomous recovery proves infeasible and human judgment is required.
+\textbf{ACT (T+4.5s to T+5.5s):} The system dispatches mission updates and presents the operator decision interface. The critical alert summarizes: Package B (2.0 kg, $P=0.7$) undeliverable due to payload constraints; recommended action is backup UAV-4 deployment (13 min, meets 45-minute deadline); backup option is ground vehicle (20--30 min, deadline risk). Final system state: operator escalation active, 80\% autonomous coverage preserved, zero constraint violations, safety maintained.
 
 \begin{table}[H]
 \centering
@@ -1728,73 +1363,6 @@ Autonomous Feasibility & TRUE & \cellcolor{red!25}\textbf{FALSE} \\
 \label{tab:delivery_escalation_decision}
 \end{table}
 
-\textbf{Escalation Alert Configuration:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|p{8cm}|}
-\hline
-\textbf{Alert Parameter} & \textbf{Value} \\
-\hline
-Urgency Level & \cellcolor{red!25}HIGH \\
-Reason & Package B (Antibiotics, $P=0.7$) cannot be reallocated due to payload constraints \\
-Recommended Action & Deploy backup UAV-4 within 5 minutes to meet 45-minute deadline \\
-Backup Option & Ground vehicle dispatch (20--30 min ETA, deadline violation) \\
-Auto-Failsafe & Deploy UAV-4 after 30-second countdown if no operator response \\
-\hline
-\end{tabular}
-\caption{Escalation Alert Parameters}
-\label{tab:delivery_alert_config}
-\end{table}
-
-\textbf{Autonomous Actions and Command Dispatch:}
-
-The system executes safety-preserving actions without awaiting operator approval for the feasible portion of the mission. UAV-1 receives a modified route: complete Package A delivery to Clinic 1, then return to launch (skipping Clinic 2 and its now-undeliverable Package B). UAV-2 and UAV-3 continue their planned routes unchanged---Packages C, D, and E remain on schedule. Meanwhile, UAV-4 enters standby mode, prepared for rapid deployment pending operator decision.
-
-\subsubsection{ACT Phase (T+4.5s to T+5.5s)}
-
-\textbf{Operator Alert Interface:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|p{12cm}|}
-\hline
-\textbf{CRITICAL ALERT: Package B Reallocation Required} \\
-\hline
-\\
-\textbf{Situation:} Package B (2.0 kg, $P=0.7$) undeliverable due to payload constraints \\
-\\
-\textbf{Recommended:} Deploy backup UAV-4 (13 min, meets deadline) \\
-\textbf{Backup:} Ground vehicle (20--30 min, deadline risk) \\
-\\
-\cellcolor{yellow!25}\textbf{AUTO-FAILSAFE: 30 seconds (Deploy UAV-4)} \\
-\hline
-\end{tabular}
-\caption{Operator Decision Interface}
-\label{tab:delivery_alert}
-\end{table}
-
-\textbf{System State:}
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{|l|c|}
-\hline
-\textbf{Status} & \textbf{Value} \\
-\hline
-Mission Status & \cellcolor{yellow!25}OPERATOR ESCALATION \\
-Autonomous Coverage & 80\% (4/5 packages) \\
-Alert Urgency & \cellcolor{red!25}CRITICAL \\
-Safety Preserved & \cellcolor{green!25}YES \\
-\hline
-\end{tabular}
-\caption{Delivery Mission Status}
-\label{tab:delivery_status}
-\end{table}
-
 \subsection{Scenario Outcome}
 
 The delivery scenarios (D6 and D7) demonstrate what constraint-aware design looks like when physical reality defeats autonomous recovery. In D6, Package B (2.0 kg antibiotics) exceeds every available UAV's spare payload capacity---the maximum available is 0.7 kg. In D7, the destination coordinates (3500, 2500) lie outside the operational grid boundary, and no UAV holds out-of-grid permission. The OODA system correctly identified both situations as autonomously infeasible in 0.11 ms and 0.23 ms respectively, escalating to operators while preserving zero constraint violations.
@@ -1805,28 +1373,9 @@ The system autonomously handles what it can: Package A (critical insulin, priori
 
 \section{Cross-Scenario Comparative Analysis}
 
-\subsection{Constraint Prioritization by Mission Type}
-
 \begin{table}[H]
 \centering
-\caption{Constraint Priority by Mission Type}
-\label{tab:constraint_priority}
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-\textbf{Mission Type} & \textbf{Battery} & \textbf{Payload} & \textbf{Time} & \textbf{Dominant Failure Mode} \\
-\hline
-Surveillance & Critical & N/A & High & Battery depletion during rotation \\
-Search \& Rescue & Critical & N/A & Critical & GPS loss / Communication timeout \\
-Delivery & High & Critical & High & Payload constraint violations \\
-\hline
-\end{tabular}
-\end{table}
-
-\subsection{Performance Comparison Across Scenarios}
-
-\begin{table}[H]
-\centering
-\caption{Measured Performance by Scenario (S5, R5/R6, D6/D7)}
+\caption{Measured Performance by Scenario}
 \label{tab:scenario_performance}
 \begin{tabular}{|l|c|c|c|}
 \hline
@@ -1836,56 +1385,14 @@ Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \
 OODA Computation & \textbf{0.34 ms} & \textbf{0.50/0.16 ms} & \textbf{0.11/0.23 ms} \\
 Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
 Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
-Mission Outcome & 100\% complete & 100\% complete & Escalated (safe) \\
+Dominant Constraint & Battery & Time (golden hour) & Payload \\
 \hline
 \end{tabular}
 \end{table}
 
-\textbf{Key Findings Across All Scenarios:}
-\begin{itemize}
-\item \textbf{Speed:} All scenarios complete in under 0.5 milliseconds (range: 0.11--0.50 ms)
-\item \textbf{Safety:} Zero violations across all five experimental scenarios
-\item \textbf{Coverage:} Complete recovery for S5, R5, R6 where physically feasible
-\item \textbf{Escalation:} D6/D7 correctly deferred to operators when safe reallocation was impossible
-\item \textbf{Advantage:} Six orders of magnitude faster than manual operator response
-\end{itemize}
+The three scenarios validate consistent OODA behavior across diverse operational contexts while revealing mission-specific constraint priorities. Surveillance and SAR achieved full autonomous recovery because their constraints (battery, time) permitted reallocation within fleet capacity. Delivery scenarios D6/D7 correctly escalated to operators when payload constraints (2.0 kg package vs. 0.7 kg maximum spare capacity) made autonomous recovery physically impossible---demonstrating that intelligent escalation is a feature, not a failure mode.
 
-\subsection{Failure Mode Taxonomy}
-
-\begin{table}[H]
-\centering
-\caption{Failure Modes and System Response}
-\label{tab:failure_taxonomy}
-\begin{tabular}{|p{3.5cm}|p{3cm}|p{3.5cm}|p{3.5cm}|}
-\hline
-\textbf{Failure Mode} & \textbf{Scenario} & \textbf{Autonomous Recovery} & \textbf{Operator Escalation} \\
-\hline
-Battery depletion & Surveillance & Partial reallocation (91.7\%) & Not required \\
-\hline
-GPS signal loss & SAR & Full reallocation (100\% high-priority) & Not required \\
-\hline
-Payload constraint violation & Delivery & Partial (80\%) & Required for 20\% \\
-\hline
-Cascading failures (hypothetical) & All & Degraded (<50\%) & Required \\
-\hline
-\end{tabular}
-\end{table}
-
-\subsection{Key Takeaways}
-
-\begin{enumerate}
-\item \textbf{No One-Size-Fits-All Solution:} Each mission type requires different constraint prioritization and recovery strategies
-
-\item \textbf{Partial Autonomy is Valuable:} 80-91\% autonomous recovery reduces operator workload significantly compared to 0\% (no adaptation) or 100\% manual intervention
-
-\item \textbf{Honest Performance Metrics:} Reporting 80\% autonomous + 20\% supervised is more valuable than claiming 100\% autonomy that cannot be deployed
-
-\item \textbf{Operator Escalation is a Feature, Not a Bug:} Recognizing physical limitations and involving operators for non-compensable failures is essential for safe, deployable systems
-
-\item \textbf{Real-World Constraints Matter:} Battery, payload, and time constraints dominate failure recovery—ignoring them (as many academic works do) produces non-deployable systems
-\end{enumerate}
-
-These three scenarios validate the OODA-based hybrid autonomy architecture across diverse operational contexts, demonstrating both its capabilities and its honest acknowledgment of limitations—a critical requirement for real-world deployment.
+All scenarios completed OODA computation in under 0.5 milliseconds (range: 0.11--0.50 ms), six orders of magnitude faster than manual operator response. Zero constraint violations occurred across all five experimental runs. The 80--100\% autonomous recovery rate reduces operator workload significantly compared to fully manual intervention, while honest acknowledgment of physical limitations ensures deployable systems rather than theoretical claims that cannot survive contact with reality.
 
 \chapter{Implementation and Validation Plan}
 
