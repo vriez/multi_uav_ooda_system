@@ -853,9 +853,9 @@
             <h3 style="margin-top: 20px;" onclick="toggleSection(this)">Fleet Configuration</h3>
             <div class="section-content">
                 <div class="home-base-inputs">
-                    <div class="input-group">
-                        <label>Number of UAVs:</label>
-                        <input type="number" id="numUAVs" value="5" min="1" max="20" step="1" onchange="updateFleetConfig()">
+                    <div class="input-group" style="display: flex; align-items: center; gap: 8px;">
+                        <label style="margin: 0;">Number of UAVs:</label>
+                        <input type="number" id="numUAVs" value="5" min="1" max="20" step="1" onchange="updateFleetConfig()" style="width: 50px;">
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
                         <input type="range" id="numUAVsSlider" min="1" max="20" value="5"
