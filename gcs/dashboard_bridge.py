@@ -1,5 +1,8 @@
 """
 Dashboard Bridge - Streams GCS telemetry to web dashboard
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 """
 
 import threading

@@ -1,6 +1,9 @@
 """
 Integration tests for Search and Rescue (SAR) missions
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Tests cover:
 - Asset detection and last known position tracking
 - Zone assignments (spatial contiguity, no auto-reassignment)

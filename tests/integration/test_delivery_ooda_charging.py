@@ -1,6 +1,9 @@
 """
 Test OODA loop monitoring of charging UAVs and immediate reassignment.
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Verifies that when all UAVs are charging and packages are pending,
 the OODA loop immediately assigns packages as soon as a UAV finishes charging.
 """

@@ -1,6 +1,10 @@
 """
 UAV Simulation Engine - Complete vehicle system with physics and control
-Based on Quadcopter_SimCon codebase
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
+Based on Quadcopter_SimCon codebase (https://github.com/bobzwik/Quadcopter_SimCon)
 """
 
 import numpy as np

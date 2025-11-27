@@ -1,6 +1,9 @@
 """
 D6: Delivery Mission Baseline Comparison Experiment
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 This experiment validates that the OODA-based system correctly handles
 payload constraints and appropriately escalates when autonomous
 reallocation is impossible.

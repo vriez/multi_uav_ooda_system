@@ -1,6 +1,9 @@
 """
 Objective Function and Optimization Strategy for OODA Loop DECIDE Phase
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 This module implements the formal objective function J(A) that quantifies
 allocation quality and the two-stage optimization strategy (greedy + local search).
 

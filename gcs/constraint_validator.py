@@ -1,5 +1,39 @@
 """
-Constraint Validator - Sequential verification of battery, payload, and time constraints
+Constraint Validator - Sequential verification of battery, payload, and time constraints.
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
+This module implements constraint checking for task-to-UAV assignments during the
+OODA DECIDE phase. Constraints are checked in order of computational cost and
+likelihood of failure.
+
+Constraint Checking Order:
+    1. Grid Boundary: Is the task within the operational area?
+    2. Battery: Does the UAV have enough energy for round-trip?
+    3. Payload: Can the UAV carry the required cargo? (delivery only)
+    4. Time: Can the task complete before its deadline?
+
+Grid Boundary Constraint:
+    By default, tasks must be within a 3000m x 2000m operational grid.
+    UAVs with `out_of_grid` permission in their FleetState can operate
+    outside these bounds.
+
+Battery Constraint:
+    Uses a simplified energy model: energy = distance / efficiency.
+    Accounts for committed tasks, round-trip distance, and safety reserve.
+    Default safety reserve: 20% of battery capacity.
+
+Example:
+    >>> validator = ConstraintValidator(config)
+    >>> can_assign = validator.check_all_constraints(
+    ...     uav_id=1,
+    ...     task_id=5,
+    ...     fleet_state=state,
+    ...     mission_db=db
+    ... )
+    >>> if can_assign:
+    ...     db.assign_task(task_id=5, uav_id=1)
 """
 
 import logging
@@ -10,10 +44,27 @@ logger = logging.getLogger(__name__)
 
 class ConstraintValidator:
     """
-    Validates constraints for task assignments using sequential checking:
-    1. Battery constraints
-    2. Payload constraints (cargo missions only)
-    3. Time constraints
+    Validates constraints for task-to-UAV assignments.
+
+    Performs sequential constraint checking in order of computational cost
+    and likelihood of failure. Early termination on first constraint violation
+    improves performance during optimization.
+
+    Attributes:
+        config: GCS configuration dictionary
+        battery_safety_reserve: Fraction of battery to keep as reserve (0-1)
+        battery_efficiency: Travel efficiency in meters per Watt-hour
+        grid_bounds: Operational area boundaries {x_min, x_max, y_min, y_max}
+
+    Args:
+        config: GCS configuration with 'constraints' and optional 'grid_bounds' sections
+
+    Example:
+        >>> config = {
+        ...     "constraints": {"battery_safety_reserve_percent": 20.0},
+        ...     "grid_bounds": {"x_min": 0, "x_max": 3000, "y_min": 0, "y_max": 2000}
+        ... }
+        >>> validator = ConstraintValidator(config)
     """
 
     def __init__(self, config: dict):
@@ -32,8 +83,26 @@ class ConstraintValidator:
         self, uav_id: int, task_id: int, fleet_state, mission_db
     ) -> bool:
         """
-        Sequential constraint validation
-        Returns True if all constraints satisfied
+        Check all constraints sequentially for a task-UAV assignment.
+
+        Validates grid boundary, battery, payload, and time constraints
+        in order. Returns False immediately on first violation.
+
+        Args:
+            uav_id: ID of the UAV to check
+            task_id: ID of the task to assign
+            fleet_state: Current FleetState with positions and battery levels
+            mission_db: MissionDatabase with task definitions
+
+        Returns:
+            True if all constraints are satisfied, False otherwise
+
+        Note:
+            Constraint order is optimized for early termination:
+            1. Grid boundary (O(1), safety critical)
+            2. Battery (O(1), most common failure)
+            3. Payload (O(1), delivery missions only)
+            4. Time (O(1), deadline check)
         """
         # Check grid boundary first (safety critical)
         if not self.check_grid_boundary_constraint(

@@ -1,6 +1,9 @@
 """
 Unit tests for battery management across all mission types
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Tests cover:
 - Normal battery drain during flight
 - Battery drain during return flight

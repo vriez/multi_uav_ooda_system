@@ -1,6 +1,9 @@
 """
 Unit tests for UAV state transitions
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Tests cover:
 - Valid state transitions (idle -> deploying -> patrolling -> returning -> charging -> recovered)
 - Low battery automatic return

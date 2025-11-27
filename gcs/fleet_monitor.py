@@ -1,5 +1,37 @@
 """
-Fleet Monitor - UAV telemetry collection and failure detection
+Fleet Monitor - UAV telemetry collection and multi-modal failure detection.
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
+This module implements real-time fleet monitoring with automatic failure detection.
+It polls UAVs for telemetry at a configurable rate and triggers OODA cycles when
+anomalies are detected.
+
+Failure Detection Methods:
+    1. Communication Timeout: No response within timeout threshold (default 1.5s)
+    2. Battery Anomaly: Discharge rate exceeds threshold (default 5%/30s)
+    3. Position Discontinuity: Position jump exceeds threshold (default 100m)
+    4. Altitude Violation: Altitude outside safe envelope (5m-120m)
+
+Key Classes:
+    FleetMonitor: Main monitoring class with failure detection
+    UAVStatus: Individual UAV state tracking with history
+
+Usage:
+    >>> monitor = FleetMonitor(config)
+    >>> monitor.add_failure_callback(ooda_engine.on_failure)
+    >>> monitor.start_monitoring()
+    >>>
+    >>> # Register new UAV
+    >>> monitor.register_uav(uav_id=1, connection=socket)
+    >>>
+    >>> # Get fleet snapshot
+    >>> state = monitor.get_fleet_state()
+
+Threading Model:
+    FleetMonitor runs a background thread that polls UAVs at the configured
+    telemetry rate. Failure callbacks are invoked from this thread.
 """
 
 import time
@@ -15,7 +47,27 @@ logger = logging.getLogger(__name__)
 
 
 class UAVStatus:
-    """Track individual UAV status"""
+    """
+    Track individual UAV status and telemetry history.
+
+    Maintains current state and historical data for anomaly detection.
+    Battery and position history are kept for detecting sudden changes
+    that indicate failures.
+
+    Attributes:
+        uav_id: Unique identifier for this UAV
+        is_connected: Whether UAV has active connection
+        is_operational: Whether UAV is functioning normally
+        last_telemetry_time: Unix timestamp of last telemetry update
+        position: Current [x, y, z] position in meters
+        attitude: Current attitude as quaternion [w, x, y, z]
+        battery_soc: Battery state-of-charge (0-100%)
+        payload_capacity: Available payload capacity in kg
+        active_tasks: List of task IDs currently assigned
+        failure_mode: Type of failure if not operational (e.g., 'battery_anomaly')
+        battery_history: Deque of (timestamp, soc) tuples for anomaly detection
+        position_history: Deque of position arrays for discontinuity detection
+    """
 
     def __init__(self, uav_id: int):
         self.uav_id = uav_id

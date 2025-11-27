@@ -1,7 +1,8 @@
 """
 Realistic Mission Completion Assistance - Web Dashboard
 
-Author: Vítor EULÁLIO REIS
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 
 Advanced multi-UAV coordination system with workload distribution,
 recovery management, and mission-specific behavioral adaptations.
