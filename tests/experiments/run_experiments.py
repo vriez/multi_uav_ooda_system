@@ -2,6 +2,9 @@
 """
 Experiment Runner - Execute and analyze baseline comparison experiments
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 This script runs the three key experiments (S5, R5, D6) and generates
 a comprehensive report validating the thesis claims.
 

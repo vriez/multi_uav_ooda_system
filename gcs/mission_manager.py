@@ -1,5 +1,38 @@
 """
-Mission Manager - Task database and assignment management
+Mission Manager - Task database and assignment management.
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
+This module provides the authoritative task database for mission management.
+It tracks all tasks, their assignments to UAVs, and their execution status.
+
+Key Classes:
+    MissionDatabase: Central repository for tasks and assignments
+    Task: Data structure for individual mission tasks
+    TaskType: Enumeration of mission types (surveillance, search_rescue, delivery)
+    TaskStatus: Enumeration of task states (pending, assigned, completed, failed)
+
+Task Lifecycle:
+    1. PENDING: Task created but not assigned
+    2. ASSIGNED: Task allocated to a UAV
+    3. IN_PROGRESS: UAV is executing the task
+    4. COMPLETED: Task successfully finished
+    5. FAILED: Task could not be completed
+
+Usage:
+    >>> db = MissionDatabase()
+    >>> task_id = db.add_task(
+    ...     task_type=TaskType.SURVEILLANCE,
+    ...     position=np.array([100, 200, 25]),
+    ...     priority=75
+    ... )
+    >>> db.assign_task(task_id, uav_id=1)
+    >>> db.mark_completed(task_id)
+
+OODA Integration:
+    The MissionDatabase is used by the OODA engine during the DECIDE phase
+    to commit reallocation decisions atomically via `commit_reallocation()`.
 """
 
 import logging

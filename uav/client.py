@@ -1,5 +1,8 @@
 """
 UAV Client - Connects to GCS and runs simulation
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 """
 
 import socket

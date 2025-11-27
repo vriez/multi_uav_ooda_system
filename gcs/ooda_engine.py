@@ -1,5 +1,48 @@
 """
-OODA Loop Engine - Core decision-making system for fault-tolerant fleet control
+OODA Loop Engine - Core decision-making system for fault-tolerant fleet control.
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
+This module implements the four-phase OODA (Observe-Orient-Decide-Act) decision
+cycle for autonomous fault recovery in multi-UAV systems.
+
+Overview:
+    When a UAV failure is detected, the OODA engine executes a complete cycle:
+
+    1. OBSERVE: Aggregate fleet telemetry and identify failed vehicles
+    2. ORIENT: Analyze mission impact (coverage loss, capacity, deadlines)
+    3. DECIDE: Optimize task reallocation using objective function J(A)
+    4. ACT: Dispatch updated mission commands to operational UAVs
+
+Key Classes:
+    OODAEngine: Main engine orchestrating the decision cycle
+    FleetState: Snapshot of fleet status at a point in time
+    MissionImpact: Analysis of how failure affects mission objectives
+    OODADecision: Output containing recovery strategy and reallocation plan
+
+Recovery Strategies:
+    FULL_REALLOCATION: All lost tasks can be recovered (coverage >= 75%)
+    PARTIAL_REALLOCATION: Some tasks recovered (50-74% coverage)
+    OPERATOR_ESCALATION: Human intervention needed (< 50% coverage)
+    ABORT_MISSION: Mission cannot continue (no operational UAVs)
+
+Performance Targets:
+    - Total OODA cycle: < 2500ms
+    - OBSERVE phase: < 500ms
+    - ORIENT phase: < 500ms
+    - DECIDE phase: < 1200ms (includes optimization)
+    - ACT phase: < 300ms
+
+Example:
+    >>> from gcs.ooda_engine import OODAEngine, FleetState
+    >>> engine = OODAEngine(config)
+    >>> decision = engine.trigger_ooda_cycle(fleet_state, mission_db, validator)
+    >>> print(f"Strategy: {decision.strategy.value}")
+    >>> print(f"Tasks reallocated: {len(decision.reallocation_plan)}")
+
+References:
+    Boyd, John. "The OODA Loop." Military briefing, 1987.
 """
 
 import time
@@ -42,7 +85,34 @@ class RecoveryStrategy(Enum):
 
 @dataclass
 class FleetState:
-    """Complete fleet state snapshot"""
+    """
+    Complete fleet state snapshot at a specific point in time.
+
+    This dataclass captures all relevant information about the UAV fleet
+    needed for OODA decision-making, including positions, battery levels,
+    payload capacities, and failure status.
+
+    Attributes:
+        timestamp: Unix timestamp when snapshot was taken
+        operational_uavs: List of UAV IDs that are currently operational
+        failed_uavs: List of UAV IDs that have failed
+        uav_positions: Mapping of UAV ID to [x, y, z] position (meters)
+        uav_battery: Mapping of UAV ID to battery state-of-charge (0-100%)
+        uav_payloads: Mapping of UAV ID to available payload capacity (kg)
+        lost_tasks: List of task IDs that need reallocation (from failed UAVs)
+        uav_permissions: Special permissions per UAV, e.g., {'out_of_grid': True}
+
+    Example:
+        >>> state = FleetState(
+        ...     timestamp=time.time(),
+        ...     operational_uavs=[1, 2, 3],
+        ...     failed_uavs=[4],
+        ...     uav_positions={1: np.array([0, 0, 25]), ...},
+        ...     uav_battery={1: 80.0, 2: 75.0, 3: 90.0},
+        ...     uav_payloads={1: 5.0, 2: 5.0, 3: 5.0},
+        ...     lost_tasks=[5, 6],  # Tasks from failed UAV 4
+        ... )
+    """
 
     timestamp: float
     operational_uavs: List[int]
@@ -62,7 +132,21 @@ class FleetState:
 
 @dataclass
 class MissionImpact:
-    """Analysis of failure impact on mission"""
+    """
+    Analysis of failure impact on mission objectives.
+
+    Computed during the ORIENT phase, this captures how a UAV failure
+    affects overall mission success potential.
+
+    Attributes:
+        coverage_loss_percent: Percentage of total tasks now unassigned (0-100)
+        affected_zones: List of zone IDs impacted by the failure
+        fleet_capacity_battery: Total spare battery capacity across fleet (Wh)
+        fleet_capacity_payload: Total spare payload capacity across fleet (kg)
+        temporal_margin_sec: Time until nearest deadline (seconds)
+        recoverable_tasks: Estimated number of tasks that can be reallocated
+        total_lost_tasks: Total number of tasks needing reallocation
+    """
 
     coverage_loss_percent: float
     affected_zones: List[int]
@@ -75,7 +159,35 @@ class MissionImpact:
 
 @dataclass
 class OODADecision:
-    """OODA cycle decision output"""
+    """
+    Output of OODA cycle containing recovery strategy and reallocation plan.
+
+    This is the final output of the DECIDE phase, containing all information
+    needed to execute the recovery action.
+
+    Attributes:
+        strategy: Selected recovery strategy (full/partial/escalate/abort)
+        reallocation_plan: Mapping of UAV ID to list of task IDs to assign
+        rationale: Human-readable explanation of the decision
+        metrics: Performance and quality metrics from the cycle
+        execution_time_ms: Total OODA cycle execution time (milliseconds)
+        phase_timings: Breakdown of time spent in each phase (ms)
+
+    Metrics Dictionary Keys:
+        - recovery_rate: Percentage of lost tasks successfully reallocated
+        - coverage_loss: Original coverage loss from failure
+        - tasks_recovered: Number of tasks in reallocation plan
+        - tasks_lost: Number of tasks from failed UAV(s)
+        - objective_score: J(A) score from optimization
+        - optimization_time_ms: Time spent in optimization
+        - optimality_gap_estimate: Estimated distance from optimal solution
+
+    Example:
+        >>> decision = engine.trigger_ooda_cycle(state, db, validator)
+        >>> if decision.strategy == RecoveryStrategy.FULL_REALLOCATION:
+        ...     for uav_id, tasks in decision.reallocation_plan.items():
+        ...         dispatch_tasks(uav_id, tasks)
+    """
 
     strategy: RecoveryStrategy
     reallocation_plan: Dict[int, List[int]]  # UAV ID -> Task IDs
@@ -89,8 +201,33 @@ class OODADecision:
 
 class OODAEngine:
     """
-    OODA Loop Engine implementing the four-phase decision cycle
-    for fault-tolerant mission control
+    OODA Loop Engine implementing the four-phase decision cycle for fault-tolerant
+    mission control.
+
+    The engine orchestrates the complete OODA (Observe-Orient-Decide-Act) cycle
+    when triggered by a failure event. It coordinates with the FleetMonitor,
+    MissionManager, ConstraintValidator, and ObjectiveFunction to produce
+    optimal recovery decisions.
+
+    Attributes:
+        config: GCS configuration dictionary
+        phase: Current OODA phase (IDLE when not in cycle)
+        cycle_count: Number of OODA cycles executed
+        mission_context: Mission-specific parameters for optimization
+
+    Args:
+        config: GCS configuration with ooda_engine and constraints sections
+        dashboard_bridge: Optional bridge for real-time UI updates
+        mission_context: Optional mission context (inferred if not provided)
+
+    Example:
+        >>> config = load_yaml("config/gcs_config.yaml")
+        >>> engine = OODAEngine(config)
+        >>> engine.set_mission_context(MissionContext.for_surveillance())
+        >>>
+        >>> # Trigger on failure
+        >>> decision = engine.trigger_ooda_cycle(fleet_state, mission_db, validator)
+        >>> print(f"Cycle #{engine.cycle_count}: {decision.strategy.value}")
     """
 
     def __init__(

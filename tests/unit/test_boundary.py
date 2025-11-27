@@ -1,6 +1,9 @@
 """
 Unit tests for grid boundary management
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Tests cover:
 - Boundary detection for targets outside grid
 - Boundary intersection calculation

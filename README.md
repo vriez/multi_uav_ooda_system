@@ -327,18 +327,64 @@ Implement in `uav/simulation.py`:
 
 **UAVs won't connect:**
 - Check GCS is running first
-- Verify port 5555 is available
-- Check `gcs_config.yaml` host/port
+- Verify port 5555 is available: `lsof -i :5555`
+- Check `gcs_config.yaml` host/port settings
+- Ensure firewall allows local connections
 
 **OODA cycle not triggering:**
-- Verify failure detection thresholds
-- Check telemetry rate configuration
-- Enable DEBUG logging
+- Verify failure detection thresholds in `gcs_config.yaml`
+- Check telemetry rate configuration (default: 2 Hz)
+- Enable DEBUG logging: `LOG_LEVEL=DEBUG python launch.py`
+- Confirm UAV has active tasks assigned
 
 **Battery depleting too fast:**
-- Adjust `battery.efficiency_m_per_wh` in `uav_config.yaml`
+- Adjust `battery.efficiency_m_per_wh` in `uav_config.yaml` (default: 150)
 - Reduce mission distance/duration
-- Lower control gains (less aggressive)
+- Lower control gains (less aggressive maneuvers)
+
+**UAVs disappear during SAR mission:**
+- Check grid boundary settings in `gcs_config.yaml`
+- Verify SAR zone coordinates are within grid bounds
+- UAVs outside grid without `out_of_grid` permission will be rejected
+- See `constraint_validator.py` for boundary checking logic
+
+**UAV not turning red on failure:**
+- Ensure dashboard bridge is connected
+- Check browser console for WebSocket errors
+- Verify failure callbacks are registered in FleetMonitor
+- Dashboard updates require SocketIO connection
+
+**Tasks not being reallocated:**
+- Check constraint validator logs for rejection reasons
+- Verify remaining UAVs have sufficient battery
+- Ensure tasks are within operational grid
+- Check payload constraints for delivery missions
+
+**High OODA cycle latency (>3s):**
+- Reduce `max_local_search_iterations` in mission context
+- Lower `optimization_budget_ms` parameter
+- Check for network latency in telemetry polling
+- Consider reducing fleet size for faster optimization
+
+**Dashboard not loading:**
+- Verify Flask server is running on port 8085
+- Check for port conflicts: `lsof -i :8085`
+- Clear browser cache and reload
+- Check Flask logs for startup errors
+
+For detailed configuration options, see [docs/configuration.md](docs/configuration.md).
+
+## Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+| Document | Description |
+|----------|-------------|
+| [Configuration Guide](docs/configuration.md) | All configurable parameters |
+| [Architecture](docs/architecture.md) | System design and data flow |
+| [Algorithms](docs/algorithms.md) | OODA algorithms and optimization |
+| [Testing Guide](docs/testing.md) | Running and writing tests |
+| [Contributing](CONTRIBUTING.md) | Development workflow |
 
 ## Development Status
 
@@ -349,11 +395,11 @@ Implement in `uav/simulation.py`:
 - UAV simulation
 - Mission management
 - TCP/IP communication
+- Web dashboard
 
 **Future Work:**
 - Unity visualization client
 - Advanced path planning (TSP)
-- Web dashboard
 - Real hardware integration
 - Multi-GCS coordination
 
@@ -362,6 +408,12 @@ Implement in `uav/simulation.py`:
 Based on thesis: "Constraint-Aware Fault-Tolerant Control for Multi-Agent UAV Systems"
 
 Quadcopter dynamics adapted from: [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon)
+
+## Author
+
+**Vítor Eulálio Reis** - [vitor.ereis@proton.me](mailto:vitor.ereis@proton.me)
+
+Developed as part of the Specialization in Aeronautical Systems at the School of Engineering of São Carlos, University of São Paulo (EESC-USP).
 
 ## License
 

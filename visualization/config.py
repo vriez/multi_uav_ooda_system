@@ -1,7 +1,8 @@
 """
 Configuration constants for Realistic Mission Completion Assistance
 
-Author: Vítor EULÁLIO REIS
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 
 This module contains all configuration constants, magic numbers, and
 scenario definitions to improve maintainability and reduce code duplication.

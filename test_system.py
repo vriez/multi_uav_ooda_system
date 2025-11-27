@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 Quick system test
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 """
 import sys
 

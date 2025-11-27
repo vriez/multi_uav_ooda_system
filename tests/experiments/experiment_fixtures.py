@@ -1,6 +1,9 @@
 """
 Experiment Fixtures - Shared test infrastructure for baseline comparison experiments
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Provides:
 - Mock mission database with configurable tasks
 - Mock fleet state with failure injection

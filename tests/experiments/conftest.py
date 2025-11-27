@@ -1,6 +1,9 @@
 """
 Pytest fixtures for experiment tests
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Imports all fixtures from experiment_fixtures.py and makes them available
 to all tests in the experiments directory.
 """

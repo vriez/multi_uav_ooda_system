@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 Complete system launcher with GUI dashboard
+
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
 """
 import subprocess
 import time

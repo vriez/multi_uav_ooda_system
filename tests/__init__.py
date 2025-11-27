@@ -1,6 +1,9 @@
 """
 UAV System Test Suite
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 Test organization:
 - tests/unit/: Unit tests for individual components
 - tests/integration/: Integration tests for mission workflows

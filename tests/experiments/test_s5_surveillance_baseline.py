@@ -1,6 +1,9 @@
 """
 S5: Surveillance Mission Baseline Comparison Experiment
 
+Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Copyright (c) 2025
+
 This experiment validates that the OODA-based system achieves the best
 balance of coverage, speed, and safety compared to alternative strategies.
 
