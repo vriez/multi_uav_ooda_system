@@ -415,6 +415,10 @@ Quadcopter dynamics adapted from: [bobzwik/Quadcopter_SimCon](https://github.com
 
 Developed as part of the Specialization in Aeronautical Systems at the School of Engineering of São Carlos, University of São Paulo (EESC-USP).
 
+## AI Disclosure
+
+This project was developed with assistance from Claude (Anthropic), a large language model. AI tools were used to support code development, debugging, and documentation. All technical decisions, system architecture, and algorithm design are the author's own work.
+
 ## License
 
 See project specifications document.
