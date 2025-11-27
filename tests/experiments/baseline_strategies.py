@@ -277,9 +277,7 @@ class OODAStrategy(BaselineStrategy):
         )
 
 
-def create_strategy(
-    strategy_type: StrategyType, ooda_engine=None
-) -> BaselineStrategy:
+def create_strategy(strategy_type: StrategyType, ooda_engine=None) -> BaselineStrategy:
     """
     Factory function to create strategy instances.
 

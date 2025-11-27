@@ -8,13 +8,14 @@ This experiment validates that the OODA-based system correctly handles
 payload constraints and appropriately escalates when autonomous
 reallocation is impossible.
 
-Scenario: UAV-1 (heavy lifter) battery anomaly at t=15min, Package B cannot
-         be reallocated due to payload constraints (2.0kg > spare capacity)
+Scenario: UAV-1 (heavy lifter) battery anomaly at t=15min while delivering
+to Zone 1 (3x3 grid, 40m x 40m zones, 120m x 120m operational area).
+Package B cannot be reallocated due to payload constraints (2.0kg > spare capacity)
 
 Expected Results:
 | Strategy        | Coverage | Safety     | Critical Pkg |
 |-----------------|----------|------------|--------------|
-| No Adaptation   | 60%      | Safe       | NO           |
+| No Adaptation   | 80%      | Safe       | NO           |
 | Greedy Nearest  | 100%     | UNSAFE     | Yes (overload)|
 | OODA (This Work)| 0% (esc.)| Safe       | Escalated    |
 
@@ -31,7 +32,6 @@ import numpy as np
 from tests.experiments.baseline_strategies import (
     NoAdaptationStrategy,
     GreedyNearestStrategy,
-    
     OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
@@ -53,26 +53,37 @@ class TestD6DeliveryBaseline:
 
     @pytest.fixture
     def delivery_setup(self, gcs_config, constraint_validator):
-        """Set up delivery experiment with payload constraints"""
+        """Set up delivery experiment with payload constraints
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Total operational area: 120m x 120m
+
+        5 clinics distributed across grid zones:
+        - Clinic 1: Zone 1 (20, 100) - Package A (insulin, critical)
+        - Clinic 2: Zone 3 (100, 100) - Package B (antibiotics, high) - LOST
+        - Clinic 3: Zone 2 (60, 100) - Package C (bandages)
+        - Clinic 4: Zone 6 (100, 60) - Package D (gauze)
+        - Clinic 5: Zone 8 (60, 20) - Package E (vitamins)
+        """
         db = MockMissionDatabase()
 
         current_time = time.time()
 
-        # Packages with varying weights and priorities
+        # 5 packages to 5 clinics within 9-zone grid
         # Package B (2.0kg) will be lost and CANNOT be reallocated
         # because no UAV has 2.0kg spare capacity
         packages = [
             # (x, y, priority, payload_kg, deadline_min, description)
-            (800, 1200, 100, 2.5, 30, "Package A - Insulin (CRITICAL)"),
-            (1500, 800, 70, 2.0, 45, "Package B - Antibiotics"),  # LOST - too heavy
-            (2200, 1500, 40, 1.2, 60, "Package C - Bandages"),
-            (2800, 600, 40, 1.0, 60, "Package D - Gauze"),
-            (1200, 300, 20, 1.8, 90, "Package E - Vitamins"),
+            (20, 100, 100, 2.5, 30, "Package A - Insulin (CRITICAL)"),  # Zone 1
+            (100, 100, 70, 2.0, 45, "Package B - Antibiotics"),  # Zone 3 - LOST
+            (60, 100, 40, 1.2, 60, "Package C - Bandages"),  # Zone 2
+            (100, 60, 40, 1.0, 60, "Package D - Gauze"),  # Zone 6
+            (60, 20, 20, 1.8, 90, "Package E - Vitamins"),  # Zone 8
         ]
 
         for i, (x, y, priority, payload, deadline_min, desc) in enumerate(packages, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 0.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
@@ -80,7 +91,7 @@ class TestD6DeliveryBaseline:
                 duration_sec=120.0,
             )
 
-        # Assign packages to UAVs
+        # Assign packages to UAVs (3 UAVs, 5 packages)
         # UAV-1: Heavy lifter (5.0kg capacity) - has Package A (2.5kg) + B (2.0kg)
         # UAV-2: Standard (2.5kg capacity) - has Package C (1.2kg) + D (1.0kg)
         # UAV-3: Standard (2.5kg capacity) - has Package E (1.8kg)
@@ -97,9 +108,9 @@ class TestD6DeliveryBaseline:
             operational_uavs=[2, 3],  # UAV-1 partially failed
             failed_uavs=[1],
             uav_positions={
-                1: np.array([600.0, 1000.0, 50.0]),  # Near Clinic 1
-                2: np.array([1800.0, 1400.0, 50.0]),  # En route
-                3: np.array([1000.0, 500.0, 50.0]),  # En route
+                1: np.array([20.0, 100.0, 15.0]),  # Near Clinic 1 (Zone 1)
+                2: np.array([60.0, 100.0, 15.0]),  # En route to Clinic 3 (Zone 2)
+                3: np.array([60.0, 20.0, 15.0]),  # En route to Clinic 5 (Zone 8)
             },
             uav_battery={
                 1: 40.0,  # Low - can only complete current delivery
@@ -344,24 +355,26 @@ class TestD6EscalationAppropriate:
         Setup where SOME tasks can be reallocated but not all
 
         This tests the 80% autonomous + 20% escalation scenario
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
         """
         db = MockMissionDatabase()
         current_time = time.time()
 
-        # 5 packages, 2 will be lost
+        # 5 packages within 9-zone grid, 2 will be lost
         # Package B (2.0kg) - cannot reallocate (too heavy)
         # Package F (0.5kg) - CAN reallocate (fits in spare)
         packages = [
-            (800, 1200, 100, 2.5, 30, "Package A"),
-            (1500, 800, 70, 2.0, 45, "Package B - Heavy"),  # Lost, cannot reallocate
-            (2200, 1500, 40, 1.2, 60, "Package C"),
-            (2800, 600, 40, 1.0, 60, "Package D"),
-            (1200, 300, 20, 0.5, 90, "Package F - Light"),  # Lost, CAN reallocate
+            (20, 100, 100, 2.5, 30, "Package A"),  # Zone 1
+            (100, 100, 70, 2.0, 45, "Package B - Heavy"),  # Zone 3 - Lost
+            (60, 100, 40, 1.2, 60, "Package C"),  # Zone 2
+            (100, 60, 40, 1.0, 60, "Package D"),  # Zone 6
+            (60, 20, 20, 0.5, 90, "Package F - Light"),  # Zone 8 - Lost, CAN reallocate
         ]
 
         for i, (x, y, priority, payload, deadline_min, desc) in enumerate(packages, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 0.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
@@ -380,9 +393,9 @@ class TestD6EscalationAppropriate:
             operational_uavs=[2, 3],
             failed_uavs=[1],
             uav_positions={
-                1: np.array([600.0, 1000.0, 50.0]),
-                2: np.array([1800.0, 1400.0, 50.0]),
-                3: np.array([1000.0, 500.0, 50.0]),
+                1: np.array([20.0, 100.0, 15.0]),  # Zone 1
+                2: np.array([60.0, 100.0, 15.0]),  # Zone 2
+                3: np.array([60.0, 20.0, 15.0]),  # Zone 8
             },
             uav_battery={
                 1: 40.0,

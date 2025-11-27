@@ -46,9 +46,9 @@ Open browser: **http://localhost:8085**
 
 ## Mission Scenarios
 
-**Surveillance**: 5 UAVs covering 8 surveillance zones  
-**Search & Rescue**: 4 UAVs, 3 priority zones, time-critical  
-**Medical Delivery**: 6 UAVs, 10 deliveries, payload constraints
+**Surveillance**: 5 UAVs covering 9 patrol zones (3×3 grid, 40m×40m each, 120m×120m area)
+**Search & Rescue**: 5 UAVs, 9 search zones (3×3 grid, 40m×40m each, 120m×120m area), time-critical
+**Medical Delivery**: 3 UAVs, 5 packages to 5 clinics within 9-zone grid (120m×120m area), payload constraints
 
 ## What You'll See
 

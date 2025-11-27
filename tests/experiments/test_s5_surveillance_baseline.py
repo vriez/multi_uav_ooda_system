@@ -7,13 +7,14 @@ Copyright (c) 2025
 This experiment validates that the OODA-based system achieves the best
 balance of coverage, speed, and safety compared to alternative strategies.
 
-Scenario: UAV-3 experiences battery anomaly at t=45min while covering Zone C
+Scenario: UAV-3 experiences battery anomaly at t=45min while covering Zone 5
+(3x3 grid, 40m x 40m zones, 120m x 120m operational area)
 
 Expected Results:
 | Strategy        | Coverage | Time     | Safety   |
 |-----------------|----------|----------|----------|
-| No Adaptation   | 87.5%    | N/A      | Safe     |
-| Greedy Nearest  | ~100%    | <1s      | UNSAFE   |
+| No Adaptation   | 88.9%    | N/A      | Safe     |
+| Greedy Nearest  | ~100%    | <1s      | Safe     |
 | OODA (This Work)| 100%     | <1s      | Safe     |
 
 Key Thesis Claims Validated:
@@ -50,39 +51,48 @@ class TestS5SurveillanceBaseline:
 
     @pytest.fixture
     def surveillance_setup(self, gcs_config, constraint_validator):
-        """Set up surveillance experiment"""
+        """Set up surveillance experiment
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Total operational area: 120m x 120m
+        """
         # Create mission database
         db = MockMissionDatabase()
 
-        # 8 patrol zones (200m spacing in 2x4 grid)
+        # 9 patrol zones (3x3 grid, 40m x 40m each)
         zones = [
-            (100, 100, 90),  # Zone A - High Priority
-            (300, 100, 90),  # Zone B - High Priority
-            (500, 100, 60),  # Zone C - Medium (UAV-3's zone)
-            (700, 100, 60),  # Zone D - Medium
-            (100, 300, 40),  # Zone E - Standard
-            (300, 300, 40),  # Zone F - Standard
-            (500, 300, 40),  # Zone G - Standard
-            (700, 300, 40),  # Zone H - Standard
+            # Top row (P=0.9) - High Priority
+            (20, 100, 90),  # Zone 1 - High Priority
+            (60, 100, 90),  # Zone 2 - High Priority
+            (100, 100, 90),  # Zone 3 - High Priority
+            # Middle row (P=0.6) - Medium Priority
+            (20, 60, 60),  # Zone 4 - Medium
+            (60, 60, 60),  # Zone 5 - Medium (UAV-3's zone, will fail)
+            (100, 60, 60),  # Zone 6 - Medium
+            # Bottom row (P=0.4) - Standard Priority
+            (20, 20, 40),  # Zone 7 - Standard
+            (60, 20, 40),  # Zone 8 - Standard
+            (100, 20, 40),  # Zone 9 - Standard
         ]
 
         for i, (x, y, priority) in enumerate(zones, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 50.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 zone_id=i,
                 task_type="patrol",
             )
 
-        # Initial assignments (before failure)
-        db.assign_task(1, 1)  # Zone A -> UAV 1
-        db.assign_task(2, 2)  # Zone B -> UAV 2
-        db.assign_task(3, 3)  # Zone C -> UAV 3 (will fail)
-        db.assign_task(4, 4)  # Zone D -> UAV 4
-        db.assign_task(5, 5)  # Zone E -> UAV 5
-        db.assign_task(6, 1)  # Zone F -> UAV 1
-        db.assign_task(7, 2)  # Zone G -> UAV 2
-        db.assign_task(8, 4)  # Zone H -> UAV 4
+        # Initial assignments (5 UAVs, 9 zones)
+        db.assign_task(1, 1)  # Zone 1 -> UAV 1
+        db.assign_task(2, 1)  # Zone 2 -> UAV 1
+        db.assign_task(3, 2)  # Zone 3 -> UAV 2
+        db.assign_task(4, 2)  # Zone 4 -> UAV 2
+        db.assign_task(5, 3)  # Zone 5 -> UAV 3 (will fail)
+        db.assign_task(6, 4)  # Zone 6 -> UAV 4
+        db.assign_task(7, 4)  # Zone 7 -> UAV 4
+        db.assign_task(8, 5)  # Zone 8 -> UAV 5
+        db.assign_task(9, 5)  # Zone 9 -> UAV 5
 
         # Fleet state after UAV-3 failure
         fleet_state = FleetState(
@@ -90,11 +100,11 @@ class TestS5SurveillanceBaseline:
             operational_uavs=[1, 2, 4, 5],
             failed_uavs=[3],
             uav_positions={
-                1: np.array([100.0, 100.0, 50.0]),
-                2: np.array([300.0, 100.0, 50.0]),
-                3: np.array([500.0, 100.0, 50.0]),  # Failed position
-                4: np.array([700.0, 100.0, 50.0]),
-                5: np.array([100.0, 300.0, 50.0]),
+                1: np.array([20.0, 100.0, 15.0]),  # Zone 1
+                2: np.array([100.0, 100.0, 15.0]),  # Zone 3
+                3: np.array([60.0, 60.0, 15.0]),  # Zone 5 (failed)
+                4: np.array([100.0, 60.0, 15.0]),  # Zone 6
+                5: np.array([60.0, 20.0, 15.0]),  # Zone 8
             },
             uav_battery={
                 1: 75.0,
@@ -104,7 +114,7 @@ class TestS5SurveillanceBaseline:
                 5: 80.0,
             },
             uav_payloads={},
-            lost_tasks=[3],  # Zone C task lost
+            lost_tasks=[5],  # Zone 5 task lost
         )
 
         # OODA engine with surveillance context
@@ -116,14 +126,14 @@ class TestS5SurveillanceBaseline:
             "fleet_state": fleet_state,
             "constraint_validator": constraint_validator,
             "ooda_engine": ooda_engine,
-            "lost_tasks": [db.get_task(3)],  # Zone C
+            "lost_tasks": [db.get_task(5)],  # Zone 5
         }
 
     def test_no_adaptation_baseline(self, surveillance_setup):
         """
         Test No Adaptation strategy - establishes lower bound
 
-        Expected: 87.5% coverage (7/8 zones remain, 1 lost)
+        Expected: 88.9% coverage (8/9 zones remain, 1 lost)
         """
         setup = surveillance_setup
         strategy = NoAdaptationStrategy()
@@ -141,7 +151,7 @@ class TestS5SurveillanceBaseline:
         assert len(result.allocation) == 0
         assert len(result.safety_violations) == 0
 
-        # Coverage should be 7/8 = 87.5% (loss of Zone C)
+        # Coverage should be 8/9 = 88.9% (loss of Zone 5)
         # Note: coverage_percentage in this context is remaining coverage
         print(f"\n[No Adaptation] Coverage: {result.coverage_percentage:.1f}%")
         print(f"[No Adaptation] Tasks lost: {result.tasks_lost}")
@@ -247,18 +257,26 @@ class TestS5SurveillanceBaseline:
         no_adapt_result = results.results["No Adaptation"]
 
         # Claim 1: OODA achieves sub-millisecond response
-        print(f"\n[THESIS VALIDATION] OODA Time: {ooda_result.adaptation_time_sec*1000:.2f}ms")
+        print(
+            f"\n[THESIS VALIDATION] OODA Time: {ooda_result.adaptation_time_sec*1000:.2f}ms"
+        )
         assert ooda_result.adaptation_time_sec < 1.0, "OODA should be sub-second"
 
         # Claim 2: OODA is safe (unlike greedy which may violate constraints)
         assert len(ooda_result.safety_violations) == 0, "OODA must be safe"
 
         # Claim 3: OODA achieves better coverage than No Adaptation
-        print(f"[THESIS VALIDATION] OODA Coverage: {ooda_result.coverage_percentage:.1f}%")
-        print(f"[THESIS VALIDATION] No Adaptation Coverage: {no_adapt_result.coverage_percentage:.1f}%")
+        print(
+            f"[THESIS VALIDATION] OODA Coverage: {ooda_result.coverage_percentage:.1f}%"
+        )
+        print(
+            f"[THESIS VALIDATION] No Adaptation Coverage: {no_adapt_result.coverage_percentage:.1f}%"
+        )
 
         # Claim 4: Greedy may violate constraints
-        print(f"[THESIS VALIDATION] Greedy Violations: {greedy_result.constraint_violations}")
+        print(
+            f"[THESIS VALIDATION] Greedy Violations: {greedy_result.constraint_violations}"
+        )
 
         print("\n[S5 EXPERIMENT] All thesis claims validated!")
 
@@ -275,29 +293,44 @@ class TestS5StatisticalValidation:
         """Setup for statistical runs with slight variations"""
 
         def create_scenario(run_id: int):
-            """Create scenario with slight random variation"""
+            """Create scenario with slight random variation
+
+            3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+            """
             np.random.seed(run_id)
 
             db = MockMissionDatabase()
 
-            # 8 zones with slight position variation
-            for i in range(1, 9):
-                x = 100 + (i % 4) * 200 + np.random.uniform(-10, 10)
-                y = 100 + (i // 4) * 200 + np.random.uniform(-10, 10)
-                priority = 90 if i <= 2 else (60 if i <= 4 else 40)
+            # 9 zones (3x3 grid) with slight position variation
+            zone_centers = [
+                (20, 100), (60, 100), (100, 100),  # Top row
+                (20, 60), (60, 60), (100, 60),     # Middle row
+                (20, 20), (60, 20), (100, 20),     # Bottom row
+            ]
+            for i, (cx, cy) in enumerate(zone_centers, 1):
+                x = cx + np.random.uniform(-5, 5)
+                y = cy + np.random.uniform(-5, 5)
+                # Priority: top row=0.9, middle=0.6, bottom=0.4
+                priority = 90 if i <= 3 else (60 if i <= 6 else 40)
                 priority += np.random.uniform(-5, 5)
 
                 db.add_task(
-                    position=np.array([x, y, 50.0]),
+                    position=np.array([x, y, 15.0]),
                     priority=priority,
                     zone_id=i,
                     task_type="patrol",
                 )
 
-            # Assignments
-            for i in range(1, 9):
-                uav_id = ((i - 1) % 5) + 1
-                db.assign_task(i, uav_id)
+            # Assignments (5 UAVs, 9 zones)
+            db.assign_task(1, 1)  # Zone 1 -> UAV 1
+            db.assign_task(2, 1)  # Zone 2 -> UAV 1
+            db.assign_task(3, 2)  # Zone 3 -> UAV 2
+            db.assign_task(4, 2)  # Zone 4 -> UAV 2
+            db.assign_task(5, 3)  # Zone 5 -> UAV 3 (will fail)
+            db.assign_task(6, 4)  # Zone 6 -> UAV 4
+            db.assign_task(7, 4)  # Zone 7 -> UAV 4
+            db.assign_task(8, 5)  # Zone 8 -> UAV 5
+            db.assign_task(9, 5)  # Zone 9 -> UAV 5
 
             # Fleet state with battery variation
             fleet_state = FleetState(
@@ -305,11 +338,11 @@ class TestS5StatisticalValidation:
                 operational_uavs=[1, 2, 4, 5],
                 failed_uavs=[3],
                 uav_positions={
-                    1: np.array([100.0, 100.0, 50.0]),
-                    2: np.array([300.0, 100.0, 50.0]),
-                    3: np.array([500.0, 100.0, 50.0]),
-                    4: np.array([700.0, 100.0, 50.0]),
-                    5: np.array([100.0, 300.0, 50.0]),
+                    1: np.array([20.0, 100.0, 15.0]),   # Zone 1
+                    2: np.array([100.0, 100.0, 15.0]),  # Zone 3
+                    3: np.array([60.0, 60.0, 15.0]),    # Zone 5 (failed)
+                    4: np.array([100.0, 60.0, 15.0]),   # Zone 6
+                    5: np.array([60.0, 20.0, 15.0]),    # Zone 8
                 },
                 uav_battery={
                     1: 75.0 + np.random.uniform(-5, 5),
@@ -319,7 +352,7 @@ class TestS5StatisticalValidation:
                     5: 80.0 + np.random.uniform(-5, 5),
                 },
                 uav_payloads={},
-                lost_tasks=[3],
+                lost_tasks=[5],  # Zone 5
             )
 
             ooda_engine = OODAEngine(gcs_config)
@@ -330,7 +363,7 @@ class TestS5StatisticalValidation:
                 "fleet_state": fleet_state,
                 "constraint_validator": constraint_validator,
                 "ooda_engine": ooda_engine,
-                "lost_tasks": [db.get_task(3)],
+                "lost_tasks": [db.get_task(5)],  # Zone 5
             }
 
         return create_scenario

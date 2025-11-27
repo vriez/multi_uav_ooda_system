@@ -7,12 +7,13 @@ Copyright (c) 2025
 This experiment validates that the OODA-based system achieves critical
 time-sensitive performance for life-saving missions.
 
-Scenario: UAV-2 loses GPS signal at t=8min during golden hour search
+Scenario: UAV-2 loses GPS signal at t=8min while covering Zone 3
+(3x3 grid, 40m x 40m zones, 120m x 120m operational area)
 
 Expected Results:
 | Strategy        | High-Priority | Total  | Golden Hour |
 |-----------------|---------------|--------|-------------|
-| No Adaptation   | 70%           | 66.7%  | N/A (degraded)  |
+| No Adaptation   | 77.8%         | 77.8%  | N/A (degraded)  |
 | Greedy Nearest  | 100%          | 100%   | MET (unsafe)|
 | OODA (This Work)| 100%          | 100%   | MET (safe)  |
 
@@ -29,7 +30,6 @@ import numpy as np
 from tests.experiments.baseline_strategies import (
     NoAdaptationStrategy,
     GreedyNearestStrategy,
-    
     OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
@@ -51,7 +51,16 @@ class TestR5SARBaseline:
 
     @pytest.fixture
     def sar_setup(self, gcs_config, constraint_validator):
-        """Set up SAR experiment with golden hour constraints"""
+        """Set up SAR experiment with golden hour constraints
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Total operational area: 120m x 120m
+
+        SAR Priority mapping:
+        - Top row (Zones 1-3): LKP area, water sources (highest priority, P=0.9)
+        - Middle row (Zones 4-6): Shelters, trails (medium priority, P=0.6)
+        - Bottom row (Zones 7-9): Dense forest, steep terrain (low priority, P=0.4)
+        """
         db = MockMissionDatabase()
 
         current_time = time.time()
@@ -61,24 +70,30 @@ class TestR5SARBaseline:
         # Time remaining in golden hour
         time_remaining = golden_hour_deadline - current_time  # ~52 minutes
 
-        # Search zones with SAR-specific priorities
-        # High priority: LKP area, water sources, shelters
-        # Medium priority: trails, clearings
-        # Low priority: dense forest, steep terrain
+        # 9 search zones in 3x3 grid (40m x 40m each)
+        # High priority: top row (LKP area, water sources)
+        # Medium priority: middle row (shelters, trails)
+        # Low priority: bottom row (dense forest, steep terrain)
         zones = [
             # (x, y, priority, description, is_high_priority)
-            (200, 200, 90, "Zone 1 - LKP radius", True),
-            (400, 200, 85, "Zone 2 - Water sources", True),
-            (600, 400, 80, "Zone 3 - Shelters", True),  # UAV-2's zone (lost)
-            (200, 600, 75, "Zone 4 - More shelters", True),  # UAV-2's zone (lost)
-            (400, 600, 60, "Zone 5 - Trails", False),
-            (800, 800, 30, "Zone 6 - Dense forest", False),
+            # Top row (P=0.9) - LKP area, water sources
+            (20, 100, 90, "Zone 1 - LKP radius", True),
+            (60, 100, 85, "Zone 2 - Water sources", True),
+            (100, 100, 80, "Zone 3 - Shelters", True),  # UAV-2's zone (lost)
+            # Middle row (P=0.6) - More shelters, trails
+            (20, 60, 75, "Zone 4 - More shelters", True),  # UAV-2's zone (lost)
+            (60, 60, 60, "Zone 5 - Trails", False),
+            (100, 60, 55, "Zone 6 - Clearings", False),
+            # Bottom row (P=0.4) - Dense forest, steep terrain
+            (20, 20, 40, "Zone 7 - Dense forest", False),
+            (60, 20, 35, "Zone 8 - Steep terrain", False),
+            (100, 20, 30, "Zone 9 - Remote area", False),
         ]
 
         high_priority_tasks = []
         for i, (x, y, priority, desc, is_high) in enumerate(zones, 1):
             task = db.add_task(
-                position=np.array([float(x), float(y), 50.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 zone_id=i,
                 task_type="search",
@@ -88,13 +103,16 @@ class TestR5SARBaseline:
             if is_high:
                 high_priority_tasks.append(task.id)
 
-        # Initial assignments
+        # Initial assignments (4 UAVs, 9 zones)
         db.assign_task(1, 1)  # Zone 1 -> UAV 1
         db.assign_task(2, 1)  # Zone 2 -> UAV 1
         db.assign_task(3, 2)  # Zone 3 -> UAV 2 (will fail)
         db.assign_task(4, 2)  # Zone 4 -> UAV 2 (will fail)
         db.assign_task(5, 3)  # Zone 5 -> UAV 3
-        db.assign_task(6, 4)  # Zone 6 -> UAV 4
+        db.assign_task(6, 3)  # Zone 6 -> UAV 3
+        db.assign_task(7, 4)  # Zone 7 -> UAV 4
+        db.assign_task(8, 4)  # Zone 8 -> UAV 4
+        db.assign_task(9, 4)  # Zone 9 -> UAV 4
 
         # Fleet state after UAV-2 GPS failure
         fleet_state = FleetState(
@@ -102,10 +120,10 @@ class TestR5SARBaseline:
             operational_uavs=[1, 3, 4],
             failed_uavs=[2],
             uav_positions={
-                1: np.array([200.0, 200.0, 50.0]),  # Zone 1
-                2: np.array([600.0, 400.0, 50.0]),  # Zone 3 (GPS lost)
-                3: np.array([400.0, 600.0, 50.0]),  # Zone 5
-                4: np.array([800.0, 800.0, 50.0]),  # Zone 6
+                1: np.array([20.0, 100.0, 15.0]),  # Zone 1 (top-left)
+                2: np.array([100.0, 100.0, 15.0]),  # Zone 3 (top-right, GPS lost)
+                3: np.array([60.0, 60.0, 15.0]),  # Zone 5 (center)
+                4: np.array([100.0, 20.0, 15.0]),  # Zone 9 (bottom-right)
             },
             uav_battery={
                 1: 75.0,  # 20% spare (after reserve)
@@ -114,7 +132,7 @@ class TestR5SARBaseline:
                 4: 78.0,  # 30% spare
             },
             uav_payloads={},
-            lost_tasks=[3, 4],  # Zones 3 and 4 (high priority shelters)
+            lost_tasks=[3, 4],  # Zones 3 and 4 (high priority)
         )
 
         # OODA engine with SAR context
@@ -138,7 +156,7 @@ class TestR5SARBaseline:
         """
         Test No Adaptation in SAR - critical zones lost
 
-        Expected: 66.7% coverage (4/6 zones), high-priority gaps
+        Expected: 77.8% coverage (7/9 zones), high-priority gaps
         """
         setup = sar_setup
         strategy = NoAdaptationStrategy()
@@ -156,7 +174,7 @@ class TestR5SARBaseline:
             f"[SAR No Adaptation] Golden hour status: Coverage gaps in critical areas"
         )
 
-        # 2 of 6 zones lost
+        # 2 of 9 zones lost (Zones 3 and 4)
         assert result.tasks_lost == 2
 
     def test_greedy_nearest_sar(self, sar_setup):
@@ -296,7 +314,9 @@ class TestR5SARBaseline:
         assert ooda_delay < 1.0, "OODA must respond in <1s for SAR"
         assert len(ooda.safety_violations) == 0, "OODA must be safe"
 
-        print(f"\n[R5 RESULT] OODA achieves sub-millisecond response with 0 violations!")
+        print(
+            f"\n[R5 RESULT] OODA achieves sub-millisecond response with 0 violations!"
+        )
         print("[R5 RESULT] Golden hour preserved - negligible time consumption.")
 
 

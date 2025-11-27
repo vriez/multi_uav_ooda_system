@@ -102,54 +102,70 @@ class ExperimentRunner:
         }
 
     def run_s5_surveillance(self) -> ExperimentSummary:
-        """Run S5: Surveillance baseline comparison"""
+        """Run S5: Surveillance baseline comparison
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Total operational area: 120m x 120m
+        """
         print("\n" + "=" * 70)
         print("EXPERIMENT S5: SURVEILLANCE BASELINE COMPARISON")
         print("=" * 70)
 
-        # Setup
+        # Setup: 9 patrol zones (3x3 grid, 40m x 40m each)
         db = MockMissionDatabase()
         zones = [
-            (100, 100, 90),
-            (300, 100, 90),
-            (500, 100, 60),
-            (700, 100, 60),
-            (100, 300, 40),
-            (300, 300, 40),
-            (500, 300, 40),
-            (700, 300, 40),
+            # Top row (P=0.9) - High Priority
+            (20, 100, 90),  # Zone 1
+            (60, 100, 90),  # Zone 2
+            (100, 100, 90),  # Zone 3
+            # Middle row (P=0.6) - Medium Priority
+            (20, 60, 60),  # Zone 4
+            (60, 60, 60),  # Zone 5 (will be lost)
+            (100, 60, 60),  # Zone 6
+            # Bottom row (P=0.4) - Standard Priority
+            (20, 20, 40),  # Zone 7
+            (60, 20, 40),  # Zone 8
+            (100, 20, 40),  # Zone 9
         ]
         for i, (x, y, priority) in enumerate(zones, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 50.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 zone_id=i,
                 task_type="patrol",
             )
-        for i in range(1, 9):
-            db.assign_task(i, ((i - 1) % 5) + 1)
+        # Assign 9 zones to 5 UAVs
+        db.assign_task(1, 1)  # Zone 1 -> UAV 1
+        db.assign_task(2, 1)  # Zone 2 -> UAV 1
+        db.assign_task(3, 2)  # Zone 3 -> UAV 2
+        db.assign_task(4, 2)  # Zone 4 -> UAV 2
+        db.assign_task(5, 3)  # Zone 5 -> UAV 3 (will fail)
+        db.assign_task(6, 4)  # Zone 6 -> UAV 4
+        db.assign_task(7, 4)  # Zone 7 -> UAV 4
+        db.assign_task(8, 5)  # Zone 8 -> UAV 5
+        db.assign_task(9, 5)  # Zone 9 -> UAV 5
 
         fleet_state = FleetState(
             timestamp=time.time(),
             operational_uavs=[1, 2, 4, 5],
             failed_uavs=[3],
             uav_positions={
-                1: np.array([100.0, 100.0, 50.0]),
-                2: np.array([300.0, 100.0, 50.0]),
-                3: np.array([500.0, 100.0, 50.0]),
-                4: np.array([700.0, 100.0, 50.0]),
-                5: np.array([100.0, 300.0, 50.0]),
+                1: np.array([20.0, 100.0, 15.0]),  # Zone 1
+                2: np.array([100.0, 100.0, 15.0]),  # Zone 3
+                3: np.array([60.0, 60.0, 15.0]),  # Zone 5 (failed)
+                4: np.array([100.0, 60.0, 15.0]),  # Zone 6
+                5: np.array([60.0, 20.0, 15.0]),  # Zone 8
             },
             uav_battery={1: 75.0, 2: 45.0, 3: 8.0, 4: 40.0, 5: 80.0},
             uav_payloads={},
-            lost_tasks=[3],
+            lost_tasks=[5],  # Zone 5
         )
 
         constraint_validator = ConstraintValidator(self.gcs_config)
         ooda_engine = OODAEngine(self.gcs_config)
         ooda_engine.set_mission_context(MissionContext.for_surveillance())
 
-        lost_tasks = [db.get_task(3)]
+        lost_tasks = [db.get_task(5)]  # Zone 5
 
         # Run strategies
         strategies = {
@@ -204,7 +220,11 @@ class ExperimentRunner:
         )
 
     def run_r5_sar(self) -> ExperimentSummary:
-        """Run R5: SAR baseline comparison"""
+        """Run R5: SAR baseline comparison
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Total operational area: 120m x 120m (same as surveillance)
+        """
         print("\n" + "=" * 70)
         print("EXPERIMENT R5: SEARCH & RESCUE BASELINE COMPARISON")
         print("=" * 70)
@@ -213,17 +233,24 @@ class ExperimentRunner:
         current_time = time.time()
         golden_hour_deadline = current_time + 3600
 
+        # 9 search zones (3x3 grid, 40m x 40m each)
         zones = [
-            (200, 200, 90),
-            (400, 200, 85),
-            (600, 400, 80),
-            (200, 600, 75),
-            (400, 600, 60),
-            (800, 800, 30),
+            # Top row (P=0.9) - High Priority (water sources, shelters)
+            (20, 100, 90),  # Zone 1
+            (60, 100, 90),  # Zone 2
+            (100, 100, 85),  # Zone 3
+            # Middle row (P=0.6-0.8) - Medium Priority (trails)
+            (20, 60, 80),  # Zone 4
+            (60, 60, 75),  # Zone 5 (will be lost)
+            (100, 60, 60),  # Zone 6
+            # Bottom row (P=0.3-0.4) - Low Priority (difficult terrain)
+            (20, 20, 40),  # Zone 7
+            (60, 20, 35),  # Zone 8
+            (100, 20, 30),  # Zone 9
         ]
         for i, (x, y, priority) in enumerate(zones, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 50.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 zone_id=i,
                 task_type="search",
@@ -231,26 +258,30 @@ class ExperimentRunner:
                 duration_sec=300.0,
             )
 
-        db.assign_task(1, 1)
-        db.assign_task(2, 1)
-        db.assign_task(3, 2)
-        db.assign_task(4, 2)
-        db.assign_task(5, 3)
-        db.assign_task(6, 4)
+        # Assign 9 zones to 4 UAVs (UAV-2 will fail, losing Zones 3 and 4)
+        db.assign_task(1, 1)  # Zone 1 -> UAV 1
+        db.assign_task(2, 1)  # Zone 2 -> UAV 1
+        db.assign_task(3, 2)  # Zone 3 -> UAV 2 (will fail)
+        db.assign_task(4, 2)  # Zone 4 -> UAV 2 (will fail)
+        db.assign_task(5, 3)  # Zone 5 -> UAV 3
+        db.assign_task(6, 3)  # Zone 6 -> UAV 3
+        db.assign_task(7, 4)  # Zone 7 -> UAV 4
+        db.assign_task(8, 4)  # Zone 8 -> UAV 4
+        db.assign_task(9, 4)  # Zone 9 -> UAV 4
 
         fleet_state = FleetState(
             timestamp=current_time,
             operational_uavs=[1, 3, 4],
             failed_uavs=[2],
             uav_positions={
-                1: np.array([200.0, 200.0, 50.0]),
-                2: np.array([600.0, 400.0, 50.0]),
-                3: np.array([400.0, 600.0, 50.0]),
-                4: np.array([800.0, 800.0, 50.0]),
+                1: np.array([20.0, 100.0, 15.0]),  # Zone 1
+                2: np.array([100.0, 100.0, 15.0]),  # Zone 3 (failed)
+                3: np.array([60.0, 60.0, 15.0]),  # Zone 5
+                4: np.array([100.0, 20.0, 15.0]),  # Zone 9
             },
             uav_battery={1: 75.0, 2: 50.0, 3: 80.0, 4: 78.0},
             uav_payloads={},
-            lost_tasks=[3, 4],
+            lost_tasks=[3, 4],  # Zones 3 and 4 lost (UAV-2's zones)
         )
 
         constraint_validator = ConstraintValidator(self.gcs_config)
@@ -259,7 +290,7 @@ class ExperimentRunner:
             MissionContext.for_search_rescue(golden_hour_sec=3600)
         )
 
-        lost_tasks = [db.get_task(3), db.get_task(4)]
+        lost_tasks = [db.get_task(3), db.get_task(4)]  # Zones 3 and 4
 
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
@@ -322,20 +353,27 @@ class ExperimentRunner:
         current_time = time.time()
         golden_hour_deadline = current_time + 3600
 
-        # Grid bounds: 0-1000 x, 0-1000 y for this experiment
-        # Zone 3 is 10m outside the grid at (1010, 500)
+        # 3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes
+        # Grid bounds: 0-120 x, 0-120 y (120m x 120m operational area)
+        # Zone 3 is 10m outside the grid at (130, 100)
         zones = [
-            (200, 200, 90),  # Zone 1 - inside grid, high priority
-            (500, 200, 85),  # Zone 2 - inside grid
-            (1010, 500, 95),  # Zone 3 - 10m OUTSIDE grid, HIGHEST priority (lost task)
-            (200, 800, 75),  # Zone 4 - inside grid
-            (500, 800, 60),  # Zone 5 - inside grid
-            (800, 500, 70),  # Zone 6 - inside grid
+            # Top row - Zone 3 is OUTSIDE grid
+            (20, 100, 90),    # Zone 1 - inside grid, high priority
+            (60, 100, 85),    # Zone 2 - inside grid
+            (130, 100, 95),   # Zone 3 - 10m OUTSIDE grid, HIGHEST priority
+            # Middle row
+            (20, 60, 75),     # Zone 4 - inside grid
+            (60, 60, 60),     # Zone 5 - inside grid
+            (100, 60, 55),    # Zone 6 - inside grid
+            # Bottom row
+            (20, 20, 40),     # Zone 7 - inside grid
+            (60, 20, 35),     # Zone 8 - inside grid
+            (100, 20, 30),    # Zone 9 - inside grid
         ]
 
         for i, (x, y, priority) in enumerate(zones, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 50.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 zone_id=i,
                 task_type="search",
@@ -343,27 +381,26 @@ class ExperimentRunner:
                 duration_sec=300.0,
             )
 
-        # UAV-2 had zone 3 (out-of-grid) and fails
+        # Assign 9 zones to 4 UAVs - UAV-2 had zone 3 (out-of-grid) and fails
         db.assign_task(1, 1)
         db.assign_task(2, 1)
         db.assign_task(3, 2)  # Zone 3 (out-of-grid) assigned to UAV-2
-        db.assign_task(4, 3)
+        db.assign_task(4, 2)
         db.assign_task(5, 3)
-        db.assign_task(6, 4)
+        db.assign_task(6, 3)
+        db.assign_task(7, 4)
+        db.assign_task(8, 4)
+        db.assign_task(9, 4)
 
         fleet_state = FleetState(
             timestamp=current_time,
             operational_uavs=[1, 3, 4],
             failed_uavs=[2],
             uav_positions={
-                1: np.array([200.0, 200.0, 50.0]),
-                2: np.array(
-                    [900.0, 500.0, 50.0]
-                ),  # UAV-2 was near edge, heading to out-of-grid
-                3: np.array([350.0, 800.0, 50.0]),
-                4: np.array(
-                    [800.0, 500.0, 50.0]
-                ),  # UAV-4 is closest to out-of-grid zone
+                1: np.array([20.0, 100.0, 15.0]),    # Zone 1
+                2: np.array([110.0, 100.0, 15.0]),   # Near edge, heading to out-of-grid
+                3: np.array([60.0, 60.0, 15.0]),     # Zone 5
+                4: np.array([100.0, 60.0, 15.0]),    # Zone 6, closest to out-of-grid
             },
             uav_battery={1: 75.0, 2: 30.0, 3: 80.0, 4: 85.0},
             uav_payloads={},
@@ -376,13 +413,13 @@ class ExperimentRunner:
             },
         )
 
-        # Configure smaller grid bounds for this experiment
+        # Configure grid bounds (120m x 120m)
         config_with_grid = self.gcs_config.copy()
         config_with_grid["grid_bounds"] = {
             "x_min": 0,
-            "x_max": 1000,
+            "x_max": 120,
             "y_min": 0,
-            "y_max": 1000,
+            "y_max": 120,
         }
 
         constraint_validator = ConstraintValidator(config_with_grid)
@@ -446,7 +483,16 @@ class ExperimentRunner:
         )
 
     def run_d6_delivery(self) -> ExperimentSummary:
-        """Run D6: Delivery baseline comparison"""
+        """Run D6: Delivery baseline comparison
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        5 clinics distributed across grid zones:
+        - Clinic 1: Zone 1 (20, 100) - Package A
+        - Clinic 2: Zone 3 (100, 100) - Package B (lost)
+        - Clinic 3: Zone 2 (60, 100) - Package C
+        - Clinic 4: Zone 6 (100, 60) - Package D
+        - Clinic 5: Zone 8 (60, 20) - Package E
+        """
         print("\n" + "=" * 70)
         print("EXPERIMENT D6: DELIVERY BASELINE COMPARISON")
         print("=" * 70)
@@ -454,17 +500,18 @@ class ExperimentRunner:
         db = MockMissionDatabase()
         current_time = time.time()
 
+        # 5 packages to 5 clinics within 9-zone grid (40m x 40m each)
         packages = [
-            (800, 1200, 100, 2.5, 30),
-            (1500, 800, 70, 2.0, 45),  # Lost - too heavy for reallocation
-            (2200, 1500, 40, 1.2, 60),
-            (2800, 600, 40, 1.0, 60),
-            (1200, 300, 20, 1.8, 90),
+            (20, 100, 100, 2.5, 30),   # Clinic 1, Zone 1 - Package A
+            (100, 100, 70, 2.0, 45),   # Clinic 2, Zone 3 - Package B (lost)
+            (60, 100, 40, 1.2, 60),    # Clinic 3, Zone 2 - Package C
+            (100, 60, 40, 1.0, 60),    # Clinic 4, Zone 6 - Package D
+            (60, 20, 20, 1.8, 90),     # Clinic 5, Zone 8 - Package E
         ]
 
         for i, (x, y, priority, payload, deadline_min) in enumerate(packages, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 0.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
@@ -483,9 +530,9 @@ class ExperimentRunner:
             operational_uavs=[2, 3],
             failed_uavs=[1],
             uav_positions={
-                1: np.array([600.0, 1000.0, 50.0]),
-                2: np.array([1800.0, 1400.0, 50.0]),
-                3: np.array([1000.0, 500.0, 50.0]),
+                1: np.array([20.0, 100.0, 15.0]),   # Near Clinic 1 (Zone 1)
+                2: np.array([60.0, 100.0, 15.0]),   # En route to Clinic 3 (Zone 2)
+                3: np.array([60.0, 20.0, 15.0]),    # En route to Clinic 5 (Zone 8)
             },
             uav_battery={1: 40.0, 2: 70.0, 3: 75.0},
             uav_payloads={1: 0.5, 2: 0.3, 3: 0.7},  # Package B (2.0kg) cannot fit
@@ -550,7 +597,12 @@ class ExperimentRunner:
         )
 
     def run_d7_out_of_grid(self) -> ExperimentSummary:
-        """Run D7: Out-of-Grid Delivery - tests grid boundary enforcement"""
+        """Run D7: Out-of-Grid Delivery - tests grid boundary enforcement
+
+        3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
+        Grid bounds: 0-120 x, 0-120 y (120m x 120m operational area)
+        Package C is OUTSIDE the grid at (150, 150)
+        """
         print("\n" + "=" * 70)
         print("EXPERIMENT D7: OUT-OF-GRID DELIVERY")
         print("=" * 70)
@@ -558,19 +610,19 @@ class ExperimentRunner:
         db = MockMissionDatabase()
         current_time = time.time()
 
-        # Grid bounds: 0-3000 x, 0-2000 y (default)
-        # Package C is OUTSIDE the grid at (3500, 2500)
+        # Grid bounds: 0-120 x, 0-120 y (120m x 120m)
+        # Package C is OUTSIDE the grid at (150, 150)
         packages = [
-            (800, 1200, 100, 1.0, 30),  # Package A - inside grid, normal
-            (1500, 800, 70, 0.8, 45),  # Package B - inside grid, normal
-            (3500, 2500, 90, 0.5, 60),  # Package C - OUTSIDE GRID (lost task)
-            (2800, 600, 40, 1.0, 60),  # Package D - inside grid, normal
-            (1200, 300, 20, 0.6, 90),  # Package E - inside grid, normal
+            (20, 100, 100, 1.0, 30),   # Package A - Zone 1, inside grid
+            (100, 100, 70, 0.8, 45),   # Package B - Zone 3, inside grid
+            (150, 150, 90, 0.5, 60),   # Package C - OUTSIDE GRID (lost task)
+            (100, 60, 40, 1.0, 60),    # Package D - Zone 6, inside grid
+            (60, 20, 20, 0.6, 90),     # Package E - Zone 8, inside grid
         ]
 
         for i, (x, y, priority, payload, deadline_min) in enumerate(packages, 1):
             db.add_task(
-                position=np.array([float(x), float(y), 0.0]),
+                position=np.array([float(x), float(y), 15.0]),
                 priority=priority,
                 payload_kg=payload,
                 deadline=current_time + deadline_min * 60,
@@ -590,9 +642,9 @@ class ExperimentRunner:
             operational_uavs=[2, 3],
             failed_uavs=[1],
             uav_positions={
-                1: np.array([2500.0, 1800.0, 50.0]),  # UAV-1 was heading to out-of-grid
-                2: np.array([1800.0, 1400.0, 50.0]),
-                3: np.array([1000.0, 500.0, 50.0]),
+                1: np.array([100.0, 100.0, 15.0]),  # UAV-1 was heading to out-of-grid
+                2: np.array([60.0, 100.0, 15.0]),   # Zone 2
+                3: np.array([60.0, 20.0, 15.0]),    # Zone 8
             },
             uav_battery={1: 30.0, 2: 80.0, 3: 85.0},
             uav_payloads={1: 0.5, 2: 1.5, 3: 1.5},  # Plenty of payload capacity
@@ -604,13 +656,13 @@ class ExperimentRunner:
             },
         )
 
-        # Configure grid bounds explicitly
+        # Configure grid bounds explicitly (120m x 120m)
         config_with_grid = self.gcs_config.copy()
         config_with_grid["grid_bounds"] = {
             "x_min": 0,
-            "x_max": 3000,
+            "x_max": 120,
             "y_min": 0,
-            "y_max": 2000,
+            "y_max": 120,
         }
 
         constraint_validator = ConstraintValidator(config_with_grid)
@@ -654,7 +706,7 @@ class ExperimentRunner:
         }
 
         findings = [
-            f"Package C destination (3500, 2500) is outside grid bounds [0-3000, 0-2000]",
+            f"Package C destination (150, 150) is outside grid bounds [0-120, 0-120]",
             f"No UAV has out-of-grid permission",
             f"Greedy would send UAV outside safe zone ({greedy['violations']} violations)",
             "OODA correctly escalates - operator must grant permission or use ground vehicle",
@@ -841,7 +893,7 @@ class ExperimentRunner:
                     "**Trade-off Summary:**",
                     "- **OODA:** Sub-ms response, 0 violations, intelligent escalation = DEPLOYABLE",
                     "- **Greedy:** Sub-ms response, 2 violations = UNSAFE",
-                    "- **No Adaptation:** 0 response time, 0 violations, 12.5-33.3% coverage loss = DEGRADED",
+                    "- **No Adaptation:** 0 response time, 0 violations, 11-22% coverage loss = DEGRADED",
                     "",
                     "These results support the thesis that constraint-aware, OODA-based",
                     "fault tolerance provides a practical, deployable solution for",
