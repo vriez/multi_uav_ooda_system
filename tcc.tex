@@ -161,7 +161,7 @@ São Carlos\\
 \begin{flushleft}
 Monograph presented to the Specialization Course in Aeronautical Systems, School of Engineering of São Carlos, University of São Paulo, as part of the requirements for obtaining the title of Specialist.
 
-Advisor: Prof. João Paulo Eguea, PhD
+Advisor: Prof° João Paulo Eguea, PhD
 \end{flushleft}
 \end{minipage}
 
@@ -192,13 +192,13 @@ AND RESEARCH PURPOSES, PROVIDED THE SOURCE IS CITED.
 \begin{center}
 \begin{minipage}{12cm}
 \begin{flushleft}
-Cataloging card prepared by the Library Prof. Dr. Sérgio Rodrigues Fontes at EESC/USP with data provided by the author(s).
+Cataloging card prepared by the Library Prof° Dr. Sérgio Rodrigues Fontes at EESC/USP with data provided by the author(s).
 
 \vspace{0.5cm}
 
 \noindent Eulálio Reis, Vítor
 
-\hspace{0.5cm} Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop: Realistic Mission Completion Assistance. / Vítor Eulálio Reis; advisor Prof. João Paulo Eguea, PhD. São Carlos, 2025.
+\hspace{0.5cm} Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop: Realistic Mission Completion Assistance. / Vítor Eulálio Reis; advisor Prof° João Paulo Eguea, PhD. São Carlos, 2025.
 
 \vspace{0.5cm}
 
@@ -242,11 +242,11 @@ Cataloging card prepared by the Library Prof. Dr. Sérgio Rodrigues Fontes at EE
 \hline
 \textbf{Examining Committee} & \textbf{Result} \\
 \hline
-{Prof° João Paulo Eguea, PhD} & submitted \\
+{Prof° João Paulo Eguea, PhD} &  \\
 \hline
 \textbf{Affiliation:} School of Engineering of São Carlos / EESC-USP & \\
 \hline
-{Prof° Jorge Bidinotto, PhD} & submitted \\
+{Prof° Jorge Bidinotto, PhD} &  \\
 \hline
 \textbf{Affiliation:} School of Engineering of São Carlos / EESC-USP & \\
 \hline
@@ -287,9 +287,9 @@ Chair of the Examining Committee:
 
 To the professors of the Especialização em Sistemas Aeronáuticos at the Escola de Engenharia de São Carlos, USP, for sharing their knowledge, expertise, craft, and for their dedication in supporting students throughout the course.
 
-To Prof. Dr. João Paulo Eguea for his mentorship in guiding this research.
+To Prof° Dr. João Paulo Eguea for his mentorship in guiding this research.
 
-To Prof. Dr. Jorge Bidinotto for his leadership in managing the Specialization Program.
+To Prof° Dr. Jorge Bidinotto for his leadership in managing the Specialization Program.
 
 \vspace{0.5cm}
 
@@ -371,13 +371,9 @@ UAV & Unmanned Aerial Vehicle \\
 
 \section{The Reality Gap in Multi-Agent UAV Research}
 
-Over the last decade, Unmanned Aerial Vehicles (UAVs) have progressed from experimental platforms to essential tools in logistics, environmental monitoring, and emergency response. Multi-UAV coordination, in particular, has emerged as a key enabler of scalable autonomy, allowing fleets to execute missions more efficiently and robustly than any single vehicle could achieve alone.
+Multi-UAV coordination has emerged as a key enabler of scalable autonomy in logistics, environmental monitoring, and emergency response. Yet much fault-tolerant multi-agent research still operates within idealized boundaries (ZHANG; JIANG, 2008; YU; JIANG, 2015), presuming unlimited energy, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority—assumptions that mask real-world complexities.
 
-Despite this progress, much of the research in fault-tolerant multi-agent systems still operates within idealized boundaries (ZHANG; JIANG, 2008; YU; JIANG, 2015). Academic frameworks often presume conditions that are far removed from operational reality: unlimited energy reserves, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority. These simplifying assumptions make theoretical analysis tractable, but they mask the complexities that dominate real-world deployments.
-
-In practice, UAV operations are governed by strict physical and regulatory limits. Batteries must retain safety reserves of 10–20\% to satisfy aviation standards. Payload resources, whether spray tanks or delivery packages, deplete irreversibly during flight and cannot be replenished mid-mission. Communication links introduce latencies of up to two seconds, and mission execution beyond visual line of sight requires constant operator supervision.
-
-The result is a persistent ``reality gap'' between simulated autonomy and deployable autonomy. Systems that appear reliable in laboratory conditions may struggle in the field when confronted with degraded batteries, intermittent links, or competing mission deadlines. Closing this gap requires architectures that are not only intelligent but also resilient—capable of adapting to uncertainty and resource constraints without losing situational awareness or regulatory compliance.
+In practice, UAV operations face strict physical and regulatory limits: batteries must retain 10–20\% safety reserves, payloads deplete irreversibly mid-mission, communication links introduce latencies up to two seconds, and beyond visual line of sight operations require constant operator supervision. The resulting ``reality gap'' means systems reliable in laboratory conditions may struggle in the field. Closing this gap requires architectures that adapt to uncertainty and resource constraints while maintaining situational awareness and regulatory compliance.
 
 \section{The OODA Loop: From Combat Theory to Autonomous Resilience}
 
@@ -445,7 +441,7 @@ In doing so, it bridges the long-standing gap between theoretical multi-agent fa
 
 \section{Centralized OODA Architecture with Distributed Execution}
 
-The system implements a hierarchical control structure in which the Ground Control Station hosts the OODA Loop Engine for centralized decision-making while UAVs execute tasks with operational autonomy. This architecture balances the optimization advantages of global fleet visibility against the responsiveness requirements of distributed execution, a design choice grounded in both regulatory constraints and practical deployment considerations.
+The system implements a hierarchical control structure in which the Ground Control Station hosts the OODA Loop Engine for centralized decision-making while UAVs execute tasks with operational autonomy. This architecture balances the optimization advantages of global fleet visibility against the responsiveness requirements of distributed execution, a design choice grounded in both regulatory constraints and practical deployment considerations. Figure~\ref{fig:architecture} presents a comprehensive overview of this layered architecture, illustrating the information flow between the GCS decision engine, the communication infrastructure, and the distributed UAV fleet. The diagram delineates the separation of concerns between centralized planning---where the OODA loop processes fleet-wide telemetry to generate optimal task allocations---and decentralized execution, where individual vehicles maintain local autonomy for navigation and immediate obstacle avoidance.
 
 \begin{figure}[h!tbp]
     \centering
@@ -456,11 +452,9 @@ The system implements a hierarchical control structure in which the Ground Contr
 
 \subsection{Design Rationale and Trade-offs}
 
-The centralized OODA architecture derives from multiple convergent factors. Regulatory compliance for Beyond Visual Line of Sight operations mandates operator oversight, which centralized control naturally provides through clear authority hierarchies. Optimization quality benefits from global fleet state visibility, enabling superior task allocation compared to distributed consensus approaches. Implementation complexity reduces significantly with a single decision point, eliminating complex inter-UAV coordination protocols. This approach aligns with current commercial and military deployment practices.
+The centralized OODA architecture derives from convergent factors: regulatory compliance for Beyond Visual Line of Sight operations mandates operator oversight, global fleet visibility enables superior optimization compared to distributed consensus, and single-point decision-making eliminates complex inter-UAV coordination protocols. The hybrid autonomy model explicitly recognizes scenarios where complete failure compensation proves physically impossible, maintaining safety through human-in-the-loop oversight while prioritizing honest performance assessment over aspirational capabilities.
 
-The hybrid autonomy model acknowledges fundamental operational constraints. The system explicitly recognizes scenarios where complete failure compensation proves physically impossible, maintains safety through human-in-the-loop oversight for critical decisions, and enhances deployability by avoiding full BVLOS authority requirements. This design philosophy prioritizes honest performance assessment over aspirational capabilities.
-
-Architectural trade-offs require careful mitigation. The centralized architecture introduces a single point of failure at the GCS, mitigated through autonomous Return-to-Launch behaviors triggered by communication timeout detection. Communication bandwidth scales linearly with fleet size, though the 2 Hz telemetry rate maintains manageable overhead for fleets not exceeding twelve UAVs. The 3-6 second response latency, while not instantaneous, remains acceptable for mission-level fault tolerance in applications where individual UAV aerodynamic stability persists throughout this interval.
+Architectural trade-offs require mitigation. The GCS single point of failure is addressed through autonomous Return-to-Launch behaviors triggered by communication timeout. Communication bandwidth scales linearly with fleet size, though 2 Hz telemetry maintains manageable overhead for fleets up to twelve UAVs. The 3-6 second response latency remains acceptable for mission-level fault tolerance where individual UAV aerodynamic stability persists throughout this interval.
 
 \subsection{Communication System Design}
 
@@ -514,6 +508,8 @@ This 2-3 second end-to-end response remains substantially faster than the 4-6 se
 
 \textbf{Practical implication:} Real-world deployments will experience 2-3 second adaptation times dominated by communication latency, not the 0.3 ms algorithmic computation. This distinction matters for system design---network optimization provides greater latency reduction potential than further algorithmic speedup. Nonetheless, 2-3 seconds represents a 150-fold improvement over manual operator response (465 seconds), validating the OODA approach for time-critical applications such as search and rescue operations.
 
+Figure~\ref{fig:ooda_loop} illustrates the complete OODA loop execution flow, depicting the cyclical progression through Observe, Orient, Decide, and Act phases. The diagram emphasizes the continuous nature of this adaptive process: each Act phase conclusion feeds telemetry back into the subsequent Observe phase, creating an unbroken feedback loop that maintains situational awareness throughout mission execution. This visual representation clarifies how failure events trigger immediate cycle activation, with each phase contributing specific analytical or executive functions toward recovery.
+
 \begin{figure}[h!tbp]
     \centering
     \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/ooda_loop.png}
@@ -539,7 +535,7 @@ The ACT phase (0.5-1.5s budget) dispatches mission updates to affected UAVs (new
 
 \section{Sequential Constraint Validation Process}
 
-The constraint validation process implements fail-fast sequential checking that prioritizes constraints by criticality and commonality, enabling early termination when fundamental limitations preclude autonomous compensation while avoiding wasted computation on infeasible scenarios.
+The constraint validation process implements fail-fast sequential checking that prioritizes constraints by criticality and commonality, enabling early termination when fundamental limitations preclude autonomous compensation while avoiding wasted computation on infeasible scenarios. Figure~\ref{fig:constraints} presents the decision flowchart governing this sequential validation, illustrating how each constraint category serves as a gate that must be passed before subsequent checks proceed. The hierarchical ordering---battery constraints first, followed by payload verification, and concluding with temporal feasibility---reflects both the relative criticality of each constraint type and the computational efficiency of early rejection when fundamental physical limitations cannot be satisfied.
 
 \begin{figure}[h!tbp]
     \centering
@@ -578,7 +574,7 @@ The temporal communication sequence and information pipeline architecture demons
 
 \subsection{Temporal Execution Analysis}
 
-The sequence diagram illustrates communication flow during failure events with precise timing. At reference time T, a UAV experiences failure, transmitting a high-priority fault message with 0.4-1.0 second latency. The OBSERVE phase confirms the fault and aggregates fleet state by T+1.5 seconds. The ORIENT phase completes impact assessment and capacity analysis by T+2.5 seconds. The DECIDE phase generates reallocation plans by T+3.5 seconds. The ACT phase dispatches commands and updates dashboards by T+4.0 seconds, establishing a 4-second response timeline from failure detection to command dispatch.
+Figure~\ref{fig:sequence} illustrates communication flow during failure events with precise timing. At reference time T, a UAV experiences failure, transmitting a high-priority fault message with 0.4-1.0 second latency. The OBSERVE phase confirms the fault and aggregates fleet state by T+1.5 seconds. The ORIENT phase completes impact assessment and capacity analysis by T+2.5 seconds. The DECIDE phase generates reallocation plans by T+3.5 seconds. The ACT phase dispatches commands and updates dashboards by T+4.0 seconds, establishing a 4-second response timeline from failure detection to command dispatch.
 
 This temporal progression demonstrates responsiveness far exceeding human operator capabilities while accommodating realistic communication latencies inherent in long-range RF links. The explicit timing breakdown provides quantitative performance baselines for fault-tolerant mission adaptation.
 
