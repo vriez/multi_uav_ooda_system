@@ -571,7 +571,7 @@ This temporal progression demonstrates responsiveness far exceeding human operat
 \label{fig:pipeline}
 \end{figure}
 
-The data flow architecture implements unidirectional information transformation with clear phase boundaries. The input layer ingests dual streams: high-frequency telemetry from UAV sensors updated at 2 Hz, and static mission definitions loaded at initialization. The processing layer transforms these inputs sequentially—OBSERVE produces fleet states and failure lists, ORIENT generates impact assessments and capacity analyses, DECIDE creates strategies and command packets, and ACT executes commands while logging performance metrics. The output layer distributes results through three channels: commands transmitted to UAVs, alerts displayed to operators, and logs persisted for post-mission analysis.
+The data flow architecture, depicted in Figure~\ref{fig:pipeline}, implements unidirectional information transformation with clear phase boundaries. The input layer ingests dual streams: high-frequency telemetry from UAV sensors updated at 2 Hz, and static mission definitions loaded at initialization. The processing layer transforms these inputs sequentially—OBSERVE produces fleet states and failure lists, ORIENT generates impact assessments and capacity analyses, DECIDE creates strategies and command packets, and ACT executes commands while logging performance metrics. The output layer distributes results through three channels: commands transmitted to UAVs, alerts displayed to operators, and logs persisted for post-mission analysis.
 
 This unidirectional flow pattern provides clear data provenance enabling traceability, testability through phase isolation with mock input capability, and maintainability where phase modifications avoid backward ripple effects. The implicit feedback loop manifests as ACT phase commands update UAV operational states, with updated telemetry reflecting new states flowing back into OBSERVE phase in subsequent cycles.
 
@@ -1295,6 +1295,8 @@ E & Vitamins & 1.8 kg & Clinic 5 (1200, 300) & 90 min & 0.2 (LOW) \\
 \end{table}
 
 \textbf{Delivery Route Map:}
+
+Figure~\ref{fig:delivery_map} illustrates the spatial distribution of clinic destinations across the operational area, with planned delivery routes connecting the central depot to each medical facility.
 
 \begin{figure}[H]
 \centering
