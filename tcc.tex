@@ -619,7 +619,7 @@ These scenario variations demonstrate architectural flexibility through consiste
 
 \section{Priority-Based Task Scoring Algorithm}
 
-Effective task reallocation requires a principled method for determining which orphaned tasks deserve immediate attention and which can tolerate delayed or degraded service. Algorithm~1 formalizes a multi-factor priority scoring function that balances temporal urgency, mission-specific criticality, and spatial reallocation cost.
+Task reallocation following UAV failure constitutes a resource-constrained scheduling problem under uncertainty, wherein orphaned tasks must be systematically evaluated to determine allocation precedence. This evaluation reconciles three potentially competing objectives: temporal urgency imposed by mission deadlines, intrinsic task criticality derived from domain-specific requirements, and the resource expenditure necessary to execute reallocation. Algorithm~1 formalizes this multi-objective prioritization through a weighted scoring function that synthesizes these dimensions into a unified, comparable metric.
 
 \begin{table}[H]
 \centering
@@ -639,15 +639,15 @@ Effective task reallocation requires a principled method for determining which o
 \end{tabular}
 \end{table}
 
-The temporal component $\tau$ increases as deadlines approach, ensuring time-critical tasks receive priority. Mission criticality $c$ reflects domain-specific importance: in delivery missions, medical emergencies score 1.0 while standard packages score 0.4; in search and rescue, high-probability victim zones dominate over perimeter patrols. The spatial term $\sigma$ penalizes tasks distant from available UAVs, implicitly accounting for battery expenditure required for reallocation.
+Each component of the scoring function addresses a distinct aspect of the prioritization problem. The temporal urgency term $\tau$ increases monotonically as deadlines approach, ensuring time-critical objectives receive elevated priority. The mission criticality weight $c$ encodes domain-specific importance hierarchies---medical emergencies receive maximum weighting (1.0) in delivery missions while routine packages score 0.4; in search and rescue, high-probability victim zones supersede peripheral patrols. The spatial cost term $\sigma$ penalizes tasks distant from available UAVs, implicitly incorporating battery expenditure into the priority calculus.
 
-Default weights ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasize criticality while maintaining responsiveness to deadlines. These parameters are configurable per mission type, as detailed in Section~3.5.
-
-This formulation draws inspiration from auction-based task allocation (CHOI; BRUNET; HOW, 2009) and utility functions in market-based coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), but differs by explicitly incorporating resource costs into the priority calculus rather than treating them as post-hoc constraints. The formal taxonomy of task allocation in multi-robot systems established by Gerkey and Matarić (2004) provides the theoretical foundation for this approach.
+The default weight configuration ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasizes mission criticality as the primary determinant while maintaining responsiveness to temporal constraints; these parameters admit mission-specific customization as detailed in Section~3.5. This formulation extends auction-based allocation methods (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), with the principal distinction being the explicit integration of resource costs within the priority calculus rather than their treatment as post-hoc constraints. The theoretical foundations derive from the ST-SR-IA problem class in Gerkey and Matarić's (2004) taxonomy of multi-robot task allocation.
 
 \section{Constraint-Aware Task Reallocation with Collision Avoidance}
 
-With tasks ranked by priority, the system must assign them to healthy UAVs while respecting hard operational constraints. Algorithm~2 implements a greedy allocation strategy that processes tasks in priority order, assigning each to the nearest UAV with sufficient capacity. This approach guarantees constraint satisfaction at the cost of global optimality—a trade-off justified by real-time requirements.
+With tasks ranked by Algorithm~1, the subsequent challenge involves constructing feasible assignments to the operational fleet while satisfying interdependent constraints. This task allocation problem constitutes an instance of the generalized assignment problem, known to be NP-hard, rendering exact optimization computationally intractable for real-time fault recovery where decision latency directly impacts mission outcomes.
+
+Algorithm~2 resolves this complexity-feasibility tension through a greedy strategy that processes tasks in descending priority order, assigning each to the nearest constraint-satisfying UAV. This approach guarantees constraint satisfaction by construction while achieving deterministic polynomial-time execution---a trade-off justified by the temporal criticality of fault recovery, where a promptly executed suboptimal allocation provides greater operational value than an optimal solution computed after deadlines have elapsed.
 
 \begin{table}[H]
 \centering
@@ -677,7 +677,7 @@ With tasks ranked by priority, the system must assign them to healthy UAVs while
 \end{tabular}
 \end{table}
 
-The algorithm enforces three constraint types sequentially. Battery constraints verify that the UAV retains sufficient charge to reach the task location while maintaining the 20\% safety reserve mandated by operational policy. Payload constraints, active only in delivery missions, ensure the vehicle can physically carry the required cargo. Collision avoidance, delegated to Algorithm~3, prevents spatial conflicts between reassigned flight paths.
+The algorithm enforces constraints through a hierarchical validation pipeline. Battery constraints constitute the primary filter, verifying that candidates retain sufficient energy to reach the task location while maintaining the 20\% safety margin that accounts for environmental uncertainties such as headwinds and navigation deviations. Payload constraints, activated exclusively in delivery contexts, ensure adequate lift capacity for specified cargo. Collision avoidance, delegated to Algorithm~3, evaluates spatiotemporal compatibility between proposed and committed trajectories.
 
 \begin{table}[H]
 \centering
@@ -701,9 +701,7 @@ The algorithm enforces three constraint types sequentially. Battery constraints 
 \end{tabular}
 \end{table}
 
-The collision avoidance module implements spatiotemporal conflict detection. Two UAVs are considered in conflict if their paths bring them within 15 meters of each other (approximately three times a typical UAV wingspan) during overlapping time windows. When conflicts arise during allocation, the candidate assignment is rejected and the next-nearest UAV is evaluated. If no conflict-free assignment exists, temporal separation can be applied by delaying the lower-priority UAV's departure.
-
-This approach draws on velocity obstacle methods, particularly Reciprocal Velocity Obstacles (VAN DEN BERG; LIN; MANOCHA, 2008), but simplifies the formulation for centralized planning where global path information is available. The 15-meter spatial buffer and 10-second temporal margin mirror conservative air traffic control separation standards adapted for low-altitude UAV operations.
+Algorithm~3 implements spatiotemporal conflict detection derived from velocity obstacle methods (VAN DEN BERG; LIN; MANOCHA, 2008), simplified for centralized planning where global path information obviates distributed negotiation. Conflicts arise when trajectories bring UAVs within 15 meters---approximately three wingspans---during overlapping time windows, reflecting conservative separation standards for low-altitude operations. Upon conflict detection, the candidate assignment is rejected and the next-nearest UAV evaluated; when no conflict-free assignment exists, temporal deconfliction through departure delay scheduling provides an alternative resolution.
 
 \section{Operator Escalation Decision Rules}
 

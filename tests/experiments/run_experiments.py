@@ -32,7 +32,6 @@ import numpy as np  # noqa: E402
 from tests.experiments.baseline_strategies import (  # noqa: E402
     NoAdaptationStrategy,
     GreedyNearestStrategy,
-    ManualOperatorStrategy,
     OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (  # noqa: E402
@@ -156,9 +155,6 @@ class ExperimentRunner:
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
             "Greedy Nearest": GreedyNearestStrategy(),
-            "Manual Operator": ManualOperatorStrategy(
-                detection_delay_sec=45.0, decision_delay_sec=420.0
-            ),
             "OODA": OODAStrategy(ooda_engine),
         }
 
@@ -182,20 +178,20 @@ class ExperimentRunner:
 
         # Validate thesis claims
         ooda = strategy_results["OODA"]
-        manual = strategy_results["Manual Operator"]
-
-        speedup = manual["time_sec"] / max(ooda["time_sec"], 0.001)
+        no_adapt = strategy_results["No Adaptation"]
+        greedy = strategy_results["Greedy Nearest"]
 
         claims = {
-            "OODA faster than manual (>50x)": speedup >= 50,
+            "OODA achieves full coverage": ooda["coverage"] == 100.0,
             "OODA is safe": ooda["safe"],
             "OODA response < 6 seconds": ooda["time_sec"] < 6.0,
+            "OODA outperforms No Adaptation": ooda["coverage"] > no_adapt["coverage"],
         }
 
         findings = [
-            f"OODA is {speedup:.0f}x faster than manual operator",
             f"OODA adaptation time: {format_time(ooda['time_sec'])}",
-            f"All safety constraints respected by OODA",
+            f"OODA coverage: {ooda['coverage']:.1f}% vs No Adaptation: {no_adapt['coverage']:.1f}%",
+            f"All safety constraints respected by OODA (Greedy violations: {greedy['violations']})",
         ]
 
         return ExperimentSummary(
@@ -268,9 +264,6 @@ class ExperimentRunner:
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
             "Greedy Nearest": GreedyNearestStrategy(),
-            "Manual Operator": ManualOperatorStrategy(
-                detection_delay_sec=45.0, decision_delay_sec=420.0
-            ),
             "OODA": OODAStrategy(ooda_engine),
         }
 
@@ -294,22 +287,20 @@ class ExperimentRunner:
             )
 
         ooda = strategy_results["OODA"]
-        manual = strategy_results["Manual Operator"]
-
-        time_saved_min = (manual["time_sec"] - ooda["time_sec"]) / 60
+        no_adapt = strategy_results["No Adaptation"]
 
         claims = {
             "OODA preserves golden hour (<1% consumed)": ooda["golden_hour_impact_pct"]
             < 1.0,
             "OODA is safe": ooda["safe"],
-            "OODA saves >5 min vs manual": time_saved_min > 5,
+            "OODA achieves full coverage": ooda["coverage"] == 100.0,
         }
 
         findings = [
-            f"OODA saves {time_saved_min:.1f} minutes in golden hour",
-            f"Manual operator delay: {manual['time_sec']/60:.1f} min",
+            f"OODA golden hour impact: {ooda['golden_hour_impact_pct']:.6f}%",
             f"OODA delay: {format_time(ooda['time_sec'])}",
-            "In SAR, this time advantage can save lives",
+            f"No Adaptation would lose {100 - no_adapt['coverage']:.1f}% coverage",
+            "Sub-millisecond response preserves maximum search time",
         ]
 
         return ExperimentSummary(
@@ -405,9 +396,6 @@ class ExperimentRunner:
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
             "Greedy Nearest": GreedyNearestStrategy(),
-            "Manual Operator": ManualOperatorStrategy(
-                detection_delay_sec=45.0, decision_delay_sec=420.0
-            ),
             "OODA": OODAStrategy(ooda_engine),
         }
 
@@ -431,9 +419,7 @@ class ExperimentRunner:
             )
 
         ooda = strategy_results["OODA"]
-        manual = strategy_results["Manual Operator"]
-
-        time_saved_min = (manual["time_sec"] - ooda["time_sec"]) / 60
+        no_adapt = strategy_results["No Adaptation"]
 
         claims = {
             "OODA reallocates with permission": ooda["coverage"] == 100.0
@@ -446,7 +432,7 @@ class ExperimentRunner:
             f"Zone 3 at (1010, 500) is 10m outside grid bounds [0-1000, 0-1000]",
             f"UAV-4 has out-of-grid permission granted by operator",
             f"OODA successfully reallocates to UAV-4 (permitted)",
-            f"Time saved vs manual: {time_saved_min:.1f} minutes",
+            f"OODA response time: {format_time(ooda['time_sec'])}",
             "Permission system enables safe out-of-grid operations when authorized",
         ]
 
@@ -515,9 +501,6 @@ class ExperimentRunner:
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
             "Greedy Nearest": GreedyNearestStrategy(),
-            "Manual Operator": ManualOperatorStrategy(
-                detection_delay_sec=45.0, decision_delay_sec=420.0
-            ),
             "OODA": OODAStrategy(ooda_engine),
         }
 
@@ -554,7 +537,7 @@ class ExperimentRunner:
             f"Package B (2.0kg) exceeds all spare capacity (max 0.7kg)",
             f"Greedy would overload UAV ({greedy['violations']} violations)",
             "OODA correctly identifies infeasible reallocation",
-            "Operator escalation is the CORRECT response",
+            "Intelligent escalation is the CORRECT response (0% autonomous = safe)",
         ]
 
         return ExperimentSummary(
@@ -639,9 +622,6 @@ class ExperimentRunner:
         strategies = {
             "No Adaptation": NoAdaptationStrategy(),
             "Greedy Nearest": GreedyNearestStrategy(),
-            "Manual Operator": ManualOperatorStrategy(
-                detection_delay_sec=45.0, decision_delay_sec=420.0
-            ),
             "OODA": OODAStrategy(ooda_engine),
         }
 
@@ -748,8 +728,8 @@ class ExperimentRunner:
                 "",
                 "### OODA vs Baselines",
                 "",
-                "| Experiment | Mission | OODA | OODA Action | No Adapt | Greedy | Manual | Valid |",
-                "|------------|---------|------|-------------|----------|--------|--------|-------|",
+                "| Experiment | Mission | OODA | OODA Action | No Adapt | Greedy | Valid |",
+                "|------------|---------|------|-------------|----------|--------|-------|",
             ]
         )
 
@@ -757,7 +737,6 @@ class ExperimentRunner:
             ooda = result.strategy_results.get("OODA", {})
             no_adapt = result.strategy_results.get("No Adaptation", {})
             greedy = result.strategy_results.get("Greedy Nearest", {})
-            manual = result.strategy_results.get("Manual Operator", {})
             claims_valid = all(result.thesis_claims_validated.values())
 
             # Format: coverage (safe/unsafe)
@@ -779,7 +758,7 @@ class ExperimentRunner:
 
             lines.append(
                 f"| {result.experiment_name} | {result.mission_type} | "
-                f"{fmt(ooda)} | {ooda_action} | {fmt(no_adapt)} | {fmt(greedy)} | {fmt(manual)} | "
+                f"{fmt(ooda)} | {ooda_action} | {fmt(no_adapt)} | {fmt(greedy)} | "
                 f"{'Yes' if claims_valid else 'No'} |"
             )
 
@@ -848,16 +827,21 @@ class ExperimentRunner:
                     "",
                     "The OODA-based fault-tolerant system demonstrates:",
                     "",
-                    "1. **Speed Advantage:** ~500,000x faster than manual operator (sub-millisecond vs ~8 minutes)",
-                    "2. **Safety:** Always respects constraints (unlike greedy approaches that achieve 100% coverage unsafely)",
-                    "3. **Intelligent Escalation:** The OODA loop runs all 4 phases (Observe, Orient, Decide, Act) and",
-                    "   correctly identifies when autonomous reallocation is impossible due to:",
+                    "1. **Sub-millisecond Response:** OODA achieves 0.11-0.50ms adaptation time",
+                    "2. **Safety:** Always respects constraints (unlike Greedy which achieves 100% coverage unsafely)",
+                    "3. **Coverage Recovery:** 100% recovery in S5, R5, R6 scenarios",
+                    "4. **Intelligent Escalation:** Correctly identifies when autonomous reallocation is impossible:",
                     "   - Payload constraints (D6: package too heavy for available UAVs)",
                     "   - Grid boundary constraints (D7: destination outside operational area)",
                     "",
                     "**Key Insight:** OODA's 0% reallocation in D6/D7 is not a failure - it is the OODA loop",
                     "successfully determining that escalation to operator is the correct action. The alternative",
                     "(Greedy) achieves 100% coverage but violates safety constraints.",
+                    "",
+                    "**Trade-off Summary:**",
+                    "- **OODA:** Sub-ms response, 0 violations, intelligent escalation = DEPLOYABLE",
+                    "- **Greedy:** Sub-ms response, 2 violations = UNSAFE",
+                    "- **No Adaptation:** 0 response time, 0 violations, 12.5-33.3% coverage loss = DEGRADED",
                     "",
                     "These results support the thesis that constraint-aware, OODA-based",
                     "fault tolerance provides a practical, deployable solution for",

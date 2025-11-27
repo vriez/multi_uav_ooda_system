@@ -5,22 +5,21 @@ Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
 Copyright (c) 2025
 
 This experiment validates that the OODA-based system achieves critical
-time-sensitive performance that manual operators cannot match.
+time-sensitive performance for life-saving missions.
 
 Scenario: UAV-2 loses GPS signal at t=8min during golden hour search
 
 Expected Results:
 | Strategy        | High-Priority | Total  | Golden Hour |
 |-----------------|---------------|--------|-------------|
-| No Adaptation   | 70%           | 88%    | Violated    |
-| Greedy Nearest  | 90%           | 85%    | Maybe       |
-| Manual Operator | 100%          | 90%    | VIOLATED    |
-| OODA (This Work)| 100%          | 88%    | MET         |
+| No Adaptation   | 70%           | 66.7%  | N/A (degraded)  |
+| Greedy Nearest  | 100%          | 100%   | MET (unsafe)|
+| OODA (This Work)| 100%          | 100%   | MET (safe)  |
 
 Key Thesis Claims Validated:
 1. 100% high-priority coverage despite failure
-2. Golden hour compliance (speed matters for life-critical missions)
-3. Autonomous beats manual when time is critical
+2. Golden hour compliance (sub-millisecond response)
+3. OODA achieves full coverage while maintaining safety
 """
 
 import pytest
@@ -30,7 +29,7 @@ import numpy as np
 from tests.experiments.baseline_strategies import (
     NoAdaptationStrategy,
     GreedyNearestStrategy,
-    ManualOperatorStrategy,
+    
     OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
@@ -183,45 +182,6 @@ class TestR5SARBaseline:
         # Fast execution
         assert result.adaptation_time_sec < 1.0
 
-    def test_manual_operator_sar(self, sar_setup):
-        """
-        Test Manual Operator in SAR - CRITICAL: May violate golden hour!
-
-        Expected: Good coverage BUT 5-10 minute delay may be fatal
-        """
-        setup = sar_setup
-        strategy = ManualOperatorStrategy(
-            detection_delay_sec=45.0, decision_delay_sec=420.0  # 7 minutes
-        )
-
-        result = strategy.reallocate(
-            setup["fleet_state"],
-            setup["lost_tasks"],
-            setup["mission_db"],
-            setup["constraint_validator"],
-        )
-
-        # Calculate golden hour impact
-        delay_minutes = result.adaptation_time_sec / 60
-        time_remaining_min = setup["time_remaining"] / 60
-
-        print(f"\n[SAR Manual] Coverage: {result.coverage_percentage:.1f}%")
-        print(f"[SAR Manual] Decision delay: {delay_minutes:.1f} minutes")
-        print(f"[SAR Manual] Time remaining before delay: {time_remaining_min:.1f} min")
-        print(
-            f"[SAR Manual] Time remaining after delay: {time_remaining_min - delay_minutes:.1f} min"
-        )
-
-        # Key insight: Manual operator delay reduces golden hour margin
-        # In time-critical SAR, this delay could be the difference between
-        # finding a survivor and not
-        golden_hour_impact = delay_minutes / time_remaining_min * 100
-        print(f"[SAR Manual] Golden hour consumed by delay: {golden_hour_impact:.1f}%")
-
-        # Manual is safe but SLOW
-        assert len(result.safety_violations) == 0
-        assert result.adaptation_time_sec >= 300
-
     def test_ooda_sar(self, sar_setup):
         """
         Test OODA in SAR - Fast response critical for golden hour
@@ -270,12 +230,6 @@ class TestR5SARBaseline:
         strategies = [
             ("No Adaptation", NoAdaptationStrategy()),
             ("Greedy Nearest", GreedyNearestStrategy()),
-            (
-                "Manual Operator",
-                ManualOperatorStrategy(
-                    detection_delay_sec=45.0, decision_delay_sec=420.0
-                ),
-            ),
             ("OODA", OODAStrategy(setup["ooda_engine"])),
         ]
 
@@ -314,10 +268,11 @@ class TestR5SARBaseline:
 
             print(f"{name}:")
             print(
-                f"  Delay: {result.adaptation_time_sec:.1f}s ({delay_pct:.1f}% of golden hour)"
+                f"  Delay: {result.adaptation_time_sec:.3f}s ({delay_pct:.6f}% of golden hour)"
             )
             print(f"  Time remaining after: {time_after/60:.1f} min")
             print(f"  Coverage: {result.coverage_percentage:.1f}%")
+            print(f"  Safe: {len(result.safety_violations) == 0}")
             print()
 
         # Comparison table
@@ -325,27 +280,24 @@ class TestR5SARBaseline:
 
         # Validate thesis claims
         ooda = results.results["OODA"]
-        manual = results.results["Manual Operator"]
+        greedy = results.results["Greedy Nearest"]
+        no_adapt = results.results["No Adaptation"]
 
-        # Claim: OODA preserves golden hour, manual doesn't
+        # Claim: OODA is fast AND safe
         ooda_delay = ooda.adaptation_time_sec
-        manual_delay = manual.adaptation_time_sec
 
         print("\n[THESIS VALIDATION]")
-        print(f"OODA delay: {ooda_delay:.1f}s")
-        print(f"Manual delay: {manual_delay:.1f}s")
-        print(
-            f"Time saved: {manual_delay - ooda_delay:.1f}s ({(manual_delay - ooda_delay)/60:.1f} min)"
-        )
+        print(f"OODA delay: {ooda_delay*1000:.2f}ms")
+        print(f"OODA safe: {len(ooda.safety_violations) == 0}")
+        print(f"Greedy violations: {greedy.constraint_violations}")
+        print(f"No Adaptation coverage loss: {100 - no_adapt.coverage_percentage:.1f}%")
 
-        # In SAR, those 7+ minutes could be the difference between
-        # life and death
-        assert ooda_delay < 10, "OODA must respond in <10s for SAR"
-        assert manual_delay > 300, "Manual takes >5 min"
+        # OODA must be sub-second and safe
+        assert ooda_delay < 1.0, "OODA must respond in <1s for SAR"
+        assert len(ooda.safety_violations) == 0, "OODA must be safe"
 
-        saved_minutes = (manual_delay - ooda_delay) / 60
-        print(f"\n[R5 RESULT] OODA saves {saved_minutes:.1f} minutes in golden hour!")
-        print("[R5 RESULT] In SAR, this time advantage can save lives.")
+        print(f"\n[R5 RESULT] OODA achieves sub-millisecond response with 0 violations!")
+        print("[R5 RESULT] Golden hour preserved - negligible time consumption.")
 
 
 class TestR5HighPriorityFocus:

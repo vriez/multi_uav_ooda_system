@@ -9,10 +9,9 @@ system is compared:
 
 1. NoAdaptation: Mission aborts on failure (0% reallocation)
 2. GreedyNearest: Naive nearest-UAV assignment (ignores constraints)
-3. ManualOperator: Simulated human operator (5-10 min delay + optimal)
-4. OODAStrategy: The system under test (constraint-aware + fast)
+3. OODAStrategy: The system under test (constraint-aware + fast)
 
-Reference: TCC Chapter 5 - Baseline Comparisons
+Reference: TCC Chapter 6 - Experimental Results and Validation
 """
 
 import time
@@ -31,7 +30,6 @@ class StrategyType(Enum):
 
     NO_ADAPTATION = "no_adaptation"
     GREEDY_NEAREST = "greedy_nearest"
-    MANUAL_OPERATOR = "manual_operator"
     OODA = "ooda"
 
 
@@ -215,120 +213,6 @@ class GreedyNearestStrategy(BaselineStrategy):
         )
 
 
-class ManualOperatorStrategy(BaselineStrategy):
-    """
-    Manual Operator Baseline
-
-    Simulates a human operator performing reallocation:
-    - Detection delay: 30-60 seconds (noticing the failure)
-    - Decision delay: 5-10 minutes (analyzing and planning)
-    - Execution: Optimal allocation (human makes best choice)
-
-    Expected results:
-    - Coverage: 80-95% (optimal allocation)
-    - Time: 5-10 minutes
-    - Safety: Safe (human respects constraints)
-
-    This baseline shows that OODA achieves similar coverage 75-150x faster.
-    """
-
-    def __init__(
-        self, detection_delay_sec: float = 45.0, decision_delay_sec: float = 420.0
-    ):  # 7 minutes default
-        super().__init__(StrategyType.MANUAL_OPERATOR)
-        self.detection_delay = detection_delay_sec
-        self.decision_delay = decision_delay_sec
-
-    def reallocate(
-        self, fleet_state, lost_tasks: List, mission_db, constraint_validator
-    ) -> ReallocationResult:
-        """Simulate manual operator with delay + optimal allocation"""
-
-        # Simulate operator delay (for timing comparison)
-        total_delay = self.detection_delay + self.decision_delay
-
-        # Perform optimal allocation (respecting constraints)
-        allocation: Dict[int, List[int]] = {}
-        unallocated = []
-
-        # Sort tasks by priority for optimal allocation
-        tasks_with_priority = []
-        for task_ref in lost_tasks:
-            task = mission_db.get_task(
-                task_ref.id if hasattr(task_ref, "id") else task_ref
-            )
-            if task:
-                tasks_with_priority.append((task, task.priority))
-
-        tasks_with_priority.sort(key=lambda x: x[1], reverse=True)
-
-        # Track UAV loads for optimal distribution
-        uav_task_counts: Dict[int, int] = {
-            uav_id: len(mission_db.get_uav_tasks(uav_id))
-            for uav_id in fleet_state.operational_uavs
-        }
-
-        for task, priority in tasks_with_priority:
-            best_uav = None
-            best_score = float("-inf")
-
-            # Find best UAV considering constraints AND load balancing
-            for uav_id in fleet_state.operational_uavs:
-                # Check constraints
-                if not constraint_validator.check_all_constraints(
-                    uav_id, task.id, fleet_state, mission_db
-                ):
-                    continue
-
-                # Score based on distance and current load (operator optimizes)
-                uav_pos = fleet_state.uav_positions[uav_id]
-                dist = np.linalg.norm(uav_pos[:2] - task.position[:2])
-
-                # Prefer UAVs with fewer tasks and closer distance
-                load_penalty = uav_task_counts.get(uav_id, 0) * 100
-                score = -dist - load_penalty
-
-                if score > best_score:
-                    best_score = score
-                    best_uav = uav_id
-
-            if best_uav is not None:
-                if best_uav not in allocation:
-                    allocation[best_uav] = []
-                allocation[best_uav].append(task.id)
-                uav_task_counts[best_uav] = uav_task_counts.get(best_uav, 0) + 1
-            else:
-                unallocated.append(task.id)
-
-        tasks_reallocated = sum(len(tasks) for tasks in allocation.values())
-        tasks_lost_count = len(lost_tasks)
-        coverage = (
-            (tasks_reallocated / tasks_lost_count * 100)
-            if tasks_lost_count > 0
-            else 100
-        )
-
-        return ReallocationResult(
-            strategy=self.strategy_type,
-            allocation=allocation,
-            coverage_percentage=coverage,
-            adaptation_time_sec=total_delay,
-            safety_violations=[],
-            constraint_violations=0,
-            tasks_reallocated=tasks_reallocated,
-            tasks_lost=len(unallocated),
-            rationale=f"Manual operator: {tasks_reallocated} tasks allocated after "
-            f"{total_delay:.0f}s delay ({self.decision_delay/60:.1f} min decision time)",
-            metrics={
-                "detection_delay_sec": self.detection_delay,
-                "decision_delay_sec": self.decision_delay,
-                "total_delay_sec": total_delay,
-                "recovery_rate": coverage,
-                "unallocated_tasks": len(unallocated),
-            },
-        )
-
-
 class OODAStrategy(BaselineStrategy):
     """
     OODA-Based Strategy (System Under Test)
@@ -394,7 +278,7 @@ class OODAStrategy(BaselineStrategy):
 
 
 def create_strategy(
-    strategy_type: StrategyType, ooda_engine=None, operator_delay_sec: float = 420.0
+    strategy_type: StrategyType, ooda_engine=None
 ) -> BaselineStrategy:
     """
     Factory function to create strategy instances.
@@ -402,7 +286,6 @@ def create_strategy(
     Args:
         strategy_type: Type of strategy to create
         ooda_engine: Required for OODA strategy
-        operator_delay_sec: Decision delay for manual operator
 
     Returns:
         BaselineStrategy instance
@@ -411,8 +294,6 @@ def create_strategy(
         return NoAdaptationStrategy()
     elif strategy_type == StrategyType.GREEDY_NEAREST:
         return GreedyNearestStrategy()
-    elif strategy_type == StrategyType.MANUAL_OPERATOR:
-        return ManualOperatorStrategy(decision_delay_sec=operator_delay_sec)
     elif strategy_type == StrategyType.OODA:
         if ooda_engine is None:
             raise ValueError("OODA strategy requires ooda_engine parameter")

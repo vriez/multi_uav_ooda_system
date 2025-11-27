@@ -15,14 +15,13 @@ Expected Results:
 | Strategy        | Coverage | Safety     | Critical Pkg |
 |-----------------|----------|------------|--------------|
 | No Adaptation   | 60%      | Safe       | NO           |
-| Greedy Nearest  | 100%     | UNSAFE     | Yes          |
-| Manual Operator | 100%     | Safe       | Yes (delayed)|
-| OODA (This Work)| 80%      | Safe       | Yes          |
+| Greedy Nearest  | 100%     | UNSAFE     | Yes (overload)|
+| OODA (This Work)| 0% (esc.)| Safe       | Escalated    |
 
 Key Thesis Claims Validated:
 1. Constraint-awareness prevents unsafe allocations (unlike greedy)
-2. Operator escalation is appropriate (not a failure)
-3. 80% autonomous + 20% supervised > 100% unsafe
+2. Operator escalation is correct behavior (not a failure)
+3. 0% autonomous + escalation > 100% unsafe
 """
 
 import pytest
@@ -32,7 +31,7 @@ import numpy as np
 from tests.experiments.baseline_strategies import (
     NoAdaptationStrategy,
     GreedyNearestStrategy,
-    ManualOperatorStrategy,
+    
     OODAStrategy,
 )
 from tests.experiments.experiment_fixtures import (
@@ -193,44 +192,6 @@ class TestD6DeliveryBaseline:
                 result.constraint_violations > 0 or len(result.safety_violations) > 0
             ), "Greedy should report constraint violation for payload overload"
 
-    def test_manual_operator_delivery(self, delivery_setup):
-        """
-        Test Manual Operator in delivery - safe but slow
-
-        Manual operator would recognize payload constraint and either:
-        1. Deploy backup UAV
-        2. Return UAV to base for cargo swap
-        3. Accept Package B as undeliverable
-        """
-        setup = delivery_setup
-        strategy = ManualOperatorStrategy(
-            detection_delay_sec=45.0, decision_delay_sec=420.0
-        )
-
-        result = strategy.reallocate(
-            setup["fleet_state"],
-            setup["lost_tasks"],
-            setup["mission_db"],
-            setup["constraint_validator"],
-        )
-
-        print(f"\n[Delivery Manual] Coverage: {result.coverage_percentage:.1f}%")
-        print(f"[Delivery Manual] Time: {result.adaptation_time_sec/60:.1f} min")
-        print(f"[Delivery Manual] Tasks reallocated: {result.tasks_reallocated}")
-
-        # Manual operator respects constraints
-        assert len(result.safety_violations) == 0
-
-        # But may not be able to reallocate either (same constraint)
-        # The key difference is the operator would KNOW to deploy backup
-        if result.tasks_reallocated == 0:
-            print(
-                "[Delivery Manual] Operator correctly identified infeasible reallocation"
-            )
-            print(
-                "[Delivery Manual] Would recommend: Deploy backup UAV or ground vehicle"
-            )
-
     def test_ooda_delivery(self, delivery_setup):
         """
         Test OODA in delivery - correct escalation for payload constraint
@@ -316,12 +277,6 @@ class TestD6DeliveryBaseline:
         strategies = [
             ("No Adaptation", NoAdaptationStrategy()),
             ("Greedy Nearest", GreedyNearestStrategy()),
-            (
-                "Manual Operator",
-                ManualOperatorStrategy(
-                    detection_delay_sec=45.0, decision_delay_sec=420.0
-                ),
-            ),
             ("OODA", OODAStrategy(setup["ooda_engine"])),
         ]
 
