@@ -1,7 +1,7 @@
 """
 UAV Simulation Engine - Complete vehicle system with physics and control
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 Based on Quadcopter_SimCon codebase (https://github.com/bobzwik/Quadcopter_SimCon)

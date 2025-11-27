@@ -1,7 +1,7 @@
 """
 Ground Control Station - Main controller integrating OODA, fleet monitoring, and mission management
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 """
 

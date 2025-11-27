@@ -5,7 +5,7 @@ description = "Constraint-Aware Fault-Tolerant Multi-Agent UAV System with OODA 
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    { name = "Vítor Eulálio Reis", email = "vitor.ereis@proton.me" }
+    { name = "Vítor Eulálio Reis", email = "vitor.reis@proton.me" }
 ]
 keywords = ["uav", "multi-agent", "ooda-loop", "fault-tolerant", "autonomous-systems"]
 classifiers = [

@@ -2,7 +2,7 @@
 """
 Quick system test
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 """
 import sys

@@ -1,7 +1,7 @@
 """
 Fleet Monitor - UAV telemetry collection and multi-modal failure detection.
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 This module implements real-time fleet monitoring with automatic failure detection.

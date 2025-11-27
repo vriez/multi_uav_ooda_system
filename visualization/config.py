@@ -1,7 +1,7 @@
 """
 Configuration constants for Realistic Mission Completion Assistance
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 This module contains all configuration constants, magic numbers, and

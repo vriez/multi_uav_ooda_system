@@ -2,7 +2,7 @@
 """
 Launch script for UAV fleet demonstration
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 """
 import subprocess

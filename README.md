@@ -1,429 +1,396 @@
 # Constraint-Aware Fault-Tolerant Multi-Agent UAV System
 
-Interactive OODA loop demonstration platform for autonomous fleet management.
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Tests](https://img.shields.io/badge/tests-169%20passed-brightgreen.svg)](#testing)
+[![License](https://img.shields.io/badge/license-Academic-lightgrey.svg)](#license)
+
+> **OODA loop demonstration platform for autonomous drone fleet management with real-time failure recovery.**
+
+<p align="center">
+  <img src="docs/images/dashboard_screenshot.png" alt="Dashboard Screenshot" width="600">
+</p>
 
 ## Quick Start
 
-### With uv (Recommended - Fast!)
-
 ```bash
-# Install uv (if not already installed)
+# 1. Clone and enter directory
+git clone https://github.com/vriez/uav_system.git
+cd uav_system
+
+# 2. Install uv (fast Python package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies (100x faster than pip!)
+# 3. Install dependencies
 uv sync
 
-# Run the dashboard
-uv run run_dashboard.py
-# Or even shorter:
+# 4. Run the dashboard
 make dash
 ```
 
-### With pip (Traditional)
+**Open browser:** http://localhost:8085
 
-```bash
-pip install -r requirements.txt
-python run_dashboard.py
+---
+
+## System Architecture
+
+```mermaid
+flowchart TB
+    subgraph GCS["Ground Control Station (Port 5555)"]
+        FM[Fleet Monitor<br/>2 Hz Telemetry]
+        OODA[OODA Engine]
+        MM[Mission Manager]
+        CV[Constraint Validator]
+
+        FM --> OODA
+        OODA --> MM
+        MM --> CV
+        CV --> OODA
+    end
+
+    subgraph Dashboard["Web Dashboard (Port 8085)"]
+        FLASK[Flask + SocketIO]
+        MAP[Interactive Map]
+        LOG[Event Log]
+    end
+
+    subgraph Fleet["UAV Fleet"]
+        UAV1[UAV 1<br/>6-DOF Dynamics]
+        UAV2[UAV 2<br/>6-DOF Dynamics]
+        UAV3[UAV 3<br/>6-DOF Dynamics]
+        UAV4[...]
+    end
+
+    GCS <-->|TCP/IP JSON-RPC| Fleet
+    GCS -->|WebSocket| Dashboard
 ```
 
-Open browser: **http://localhost:8085**
+## OODA Loop Decision Cycle
 
-## How to Use
+When a UAV failure is detected, the system executes a four-phase decision cycle:
 
-1. **Select Scenario** - Choose from Surveillance, Search & Rescue, or Delivery
-2. **Start Mission** - Press "Start Mission" to launch UAVs
-3. **Inject Failure** - Click failure buttons OR click any UAV on map
-4. **Watch OODA** - See real-time task reallocation
+```mermaid
+flowchart LR
+    O[OBSERVE<br/>Collect Telemetry] --> OR[ORIENT<br/>Analyze Impact]
+    OR --> D[DECIDE<br/>Optimize Allocation]
+    D --> A[ACT<br/>Dispatch Commands]
+    A -.->|Next Cycle| O
 
-## Features
+    style O fill:#e1f5fe
+    style OR fill:#fff3e0
+    style D fill:#f3e5f5
+    style A fill:#e8f5e9
+```
 
-- **3 Mission Scenarios** with different fleet sizes and tasks
-- **Playback Controls** - Start/Pause/Stop mission execution
-- **Failure Injection** - Battery, GPS, Comm, Motor failures
-- **Interactive Map** - Click UAVs to fail them
-- **Live Stats** - Fleet status, completion, OODA cycles
-- **Event Log** - Real-time OODA loop decisions
+| Phase | Duration | Actions |
+|-------|----------|---------|
+| **Observe** | ~0.3ms | Aggregate fleet telemetry, detect anomalies |
+| **Orient** | ~0.3ms | Assess mission impact, identify affected tasks |
+| **Decide** | ~0.4ms | Greedy allocation + local search optimization |
+| **Act** | ~0.2ms | Dispatch task updates to operational UAVs |
+
+**Total cycle time: 0.2-1.2 milliseconds** (~4,000× faster than human reaction)
+
+---
 
 ## Mission Scenarios
 
-**Surveillance**: 5 UAVs covering 9 patrol zones (3×3 grid, 40m×40m each, 120m×120m area)
-**Search & Rescue**: 5 UAVs, 9 search zones (3×3 grid, 40m×40m each, 120m×120m area), time-critical
-**Medical Delivery**: 3 UAVs, 5 packages to 5 clinics within 9-zone grid (120m×120m area), payload constraints
+```mermaid
+graph TD
+    subgraph S["Surveillance"]
+        S1[5 UAVs]
+        S2[9 Patrol Zones]
+        S3[3x3 Grid - 120m x 120m]
+    end
 
-## What You'll See
+    subgraph R["Search & Rescue"]
+        R1[5 UAVs]
+        R2[9 Search Zones]
+        R3[Golden Hour Constraint]
+    end
 
-When you inject a failure:
-1. UAV turns red and stops
-2. OODA event: "UAV X FAILED"
-3. OODA Cycle triggers
-4. Tasks reallocated to operational UAVs
-5. Fleet continues mission
+    subgraph D["Medical Delivery"]
+        D1[3 UAVs]
+        D2[5 Packages]
+        D3[Payload Constraints]
+    end
+```
 
-## Full System (Advanced)
+| Scenario | Fleet | Tasks | Key Constraint |
+|----------|-------|-------|----------------|
+| **Surveillance** | 5 UAVs | 9 zones | Zone contiguity |
+| **Search & Rescue** | 5 UAVs | 9 zones | Time-critical (golden hour) |
+| **Medical Delivery** | 3 UAVs | 5 packages | Payload capacity (kg) |
 
-For complete GCS + UAV simulation:
+---
+
+## Failure Detection & Recovery
+
+```mermaid
+sequenceDiagram
+    participant UAV as UAV Fleet
+    participant FM as Fleet Monitor
+    participant OODA as OODA Engine
+    participant MM as Mission Manager
+
+    UAV->>FM: Telemetry (2 Hz)
+    Note over FM: Detect: Timeout > 1.5s
+    FM->>OODA: UAV-3 FAILED
+
+    rect rgb(255, 240, 240)
+        Note over OODA: OODA Cycle Triggered
+        OODA->>OODA: Observe fleet state
+        OODA->>OODA: Orient: 3 tasks orphaned
+        OODA->>MM: Request reallocation
+        MM->>OODA: Optimized assignment
+        OODA->>UAV: Dispatch to UAV-1, UAV-2
+    end
+
+    UAV->>FM: Acknowledge new tasks
+```
+
+### Failure Modes Detected
+
+| Mode | Detection Method | Threshold |
+|------|------------------|-----------|
+| **Communication Loss** | Heartbeat timeout | > 1.5 seconds |
+| **Battery Anomaly** | Discharge rate spike | > 5% per 30s |
+| **Position Jump** | GPS discontinuity | > 100m sudden move |
+| **Altitude Violation** | Boundary check | > 50m deviation |
+
+---
+
+## Reproducibility Guide
+
+### Prerequisites
+
+- **Python 3.11+**
+- **uv** (recommended) or pip
+- **Git**
+
+### Step-by-Step Setup
 
 ```bash
-make gui
-# or: uv run launch_with_gui.py
-# or: python launch_with_gui.py
-```
+# Clone repository
+git clone https://github.com/vriez/uav_system.git
+cd uav_system
 
-This runs the full backend with realistic physics, battery models, and distributed UAV processes.
-
-## Quick Command Reference
-
-| Command | What It Does | Speed |
-|---------|-------------|-------|
-| `make dash` | Dashboard only (demo mode) | Fastest |
-| `make gui` | Full system with GUI | Fast |
-| `make launch` | Full system (programmatic) | Fast |
-| `make gcs` | GCS only | Fast |
-| `make test` | Run test suite | - |
-| `make help` | Show all commands | - |
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                  Ground Control Station                      │
-│  ┌────────────┐  ┌──────────┐  ┌─────────────────────────┐ │
-│  │ OODA Engine│  │  Fleet   │  │  Mission Manager        │ │
-│  │  Observe   │◄─┤ Monitor  │◄─┤  Task Database          │ │
-│  │  Orient    │  │          │  │  Constraint Validator   │ │
-│  │  Decide    │  │ Failure  │  └─────────────────────────┘ │
-│  │  Act       │──┤ Detection│                               │
-│  └────────────┘  └──────────┘                               │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ TCP/IP (JSON-RPC)
-         ┌────────────────┼────────────────┐
-         │                │                │
-    ┌────▼─────┐    ┌────▼─────┐    ┌────▼─────┐
-    │  UAV 1   │    │  UAV 2   │    │  UAV 3   │
-    │ Dynamics │    │ Dynamics │    │ Dynamics │
-    │ Control  │    │ Control  │    │ Control  │
-    │ Sensors  │    │ Sensors  │    │ Sensors  │
-    └──────────┘    └──────────┘    └──────────┘
-```
-
-## Quick Start
-
-### Installation
-
-**With uv (Recommended):**
-```bash
-# Install uv
+# Option A: Using uv (recommended - 100x faster)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install all dependencies with lockfile (reproducible builds)
 uv sync
 
-# Or install with development tools
-uv sync --group dev
-
-# Verify structure
-ls -la gcs/ uav/ config/ missions/
-```
-
-**With pip (Traditional):**
-```bash
-# Install dependencies
+# Option B: Using pip
 pip install -r requirements.txt
-
-# Verify structure
-ls -la gcs/ uav/ config/ missions/
 ```
 
-### Running the System
+### Verify Installation
 
-**Option 1: Quick Commands (Shortest)**
 ```bash
-make gui        # Launch with GUI (full system)
-make dash       # Dashboard only (fastest demo)
-make launch     # Full system programmatic
-make gcs        # GCS only
+# Run test suite (169 tests, ~0.22s)
+make test
+
+# Expected output:
+# ==================== 169 passed in 0.22s ====================
 ```
 
-**Option 2: uv Commands**
+### Run Experiments
+
 ```bash
-# Launch with GUI
-uv run launch_with_gui.py
+# Run all baseline comparison experiments
+make experiments
 
-# Dashboard only
-uv run run_dashboard.py
-
-# Full system
-uv run launch.py
-
-# Or with traditional python
-python launch.py  # (if dependencies installed)
+# Or run individually
+uv run python run_experiments.py
 ```
 
-**Option 3: Manual Launch (Multiple Terminals)**
+### Launch Modes
 
-Terminal 1 (GCS):
-```bash
-uv run python -m gcs.main
-# or: make gcs
+| Command | Description | Use Case |
+|---------|-------------|----------|
+| `make dash` | Dashboard only | Quick demo, presentations |
+| `make gui` | Full system + GUI | Development, testing |
+| `make launch` | Full system (headless) | Automation, CI/CD |
+| `make gcs` | GCS server only | Manual UAV connection |
+
+---
+
+## Project Structure
+
+```
+uav_system/
+├── gcs/                    # Ground Control Station
+│   ├── ooda_engine.py      # Core OODA loop implementation
+│   ├── fleet_monitor.py    # Telemetry & failure detection
+│   ├── constraint_validator.py
+│   └── mission_manager.py
+├── uav/                    # UAV Simulation
+│   ├── simulation.py       # 6-DOF dynamics, PID control
+│   └── client.py           # GCS communication
+├── visualization/          # Web Dashboard
+│   └── web_dashboard.py    # Flask + SocketIO
+├── config/                 # Configuration
+│   ├── gcs_config.yaml     # OODA parameters
+│   └── uav_config.yaml     # UAV dynamics
+├── missions/               # Mission definitions
+│   └── test_scenario.yaml
+├── tests/                  # Test suite (169 tests)
+│   ├── unit/
+│   ├── integration/
+│   └── regression/
+└── docs/                   # Documentation
 ```
 
-Terminal 2-6 (UAVs):
-```bash
-uv run python -m uav.client 1 0 0 10
-uv run python -m uav.client 2 20 0 10
-uv run python -m uav.client 3 40 0 10
-uv run python -m uav.client 4 0 20 10
-uv run python -m uav.client 5 20 20 10
-```
+---
 
-### Testing Failure Response
+## Key Configuration Parameters
 
-To inject a failure and observe OODA loop response:
-1. Kill a UAV process (Ctrl+C on UAV terminal)
-2. Watch GCS detect failure and execute OODA cycle
-3. Observe task reallocation to remaining UAVs
+### GCS (`config/gcs_config.yaml`)
 
-## System Components
-
-### Ground Control Station (`gcs/`)
-- `main.py` - Main GCS controller
-- `ooda_engine.py` - Four-phase OODA decision cycle
-- `fleet_monitor.py` - Telemetry collection & failure detection
-- `constraint_validator.py` - Battery/payload/time verification
-- `mission_manager.py` - Task database & assignment
-
-### UAV Simulation (`uav/`)
-- `client.py` - GCS communication client
-- `simulation.py` - 6-DOF dynamics & PID control
-
-### Configuration (`config/`)
-- `gcs_config.yaml` - GCS parameters
-- `uav_config.yaml` - UAV dynamics & control gains
-
-### Missions (`missions/`)
-- `test_scenario.yaml` - Sample mission with 8 tasks
-
-## Configuration
-
-### Key GCS Parameters
 ```yaml
 ooda_engine:
-  telemetry_rate_hz: 2.0          # Fleet polling rate
-  timeout_threshold_sec: 1.5       # Communication timeout
-  
+  telemetry_rate_hz: 2.0          # Fleet polling frequency
+  timeout_threshold_sec: 1.5       # Failure detection threshold
+
 constraints:
   battery_safety_reserve_percent: 20.0
-  
+
 collision_avoidance:
   safety_buffer_meters: 15.0
 ```
 
-### Key UAV Parameters
+### UAV (`config/uav_config.yaml`)
+
 ```yaml
 dynamics:
   mass_kg: 1.5
   arm_length_m: 0.225
-  
+
 battery:
   capacity_wh: 100.0
   efficiency_m_per_wh: 150.0
-  
+
 control:
   position_gains: [2.0, 2.0, 5.0]
 ```
 
-## Mission Scenarios
+---
 
-Create custom missions in `missions/`:
+## Testing
 
-```yaml
-tasks:
-  - type: surveillance
-    position: [50, 50, 20]
-    priority: 80
-    zone_id: 1
-    duration_sec: 120
-    
-  - type: delivery
-    position: [100, 80, 10]
-    priority: 85
-    payload_kg: 2.5
-    deadline: 900
+```bash
+# Full test suite
+make test
+
+# By category
+make test-unit         # 53 unit tests
+make test-integration  # 81 integration tests
+make test-regression   # 15 regression tests
+
+# With coverage report
+make test-coverage
+
+# Specific tests
+uv run pytest -k "battery"
+uv run pytest tests/integration/ -k "surveillance" -vv
 ```
 
-## Features Implemented
+---
 
-**OODA Loop Engine**
-- Observe: Fleet state aggregation
-- Orient: Mission impact analysis
-- Decide: Recovery strategy selection
-- Act: Task reallocation dispatch
+## Constraint Validation Flow
 
-**Multi-Modal Failure Detection**
-- Communication timeout (1.5s)
-- Battery anomaly detection
-- Position discontinuity
-- Altitude violations
+```mermaid
+flowchart TD
+    START[Task Assignment Request] --> B{Battery Check}
+    B -->|Insufficient| REJECT1[REJECT: Low Battery]
+    B -->|OK| P{Payload Check}
+    P -->|Overweight| REJECT2[REJECT: Payload Exceeded]
+    P -->|OK| G{Grid Boundary}
+    G -->|Outside + No Permission| REJECT3[REJECT: Out of Bounds]
+    G -->|OK or Permitted| C{Collision Check}
+    C -->|Conflict| REJECT4[REJECT: Path Conflict]
+    C -->|Clear| ACCEPT[ACCEPT Assignment]
 
-**Constraint-Aware Allocation**
-- Battery capacity verification
-- Payload constraint checking
-- Temporal deadline validation
-- Collision avoidance (15m buffer)
+    style ACCEPT fill:#c8e6c9
+    style REJECT1 fill:#ffcdd2
+    style REJECT2 fill:#ffcdd2
+    style REJECT3 fill:#ffcdd2
+    style REJECT4 fill:#ffcdd2
+```
 
-**UAV Simulation**
-- Quaternion-based 6-DOF dynamics
-- Cascade PID control
-- Battery discharge modeling
-- GPS/IMU sensor simulation
+---
 
-## Performance Metrics
+## Experimental Results Summary
 
-The system logs:
-- OODA cycle execution time (target: <6s)
-- Phase breakdowns (Observe/Orient/Decide/Act)
-- Recovery success rate
-- Fleet utilization
+| Experiment | Strategy | Coverage | Time | Safe |
+|------------|----------|----------|------|------|
+| S5 Surveillance | OODA | 100% | 0.66ms | Yes |
+| R5 Search & Rescue | OODA | 100% | 1.17ms | Yes |
+| R6 SAR Out-of-Grid | OODA | 100% | 0.29ms | Yes |
+| D6 Delivery | OODA | 0%* | 0.16ms | Yes |
+| D7 Delivery Out-of-Grid | OODA | 0%* | 0.42ms | Yes |
 
-## Architecture Details
+*\*Correct behavior: escalates to operator when constraints prevent safe reallocation*
 
-### Communication Protocol
-- TCP/IP with JSON-RPC 2.0
-- 2 Hz bidirectional telemetry
-- Asynchronous command dispatch
+**Key Finding:** Greedy strategies achieve 100% coverage but violate safety constraints. OODA prioritizes safety over coverage.
 
-### State Management
-- Centralized mission database
-- Distributed UAV simulations
-- Eventual consistency model
-
-### Failure Modes Supported
-- Communication loss
-- Battery depletion
-- GPS anomalies
-- Motor failures (simulated)
-
-## Extending the System
-
-### Adding New Mission Types
-1. Extend `TaskType` enum in `mission_manager.py`
-2. Update constraint validation logic
-3. Create mission scenario YAML
-
-### Custom Failure Injection
-Modify `UAVSimulation` to inject:
-- Battery failures
-- GPS errors
-- Communication drops
-- Motor degradation
-
-### Advanced Controllers
-Implement in `uav/simulation.py`:
-- Trajectory following
-- Obstacle avoidance
-- Formation control
+---
 
 ## Troubleshooting
 
-**UAVs won't connect:**
-- Check GCS is running first
-- Verify port 5555 is available: `lsof -i :5555`
-- Check `gcs_config.yaml` host/port settings
-- Ensure firewall allows local connections
+<details>
+<summary><b>UAVs won't connect</b></summary>
 
-**OODA cycle not triggering:**
-- Verify failure detection thresholds in `gcs_config.yaml`
-- Check telemetry rate configuration (default: 2 Hz)
-- Enable DEBUG logging: `LOG_LEVEL=DEBUG python launch.py`
-- Confirm UAV has active tasks assigned
+- Ensure GCS is running first: `make gcs`
+- Check port availability: `lsof -i :5555`
+- Verify `gcs_config.yaml` host/port settings
 
-**Battery depleting too fast:**
-- Adjust `battery.efficiency_m_per_wh` in `uav_config.yaml` (default: 150)
-- Reduce mission distance/duration
-- Lower control gains (less aggressive maneuvers)
+</details>
 
-**UAVs disappear during SAR mission:**
-- Check grid boundary settings in `gcs_config.yaml`
-- Verify SAR zone coordinates are within grid bounds
-- UAVs outside grid without `out_of_grid` permission will be rejected
-- See `constraint_validator.py` for boundary checking logic
+<details>
+<summary><b>Dashboard not loading</b></summary>
 
-**UAV not turning red on failure:**
-- Ensure dashboard bridge is connected
-- Check browser console for WebSocket errors
-- Verify failure callbacks are registered in FleetMonitor
-- Dashboard updates require SocketIO connection
+- Check port 8085: `lsof -i :8085`
+- Clear browser cache
+- Check Flask logs for errors
 
-**Tasks not being reallocated:**
-- Check constraint validator logs for rejection reasons
-- Verify remaining UAVs have sufficient battery
-- Ensure tasks are within operational grid
-- Check payload constraints for delivery missions
+</details>
 
-**High OODA cycle latency (>3s):**
-- Reduce `max_local_search_iterations` in mission context
-- Lower `optimization_budget_ms` parameter
-- Check for network latency in telemetry polling
-- Consider reducing fleet size for faster optimization
+<details>
+<summary><b>OODA cycle not triggering</b></summary>
 
-**Dashboard not loading:**
-- Verify Flask server is running on port 8085
-- Check for port conflicts: `lsof -i :8085`
-- Clear browser cache and reload
-- Check Flask logs for startup errors
+- Enable debug logging: `LOG_LEVEL=DEBUG make gui`
+- Verify UAV has assigned tasks
+- Check failure detection thresholds in config
 
-For detailed configuration options, see [docs/configuration.md](docs/configuration.md).
+</details>
 
-## Documentation
-
-Detailed documentation is available in the `docs/` directory:
-
-| Document | Description |
-|----------|-------------|
-| [Configuration Guide](docs/configuration.md) | All configurable parameters |
-| [Architecture](docs/architecture.md) | System design and data flow |
-| [Algorithms](docs/algorithms.md) | OODA algorithms and optimization |
-| [Testing Guide](docs/testing.md) | Running and writing tests |
-| [Contributing](CONTRIBUTING.md) | Development workflow |
-
-## Development Status
-
-**Completed:**
-- Core OODA engine
-- Fleet monitoring
-- Constraint validation
-- UAV simulation
-- Mission management
-- TCP/IP communication
-- Web dashboard
-
-**Future Work:**
-- Unity visualization client
-- Advanced path planning (TSP)
-- Real hardware integration
-- Multi-GCS coordination
+---
 
 ## References
 
-Based on thesis: "Constraint-Aware Fault-Tolerant Control for Multi-Agent UAV Systems"
+- **Thesis:** "Constraint-Aware Fault-Tolerant Control for Multi-Agent UAV Systems"
+- **Quadcopter Dynamics:** Adapted from [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon)
 
-Quadcopter dynamics adapted from: [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon)
+---
 
 ## Author
 
-**Vítor Eulálio Reis** - [vitor.ereis@proton.me](mailto:vitor.ereis@proton.me)
+**Vítor Eulálio Reis**
 
 Developed as part of the Specialization in Aeronautical Systems at the School of Engineering of São Carlos, University of São Paulo (EESC-USP).
+
+---
 
 ## AI Disclosure
 
 This project was developed with assistance from large language models:
 
-- **Claude** (Anthropic): Used via Claude Code (Sonnet and Opus models) for software development, experimentation, and UI design
-- **Gemini** (Google): Used for literature survey and linguistic refinement
-- **ChatGPT** (OpenAI): Used as a simulated peer reviewer
+- **Claude** (Anthropic): Software development, experimentation, UI design
+- **Gemini** (Google): Literature survey, linguistic refinement
+- **ChatGPT** (OpenAI): Simulated peer review
 
 All technical decisions, system architecture, and algorithm design are the author's own work.
+
+---
 
 ## License
 

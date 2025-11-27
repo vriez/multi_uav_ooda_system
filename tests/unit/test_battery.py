@@ -1,7 +1,7 @@
 """
 Unit tests for battery management across all mission types
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 Tests cover:

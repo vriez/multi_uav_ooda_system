@@ -1,7 +1,7 @@
 """
 Integration tests for delivery mission battery failure scenarios.
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 Tests the behavior when UAVs run out of battery during delivery missions,

@@ -1,7 +1,7 @@
 """
 Baseline Reallocation Strategies for Comparison Experiments
 
-Author: Vítor Eulálio Reis <vitor.ereis@proton.me>
+Author: Vítor Eulálio Reis <vitor.reis@proton.me>
 Copyright (c) 2025
 
 This module implements the baseline strategies against which the OODA-based
