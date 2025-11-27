@@ -1561,11 +1561,25 @@ The surveillance scenario (S5) evaluated system response to a single UAV failure
 
 The OODA system achieved 100\% coverage recovery in 0.34 milliseconds while maintaining perfect safety through explicit constraint verification at each allocation step. This represents a response 1,367,000 times faster than manual replanning---a performance advantage that transforms fault recovery from a multi-minute operational disruption into an essentially instantaneous adaptation invisible to mission progress. More significantly, the OODA approach guaranteed constraint satisfaction through sequential battery, payload, and collision verification, ensuring that the recovered mission plan remained executable rather than merely optimal on paper. All battery reserves remained above the 20\% safety threshold, spatial separation exceeded the 15-meter minimum, and no vehicle received task assignments beyond its physical capabilities.
 
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/surveillance_dashboard.png}
+\caption{S5 Surveillance Mission: Real-time trajectory visualization showing UAV-3 failure (red marker) at T+45min and dynamic reallocation of Zone C coverage to UAV-2 and UAV-4. Dotted lines indicate pre-failure patrol circuits; solid lines show post-adaptation extended routes maintaining 100\% spatial coverage with reduced waypoint density.}
+\label{fig:surveillance_trajectory}
+\end{figure}
+
 \subsection{R5 \& R6: Search \& Rescue with Time Criticality}
 
 The search and rescue scenarios (R5 and R6) examined system performance under the most stringent temporal constraints encountered in civilian UAV operations: the sixty-minute golden hour during which victim survival probability remains highest. Scenario R5 simulated a standard UAV failure during systematic grid search operations, where the no-adaptation baseline abandoned 33.3\% of the search area---effectively leaving one-third of high-probability zones unsearched and potentially condemning an injured person to prolonged exposure. The OODA system recovered complete 100\% coverage in 0.50 milliseconds, consuming a negligible 0.0000138\% of the precious golden hour interval. Manual operator response achieved equivalent coverage but required 465 seconds (7.75 minutes), consuming 12.9\% of the time-critical window. In scenarios where every minute directly correlates with survival probability, this 7.7-minute differential represents not merely a performance metric but potentially the margin between life and death.
 
 Scenario R6 introduced an additional complexity by positioning one high-priority search zone ten meters outside the nominal operational grid boundaries [0-1000, 0-1000]. This configuration tested the system's regulatory compliance mechanisms: could it correctly identify permitted vehicles for out-of-bounds operations while refusing allocation to unauthorized units? The experiment validated this capability comprehensively. With UAV-4 having received explicit out-of-grid authorization from the operator prior to mission commencement, the OODA system correctly reallocated the exterior zone to this permitted vehicle while excluding unauthorized units from consideration. The decision completed in 0.16 milliseconds---the fastest measured across all experimental scenarios---demonstrating that permission verification and regulatory constraint checking impose minimal computational burden. This result confirms that safety-first design principles need not compromise response speed when implemented through efficient data structures and sequential constraint evaluation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/sar_dashboard.png}
+\caption{R5/R6 Search \& Rescue Mission: Grid-based search pattern showing UAV-2 failure during high-priority zone coverage (water sources, shelters). The visualization displays systematic cell-by-cell coverage with priority-based reallocation ensuring 100\% high-probability area completion within the golden hour constraint. Color-coded cells indicate completion status: green (completed), amber (pending), red (orphaned by failure, reassigned).}
+\label{fig:sar_trajectory}
+\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -1583,6 +1597,13 @@ The contrasting responses across different approaches illuminate critical distin
 Scenario D7 examined boundary constraint violations by positioning a delivery destination at coordinates (3500, 2500) meters---well outside the authorized operational grid spanning [0-3000, 0-2000]. Unlike scenario R6 where a permitted vehicle existed for out-of-bounds operations, no UAV in scenario D7 carried the necessary authorization. The greedy algorithm again reported perfect coverage while violating the spatial boundary constraint. The OODA system refused this unsafe allocation, completing analysis in 0.23 milliseconds before escalating with regulatory justification: "Destination outside authorized flight zone. No vehicle possesses out-of-grid permission. Operator intervention required for boundary waiver or mission modification."
 
 These results validate a crucial principle often overlooked in autonomous systems research: intelligent refusal represents successful operation, not system failure. The OODA system's zero percent autonomous reallocation in physically or regulatorily infeasible scenarios demonstrates correct constraint detection and appropriate escalation rather than algorithmic inadequacy. A system that claims 100\% autonomy by violating safety constraints provides less operational value than one that achieves 60\% autonomous coverage while correctly identifying when human judgment becomes necessary. This honest acknowledgment of limitations distinguishes deployable systems from theoretical frameworks that assume constraints away.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{images/delivery_dashboard.png}
+\caption{D6/D7 Medical Delivery Mission: Point-to-point delivery routes showing UAV-1 battery anomaly during critical insulin transport. The trajectory visualization illustrates the system's intelligent escalation behavior---Package A (priority 1.0, deliverable) proceeds via abbreviated route while Package B (priority 0.7, 2.0 kg payload exceeding 0.7 kg spare capacity) triggers operator escalation rather than generating an infeasible assignment. Dashboard displays real-time operator alert interface with recommended actions and 30-second auto-failsafe timer.}
+\label{fig:delivery_trajectory}
+\end{figure}
 
 \begin{figure}[H]
 \centering
@@ -1811,13 +1832,13 @@ Yu, X., \& Jiang, J. (2015). A survey of fault-tolerant controllers based on saf
 Parker, L. E. (1998). ALLIANCE: An architecture for fault tolerant multirobot cooperation. \textit{IEEE Transactions on Robotics and Automation}, 14(2), 220-240.
 
 \bibitem{repo}
-Eulálio Reis, V. (2025). \textit{FUSE: Fault-tolerant UAV System Environment - OODA-based Multi-Agent Coordination with Constraint-Aware Recovery}. GitHub repository. \url{https://github.com/vriesz/fuse}
+Eulálio Reis, V. (2025). \textit{Multi-UAV OODA System: Constraint-Aware Fault-Tolerant Multi-Agent Coordination}. GitHub repository. \url{https://github.com/vriez/multi_uav_ooda_system}
 
 \bibitem{quadref}
 QUAD SIMCON. (2020). \textit{Quadcopter Simulation and Control}. GitHub repository. \url{https://github.com/bobzwik/Quadcopter_SimCon}
 
 % \bibitem{repo}
-% Project Repository: \url{https://github.com/vriesz/fuse}
+% Project Repository: \url{https://github.com/vriez/multi_uav_ooda_system}
 % \bibitem{guo2018}
 % Guo, J., Zhang, Y., \& Li, W. (2018). Fault-tolerant control of quadrotor UAVs with actuator faults using adaptive backstepping. \textit{International Journal of Control, Automation and Systems}, 16(4), 1572-1583.
 
