@@ -1,0 +1,127 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    OODA METRICS PERSISTENCE TIMELINE
+═══════════════════════════════════════════════════════════════════════════════
+
+Timeline showing how metrics persist throughout simulation runtime:
+
+Time    Event                   Backend State               Dashboard Display
+────────────────────────────────────────────────────────────────────────────────
+0.0s    Server starts           latest_ooda_metrics: None   All metrics: "-"
+        Dashboard connects      latest_ooda_timestamp: None
+
+5.0s    UAV 1 fails             [WARNING] Failure detected
+        (battery low)
+
+5.5s    OODA cycle runs         ╔════════════════════════╗   ┌──────────────────┐
+        DECIDE phase            ║ BACKEND STORAGE:       ║   │ DASHBOARD:       │
+        completes               ║                        ║   │                  │
+                                ║ latest_ooda_metrics =  ║   │ Recovery: 100.0% │
+                                ║ {                      ║   │ Tasks: 2/2       │
+                                ║   recovery_rate: 100.0 ║   │ Coverage: 12.5%  │
+                                ║   tasks_recovered: 2   ║   │ Objective: 0.505 │
+                                ║   coverage_loss: 12.5  ║   │                  │
+                                ║   objective: 0.505     ║   │ Battery: 115.0Wh │
+                                ║   battery_spare: 115.0 ║   │ Payload: 0.0kg   │
+                                ║   ...                  ║   │                  │
+                                ║ }                      ║   │ Opt Time: 0.26ms │
+                                ║                        ║   │ Iterations: 2    │
+                                ║ timestamp: 5.5         ║   │ Gap: 0.00%       │
+                                ╚════════════════════════╝   └──────────────────┘
+
+10.0s   Normal operations       ║ PERSISTS ║               ┌──────────────────┐
+15.0s   (no failures)           ║ latest_ooda_metrics      │ STILL SHOWING:   │
+20.0s                           ║ unchanged                │                  │
+25.0s                           ║                          │ Recovery: 100.0% │
+30.0s                           ║                          │ Tasks: 2/2       │
+                                ║                          │ Coverage: 12.5%  │
+                                ║                          │ Objective: 0.505 │
+                                ║                          │                  │
+                                ║                          │ ← METRICS        │
+                                ║                          │   PERSIST!       │
+                                ╚══════════════════════════╝ └──────────────────┘
+
+35.0s   User refreshes          ╔════════════════════════╗   ┌──────────────────┐
+        browser (F5)            ║ Browser reconnects     ║   │ Loading...       │
+                                ║                        ║   │                  │
+35.1s   handle_connect()        ║ RESTORATION:           ║   │                  │
+        triggered               ║                        ║   │                  │
+                                ║ if latest_ooda_metrics ║   │                  │
+                                ║   is not None:         ║   │                  │
+                                ║   emit('ooda_event',   ║   │                  │
+                                ║     phase='restore',   ║   │                  │
+                                ║     metrics={...})     ║   │                  │
+                                ╚════════════════════════╝   │                  │
+
+35.2s   Metrics restored        ║ SENT to client         ║   ┌──────────────────┐
+                                ║                        ║   │ RESTORED:        │
+                                ║                        ║   │                  │
+                                ║                        ║   │ Recovery: 100.0% │
+                                ║                        ║   │ Tasks: 2/2       │
+                                ║                        ║   │ Coverage: 12.5%  │
+                                ║                        ║   │ Objective: 0.505 │
+                                ║                        ║   │                  │
+                                ║                        ║   │ ← SAME VALUES    │
+                                ║                        ║   │   AS BEFORE!     │
+                                ╚══════════════════════════╝ └──────────────────┘
+
+45.0s   UAV 3 fails             [WARNING] New failure detected
+
+45.5s   New OODA cycle          ╔════════════════════════╗   ┌──────────────────┐
+        runs                    ║ UPDATED STORAGE:       ║   │ UPDATED:         │
+                                ║                        ║   │                  │
+                                ║ latest_ooda_metrics =  ║   │ Recovery: 95.0%  │
+                                ║ {                      ║   │ Tasks: 3/3       │
+                                ║   recovery_rate: 95.0  ║   │ Coverage: 18.2%  │
+                                ║   tasks_recovered: 3   ║   │ Objective: 0.487 │
+                                ║   coverage_loss: 18.2  ║   │                  │
+                                ║   objective: 0.487     ║   │ Battery: 98.5Wh  │
+                                ║   battery_spare: 98.5  ║   │ Payload: 1.2kg   │
+                                ║   ...                  ║   │                  │
+                                ║ }                      ║   │ Opt Time: 0.31ms │
+                                ║                        ║   │ Iterations: 3    │
+                                ║ timestamp: 45.5        ║   │ Gap: 0.05%       │
+                                ╚════════════════════════╝   └──────────────────┘
+
+50.0s   Normal operations       ║ NEW METRICS PERSIST    ║   ┌──────────────────┐
+60.0s   continue...             ║                        ║   │ Recovery: 95.0%  │
+70.0s                           ║                        ║   │ Tasks: 3/3       │
+                                ║                        ║   │ Coverage: 18.2%  │
+                                ║                        ║   │ Objective: 0.487 │
+                                ║                        ║   │                  │
+                                ║                        ║   │ ← PERSISTS UNTIL │
+                                ║                        ║   │   NEXT UPDATE    │
+                                ╚══════════════════════════╝ └──────────────────┘
+
+∞       Server restarts         latest_ooda_metrics: None   All metrics: "-"
+        (RESET)                 latest_ooda_timestamp: None (fresh start)
+
+═══════════════════════════════════════════════════════════════════════════════
+                              KEY BEHAVIORS
+═══════════════════════════════════════════════════════════════════════════════
+
+[PASS] PERSISTENCE      Metrics remain visible between OODA cycles
+[PASS] RESTORATION      Dashboard refresh preserves metrics
+[PASS] UPDATES          New OODA cycles overwrite with fresh values
+[PASS] NON-METRIC EVENTS Other events don't clear metrics
+[PASS] CONTINUOUS VIEW  Operators always see last decision quality
+
+═══════════════════════════════════════════════════════════════════════════════
+
+TECHNICAL IMPLEMENTATION:
+
+Backend (web_dashboard.py):
+  • latest_ooda_metrics = None (global variable)
+  • emit_ooda(): stores metrics when provided
+  • handle_connect(): restores metrics to new clients
+
+Frontend (dashboard.html):
+  • updateEnhancedOodaMetrics(): only updates when called
+  • No reset logic for enhanced metrics
+  • Values persist in DOM until overwritten
+
+Data Flow:
+  OODA Engine → Dashboard Bridge → emit_ooda() → [STORE] → Socket.IO → Browser
+                                                    ↓
+  Browser Refresh → handle_connect() → [RESTORE] ──┘
+
+═══════════════════════════════════════════════════════════════════════════════

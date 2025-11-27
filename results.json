@@ -1,0 +1,240 @@
+[
+  {
+    "experiment_name": "S5_Surveillance",
+    "mission_type": "SURVEILLANCE",
+    "timestamp": "2025-11-27T01:34:24.708404",
+    "strategy_results": {
+      "No Adaptation": {
+        "coverage": 87.5,
+        "time_sec": 0.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      },
+      "Greedy Nearest": {
+        "coverage": 100.0,
+        "time_sec": 0.00013327598571777344,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1
+      },
+      "Manual Operator": {
+        "coverage": 100.0,
+        "time_sec": 465.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1
+      },
+      "OODA": {
+        "coverage": 100.0,
+        "time_sec": 0.0004413127899169922,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1
+      }
+    },
+    "thesis_claims_validated": {
+      "OODA faster than manual (>50x)": true,
+      "OODA is safe": true,
+      "OODA response < 6 seconds": true
+    },
+    "key_findings": [
+      "OODA is 465000x faster than manual operator",
+      "OODA adaptation time: 0.44ms",
+      "All safety constraints respected by OODA"
+    ]
+  },
+  {
+    "experiment_name": "R5_SAR",
+    "mission_type": "SEARCH_RESCUE",
+    "timestamp": "2025-11-27T01:34:24.709460",
+    "strategy_results": {
+      "No Adaptation": {
+        "coverage": 66.66666666666666,
+        "time_sec": 0.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0,
+        "golden_hour_impact_pct": 0.0
+      },
+      "Greedy Nearest": {
+        "coverage": 100.0,
+        "time_sec": 7.867813110351562e-05,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 2,
+        "golden_hour_impact_pct": 2.1855036417643228e-06
+      },
+      "Manual Operator": {
+        "coverage": 100.0,
+        "time_sec": 465.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 2,
+        "golden_hour_impact_pct": 12.916666666666668
+      },
+      "OODA": {
+        "coverage": 100.0,
+        "time_sec": 0.000553131103515625,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 2,
+        "golden_hour_impact_pct": 1.5364752875434027e-05
+      }
+    },
+    "thesis_claims_validated": {
+      "OODA preserves golden hour (<1% consumed)": true,
+      "OODA is safe": true,
+      "OODA saves >5 min vs manual": true
+    },
+    "key_findings": [
+      "OODA saves 7.7 minutes in golden hour",
+      "Manual operator delay: 7.8 min",
+      "OODA delay: 0.55ms",
+      "In SAR, this time advantage can save lives"
+    ]
+  },
+  {
+    "experiment_name": "R6_SAR_OutOfGrid",
+    "mission_type": "SEARCH_RESCUE",
+    "timestamp": "2025-11-27T01:34:24.709941",
+    "strategy_results": {
+      "No Adaptation": {
+        "coverage": 83.33333333333334,
+        "time_sec": 0.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0,
+        "golden_hour_impact_pct": 0.0
+      },
+      "Greedy Nearest": {
+        "coverage": 100.0,
+        "time_sec": 4.7206878662109375e-05,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1,
+        "golden_hour_impact_pct": 1.3113021850585938e-06
+      },
+      "Manual Operator": {
+        "coverage": 100.0,
+        "time_sec": 465.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1,
+        "golden_hour_impact_pct": 12.916666666666668
+      },
+      "OODA": {
+        "coverage": 100.0,
+        "time_sec": 0.00015854835510253906,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 1,
+        "golden_hour_impact_pct": 4.404120975070529e-06
+      }
+    },
+    "thesis_claims_validated": {
+      "OODA reallocates with permission": true,
+      "OODA assigns to permitted UAV": true,
+      "OODA preserves golden hour": true
+    },
+    "key_findings": [
+      "Zone 3 at (1010, 500) is 10m outside grid bounds [0-1000, 0-1000]",
+      "UAV-4 has out-of-grid permission granted by operator",
+      "OODA successfully reallocates to UAV-4 (permitted)",
+      "Time saved vs manual: 7.7 minutes",
+      "Permission system enables safe out-of-grid operations when authorized"
+    ]
+  },
+  {
+    "experiment_name": "D6_Delivery",
+    "mission_type": "DELIVERY",
+    "timestamp": "2025-11-27T01:34:24.710458",
+    "strategy_results": {
+      "No Adaptation": {
+        "coverage": 80.0,
+        "time_sec": 0.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      },
+      "Greedy Nearest": {
+        "coverage": 100.0,
+        "time_sec": 7.700920104980469e-05,
+        "safe": false,
+        "violations": 1,
+        "reallocated": 1
+      },
+      "Manual Operator": {
+        "coverage": 0.0,
+        "time_sec": 465.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      },
+      "OODA": {
+        "coverage": 0.0,
+        "time_sec": 0.00011324882507324219,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      }
+    },
+    "thesis_claims_validated": {
+      "OODA is safe (respects payload)": true,
+      "Greedy violates constraints": true,
+      "OODA correctly escalates": true
+    },
+    "key_findings": [
+      "Package B (2.0kg) exceeds all spare capacity (max 0.7kg)",
+      "Greedy would overload UAV (1 violations)",
+      "OODA correctly identifies infeasible reallocation",
+      "Operator escalation is the CORRECT response"
+    ]
+  },
+  {
+    "experiment_name": "D7_OutOfGrid",
+    "mission_type": "DELIVERY",
+    "timestamp": "2025-11-27T01:34:24.710896",
+    "strategy_results": {
+      "No Adaptation": {
+        "coverage": 80.0,
+        "time_sec": 0.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      },
+      "Greedy Nearest": {
+        "coverage": 100.0,
+        "time_sec": 4.363059997558594e-05,
+        "safe": false,
+        "violations": 1,
+        "reallocated": 1
+      },
+      "Manual Operator": {
+        "coverage": 0.0,
+        "time_sec": 465.0,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      },
+      "OODA": {
+        "coverage": 0.0,
+        "time_sec": 0.00010538101196289062,
+        "safe": true,
+        "violations": 0,
+        "reallocated": 0
+      }
+    },
+    "thesis_claims_validated": {
+      "OODA respects grid boundaries": true,
+      "Greedy ignores grid (UNSAFE)": true,
+      "OODA escalates for out-of-grid": true
+    },
+    "key_findings": [
+      "Package C destination (3500, 2500) is outside grid bounds [0-3000, 0-2000]",
+      "No UAV has out-of-grid permission",
+      "Greedy would send UAV outside safe zone (1 violations)",
+      "OODA correctly escalates - operator must grant permission or use ground vehicle"
+    ]
+  }
+]
