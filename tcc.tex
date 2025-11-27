@@ -1505,6 +1505,27 @@ Table~\ref{tab:executive_summary} provides a comprehensive overview of all exper
 \end{tabular}
 \end{table}
 
+\begin{table}[H]
+\centering
+\caption{Target Achievement Summary}
+\label{tab:targets_achieved}
+\begin{tabular}{|p{5cm}|c|c|c|}
+\hline
+\textbf{Metric} & \textbf{Target} & \textbf{Achieved} & \textbf{Improvement} \\
+\hline
+OODA Computation Time & <5000 ms & 0.11--0.50 ms & 10,000--45,000$\times$ \\
+\hline
+Coverage Recovery (S5, R5/R6) & >75\% & 100\% & Exceeded by 25\% \\
+\hline
+Constraint Violations & 0 & 0 & Perfect \\
+\hline
+Golden Hour Impact (SAR) & Minimize & 0.0000138\% & Negligible \\
+\hline
+Safe Escalation Rate & >90\% & 100\% & Perfect \\
+\hline
+\end{tabular}
+\end{table}
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{images/chapter6_decision_flow.png}
@@ -1528,6 +1549,43 @@ Coverage recovery patterns across mission types illuminate the system's adaptive
 The computational performance proves particularly striking when examined against design targets. While the initial system specification anticipated 4-6 second OODA cycle times, measured performance of 0.16 to 0.50 milliseconds exceeds this target by four orders of magnitude. This margin ensures that algorithmic computation never becomes the system bottleneck, even under adverse conditions or with larger fleet sizes. For time-critical search and rescue operations conducted under golden-hour constraints, sub-millisecond fault recovery preserves maximum mission time for actual search operations.
 
 Safety validation across all experimental scenarios demonstrates perfect constraint adherence, as summarized in Figure~\ref{fig:ch6_safety}. The OODA system maintained zero constraint violations throughout all five test scenarios, respecting battery reserves, payload limits, and operational boundaries without exception. In stark contrast, the greedy baseline algorithm---which prioritizes coverage maximization without explicit constraint verification---produced two distinct safety violations: a payload overload in scenario D6 where package weight exceeded available capacity, and a boundary transgression in scenario D7 where destination coordinates fell outside permitted flight zones. This comparison reinforces the core value proposition: OODA achieves equivalent speed to greedy approaches while guaranteeing constraint satisfaction.
+
+\begin{table}[H]
+\centering
+\caption{Coverage Recovery Matrix (\%)}
+\label{tab:coverage_matrix}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Approach} & \textbf{S5} & \textbf{R5} & \textbf{R6} & \textbf{D6/D7} \\
+ & \textbf{Surveillance} & \textbf{SAR} & \textbf{SAR-OOG} & \textbf{Delivery} \\
+\hline
+\textbf{OODA} & \textbf{100} & \textbf{100} & \textbf{100} & \textbf{0 (esc.)}* \\
+\hline
+Greedy & 100 & 100 & 100 & 100\textsuperscript{\textdagger} \\
+\hline
+No Adaptation & 87.5 & 66.7 & 66.7 & 60 \\
+\hline
+\multicolumn{5}{|l|}{* Intelligent escalation is correct behavior; \textsuperscript{\textdagger} Unsafe (constraint violations)} \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Constraint Violations by Approach}
+\label{tab:safety_violations}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Approach} & \textbf{Battery} & \textbf{Payload} & \textbf{Boundary} & \textbf{Total} \\
+\hline
+\textbf{OODA} & \textbf{0} & \textbf{0} & \textbf{0} & \textbf{0} \\
+\hline
+Greedy & 0 & 1 (D6) & 1 (D7) & \textbf{2} \\
+\hline
+No Adaptation & 0 & 0 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{table}
 
 \begin{figure}[H]
 \centering
@@ -1638,7 +1696,53 @@ Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
 \end{tabular}
 \end{table}
 
-Four patterns emerge from this data. First, computational speed remains uniformly under half a millisecond across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, response times compress seven minutes of human cognitive processing into sub-millisecond algorithmic execution.
+\begin{table}[H]
+\centering
+\caption{Comprehensive Approach Comparison}
+\label{tab:approach_comparison}
+\small
+\begin{tabular}{|p{3.5cm}|p{3.5cm}|p{3.5cm}|p{3.5cm}|}
+\hline
+\textbf{Criterion} & \textbf{OODA} & \textbf{Greedy} & \textbf{No Adapt} \\
+\hline
+\textbf{Coverage} & 100\% (S5, R5/R6), Escalate (D6/D7) & 100\% all scenarios & 60--87.5\% \\
+\hline
+\textbf{Speed} & 0.11--0.50 ms & 0.09--0.18 ms & 0 ms \\
+\hline
+\textbf{Safety} & \textbf{0 violations} & \textbf{2 violations} & 0 violations \\
+\hline
+\textbf{Constraint Awareness} & \textbf{Full} & None & N/A \\
+\hline
+\textbf{Deployability} & \textbf{YES} & \textbf{NO (unsafe)} & NO (degrades) \\
+\hline
+\textbf{Regulatory Compliance} & YES & NO & NO \\
+\hline
+\textbf{Scalability} & Good & Good & N/A \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Speed vs. Safety vs. Coverage Trade-offs}
+\label{tab:tradeoffs}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{Approach} & \textbf{Speed} & \textbf{Safety} & \textbf{Coverage} & \textbf{Overall Score} \\
+ & \textbf{(0--10)} & \textbf{(0--10)} & \textbf{(0--10)} & \textbf{(0--30)} \\
+\hline
+\textbf{OODA} & 10 & \textbf{10} & 8 & \textbf{28} \\
+\hline
+Greedy & 10 & \textbf{2} & 10 & 22 \\
+\hline
+No Adaptation & 10 & 10 & \textbf{3} & 23 \\
+\hline
+\multicolumn{5}{|l|}{\textit{Speed: 10 = sub-ms; Safety: 10 = zero violations; Coverage: 10 = 100\% recovery}} \\
+\hline
+\end{tabular}
+\end{table}
+
+Four patterns emerge from this data. First, computational speed remains uniformly under half a millisecond across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, sub-millisecond response times ensure fault recovery never becomes a mission bottleneck.
 
 \subsection{Claims Validated}
 
