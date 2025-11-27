@@ -417,7 +417,13 @@ Developed as part of the Specialization in Aeronautical Systems at the School of
 
 ## AI Disclosure
 
-This project was developed with assistance from Claude (Anthropic), a large language model. AI tools were used to support code development, debugging, and documentation. All technical decisions, system architecture, and algorithm design are the author's own work.
+This project was developed with assistance from large language models:
+
+- **Claude** (Anthropic): Used via Claude Code (Sonnet and Opus models) for software development, experimentation, and UI design
+- **Gemini** (Google): Used for literature survey and linguistic refinement
+- **ChatGPT** (OpenAI): Used as a simulated peer reviewer
+
+All technical decisions, system architecture, and algorithm design are the author's own work.
 
 ## License
 
