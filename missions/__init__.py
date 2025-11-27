@@ -1,6 +1,6 @@
 """
 Mission Definitions Package
 
-Author: VÌtor Eul·lio Reis <vitor.ereis@proton.me>
+Author: V√≠tor Eul√°lio Reis <vitor.ereis@proton.me>
 Copyright (c) 2025
 """
