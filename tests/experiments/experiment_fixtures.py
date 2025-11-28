@@ -439,18 +439,18 @@ def delivery_scenario():
     """D6: Delivery baseline comparison scenario
 
     3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
-    5 clinics distributed across grid zones:
-    - Clinic 1: Zone 1 (20, 100) - Package A
-    - Clinic 2: Zone 3 (100, 100) - Package B (lost)
-    - Clinic 3: Zone 2 (60, 100) - Package C
-    - Clinic 4: Zone 6 (100, 60) - Package D
-    - Clinic 5: Zone 8 (60, 20) - Package E
+    5 destinations distributed across grid zones:
+    - Dest. 1: Zone 1 (20, 100) - Package A
+    - Dest. 2: Zone 3 (100, 100) - Package B (lost)
+    - Dest. 3: Zone 2 (60, 100) - Package C
+    - Dest. 4: Zone 6 (100, 60) - Package D
+    - Dest. 5: Zone 8 (60, 20) - Package E
     """
     return ExperimentScenario(
         name="D6_Delivery_Baseline",
         mission_type=MissionType.DELIVERY,
         num_uavs=3,
-        num_tasks=5,  # 5 packages to 5 clinics within 9-zone grid
+        num_tasks=5,  # 5 packages to 5 destinations within 9-zone grid
         failure=FailureScenario(
             name="battery_anomaly",
             failed_uav_id=1,
@@ -479,9 +479,9 @@ def delivery_fleet_state():
         operational_uavs=[2, 3],  # UAV-1 can only complete package A
         failed_uavs=[1],  # Partially failed - can finish current task
         uav_positions={
-            1: np.array([20.0, 100.0, 15.0]),  # Near Clinic 1 (Zone 1)
-            2: np.array([60.0, 100.0, 15.0]),  # En route to Clinic 3 (Zone 2)
-            3: np.array([60.0, 20.0, 15.0]),  # En route to Clinic 5 (Zone 8)
+            1: np.array([20.0, 100.0, 15.0]),  # Near Dest. 1 (Zone 1)
+            2: np.array([60.0, 100.0, 15.0]),  # En route to Dest. 3 (Zone 2)
+            3: np.array([60.0, 20.0, 15.0]),  # En route to Dest. 5 (Zone 8)
         },
         uav_battery={
             1: 40.0,  # Low - anomaly detected
@@ -489,11 +489,11 @@ def delivery_fleet_state():
             3: 75.0,
         },
         uav_payloads={
-            1: 0.5,  # Only 0.5kg spare (was carrying 4.5kg)
-            2: 0.3,  # 2.2kg loaded, 0.3kg spare
-            3: 0.7,  # 1.8kg loaded, 0.7kg spare
+            1: 0.1,  # Only 0.1kg spare (was carrying 0.9kg)
+            2: 0.05,  # 0.45kg loaded, 0.05kg spare
+            3: 0.15,  # 0.35kg loaded, 0.15kg spare
         },
-        lost_tasks=[2],  # Package B (2.0kg) cannot be delivered by UAV-1
+        lost_tasks=[2],  # Package B (0.4kg) cannot be delivered by UAV-1
     )
 
 
@@ -504,24 +504,25 @@ def delivery_mission_db():
     3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
     Total operational area: 120m x 120m
 
-    5 clinics distributed across grid zones:
-    - Clinic 1: Zone 1 (20, 100) - Package A (insulin, critical)
-    - Clinic 2: Zone 3 (100, 100) - Package B (antibiotics, high) - LOST
-    - Clinic 3: Zone 2 (60, 100) - Package C (bandages)
-    - Clinic 4: Zone 6 (100, 60) - Package D (gauze)
-    - Clinic 5: Zone 8 (60, 20) - Package E (vitamins)
+    5 destinations distributed across grid zones:
+    - Dest. 1: Zone 1 (20, 100) - Package A (electronics, critical)
+    - Dest. 2: Zone 3 (100, 100) - Package B (components, high) - LOST
+    - Dest. 3: Zone 2 (60, 100) - Package C (tools)
+    - Dest. 4: Zone 6 (100, 60) - Package D (supplies)
+    - Dest. 5: Zone 8 (60, 20) - Package E (parts)
     """
     db = MockMissionDatabase()
     current_time = time.time()
 
-    # 5 packages to 5 clinics within 9-zone grid (40m x 40m each)
+    # 5 packages to 5 destinations within 9-zone grid (40m x 40m each)
+    # Payload values scaled for 1.5 kg UAV platform (0.5-1.0 kg capacity)
     packages = [
         # (x, y, priority, payload_kg, deadline_min, description)
-        (20, 100, 100, 2.5, 30, "Package A - Insulin (CRITICAL)"),  # Clinic 1, Zone 1
-        (100, 100, 70, 2.0, 45, "Package B - Antibiotics (HIGH)"),  # Clinic 2, Zone 3 (lost)
-        (60, 100, 40, 1.2, 60, "Package C - Bandages"),  # Clinic 3, Zone 2
-        (100, 60, 40, 1.0, 60, "Package D - Gauze"),  # Clinic 4, Zone 6
-        (60, 20, 20, 1.8, 90, "Package E - Vitamins"),  # Clinic 5, Zone 8
+        (20, 100, 100, 0.5, 30, "Package A - Electronics (CRITICAL)"),  # Dest. 1, Zone 1
+        (100, 100, 70, 0.4, 45, "Package B - Components (HIGH)"),  # Dest. 2, Zone 3 (lost)
+        (60, 100, 40, 0.25, 60, "Package C - Tools"),  # Dest. 3, Zone 2
+        (100, 60, 40, 0.2, 60, "Package D - Supplies"),  # Dest. 4, Zone 6
+        (60, 20, 20, 0.35, 90, "Package E - Parts"),  # Dest. 5, Zone 8
     ]
 
     for i, (x, y, priority, payload, deadline_min, _desc) in enumerate(packages, 1):

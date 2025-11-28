@@ -62,7 +62,7 @@ When a UAV failure is detected, the system executes a four-phase decision cycle:
 |----------|-------|-------|----------------|
 | **Surveillance** | 5 UAVs | 9 zones | Zone contiguity |
 | **Search & Rescue** | 5 UAVs | 9 zones | Time-critical (golden hour) |
-| **Medical Delivery** | 3 UAVs | 5 packages | Payload capacity (kg) |
+| **Delivery** | 3 UAVs | 5 packages | Payload capacity (kg) |
 
 ### Surveillance Mission
 <p align="center">
@@ -74,9 +74,9 @@ When a UAV failure is detected, the system executes a four-phase decision cycle:
   <img src="images/sar_dashboard.png" alt="Search & Rescue Dashboard" width="700">
 </p>
 
-### Medical Delivery Mission
+### Delivery Mission
 <p align="center">
-  <img src="images/delivery_dashboard.png" alt="Medical Delivery Dashboard" width="700">
+  <img src="images/delivery_dashboard.png" alt="Delivery Dashboard" width="700">
 </p>
 
 ---

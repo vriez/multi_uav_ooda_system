@@ -66,7 +66,7 @@ ZONE_COVERAGE_THRESHOLD = 80.0  # Coverage % threshold for zone completion
 # =============================================================================
 # DELIVERY MISSION CONSTANTS
 # =============================================================================
-DEFAULT_NUM_PACKAGES = 5  # Default number of delivery packages (Clinics 1-5)
+DEFAULT_NUM_PACKAGES = 5  # Default number of delivery packages (Dropf-Off 1-5)
 DELIVERY_TIME_WINDOW = 600.0  # Delivery time window in seconds
 DELIVERY_PRIORITY_HIGH = 2.0  # High priority multiplier
 DELIVERY_PRIORITY_NORMAL = 1.0  # Normal priority multiplier
@@ -124,7 +124,7 @@ SCENARIOS: Dict[str, Dict[str, Any]] = {
         "num_packages": DEFAULT_NUM_PACKAGES,
         "mission_type": "delivery",
         "time_limit": None,
-        "description": "3 UAVs, 5 packages - Medical supply delivery to clinics",
+        "description": "3 UAVs, 5 packages - Package delivery with payload constraints",
     },
 }
 

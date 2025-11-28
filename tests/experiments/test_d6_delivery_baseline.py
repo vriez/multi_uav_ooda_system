@@ -10,7 +10,7 @@ reallocation is impossible.
 
 Scenario: UAV-1 (heavy lifter) battery anomaly at t=15min while delivering
 to Zone 1 (3x3 grid, 40m x 40m zones, 120m x 120m operational area).
-Package B cannot be reallocated due to payload constraints (2.0kg > spare capacity)
+Package B cannot be reallocated due to payload constraints (0.4kg > spare capacity)
 
 Expected Results:
 | Strategy        | Coverage | Safety     | Critical Pkg |
@@ -58,27 +58,28 @@ class TestD6DeliveryBaseline:
         3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
         Total operational area: 120m x 120m
 
-        5 clinics distributed across grid zones:
-        - Clinic 1: Zone 1 (20, 100) - Package A (insulin, critical)
-        - Clinic 2: Zone 3 (100, 100) - Package B (antibiotics, high) - LOST
-        - Clinic 3: Zone 2 (60, 100) - Package C (bandages)
-        - Clinic 4: Zone 6 (100, 60) - Package D (gauze)
-        - Clinic 5: Zone 8 (60, 20) - Package E (vitamins)
+        5 destinations distributed across grid zones:
+        - Dest. 1: Zone 1 (20, 100) - Package A (electronics, critical)
+        - Dest. 2: Zone 3 (100, 100) - Package B (components, high) - LOST
+        - Dest. 3: Zone 2 (60, 100) - Package C (tools)
+        - Dest. 4: Zone 6 (100, 60) - Package D (supplies)
+        - Dest. 5: Zone 8 (60, 20) - Package E (parts)
         """
         db = MockMissionDatabase()
 
         current_time = time.time()
 
-        # 5 packages to 5 clinics within 9-zone grid
-        # Package B (2.0kg) will be lost and CANNOT be reallocated
-        # because no UAV has 2.0kg spare capacity
+        # 5 packages to 5 destinations within 9-zone grid
+        # Package B (0.4kg) will be lost and CANNOT be reallocated
+        # because no UAV has 0.4kg spare capacity
+        # Payload values scaled for 1.5 kg UAV platform (0.5-1.0 kg capacity)
         packages = [
             # (x, y, priority, payload_kg, deadline_min, description)
-            (20, 100, 100, 2.5, 30, "Package A - Insulin (CRITICAL)"),  # Zone 1
-            (100, 100, 70, 2.0, 45, "Package B - Antibiotics"),  # Zone 3 - LOST
-            (60, 100, 40, 1.2, 60, "Package C - Bandages"),  # Zone 2
-            (100, 60, 40, 1.0, 60, "Package D - Gauze"),  # Zone 6
-            (60, 20, 20, 1.8, 90, "Package E - Vitamins"),  # Zone 8
+            (20, 100, 100, 0.5, 30, "Package A - Electronics (CRITICAL)"),  # Zone 1
+            (100, 100, 70, 0.4, 45, "Package B - Components"),  # Zone 3 - LOST
+            (60, 100, 40, 0.25, 60, "Package C - Tools"),  # Zone 2
+            (100, 60, 40, 0.2, 60, "Package D - Supplies"),  # Zone 6
+            (60, 20, 20, 0.35, 90, "Package E - Parts"),  # Zone 8
         ]
 
         for i, (x, y, priority, payload, deadline_min, desc) in enumerate(packages, 1):
@@ -92,9 +93,9 @@ class TestD6DeliveryBaseline:
             )
 
         # Assign packages to UAVs (3 UAVs, 5 packages)
-        # UAV-1: Heavy lifter (5.0kg capacity) - has Package A (2.5kg) + B (2.0kg)
-        # UAV-2: Standard (2.5kg capacity) - has Package C (1.2kg) + D (1.0kg)
-        # UAV-3: Standard (2.5kg capacity) - has Package E (1.8kg)
+        # UAV-1: Heavy lifter (1.0kg capacity) - has Package A (0.5kg) + B (0.4kg)
+        # UAV-2: Standard (0.5kg capacity) - has Package C (0.25kg) + D (0.2kg)
+        # UAV-3: Standard (0.5kg capacity) - has Package E (0.35kg)
         db.assign_task(1, 1)  # Package A -> UAV 1
         db.assign_task(2, 1)  # Package B -> UAV 1 (will be lost)
         db.assign_task(3, 2)  # Package C -> UAV 2
@@ -108,9 +109,9 @@ class TestD6DeliveryBaseline:
             operational_uavs=[2, 3],  # UAV-1 partially failed
             failed_uavs=[1],
             uav_positions={
-                1: np.array([20.0, 100.0, 15.0]),  # Near Clinic 1 (Zone 1)
-                2: np.array([60.0, 100.0, 15.0]),  # En route to Clinic 3 (Zone 2)
-                3: np.array([60.0, 20.0, 15.0]),  # En route to Clinic 5 (Zone 8)
+                1: np.array([20.0, 100.0, 15.0]),  # Near Dest. 1 (Zone 1)
+                2: np.array([60.0, 100.0, 15.0]),  # En route to Dest. 3 (Zone 2)
+                3: np.array([60.0, 20.0, 15.0]),  # En route to Dest. 5 (Zone 8)
             },
             uav_battery={
                 1: 40.0,  # Low - can only complete current delivery
@@ -118,14 +119,14 @@ class TestD6DeliveryBaseline:
                 3: 75.0,
             },
             # CRITICAL: Payload spare capacity
-            # UAV-2: 2.5 - 2.2 = 0.3kg spare (Package B needs 2.0kg - IMPOSSIBLE)
-            # UAV-3: 2.5 - 1.8 = 0.7kg spare (Package B needs 2.0kg - IMPOSSIBLE)
+            # UAV-2: 0.5 - 0.45 = 0.05kg spare (Package B needs 0.4kg - IMPOSSIBLE)
+            # UAV-3: 0.5 - 0.35 = 0.15kg spare (Package B needs 0.4kg - IMPOSSIBLE)
             uav_payloads={
-                1: 0.5,  # 5.0 - 4.5 = 0.5kg spare
-                2: 0.3,  # 2.5 - 2.2 = 0.3kg spare
-                3: 0.7,  # 2.5 - 1.8 = 0.7kg spare
+                1: 0.1,  # 1.0 - 0.9 = 0.1kg spare
+                2: 0.05,  # 0.5 - 0.45 = 0.05kg spare
+                3: 0.15,  # 0.5 - 0.35 = 0.15kg spare
             },
-            lost_tasks=[2],  # Package B (2.0kg) cannot be delivered
+            lost_tasks=[2],  # Package B (0.4kg) cannot be delivered
         )
 
         # OODA engine with delivery context
@@ -138,8 +139,8 @@ class TestD6DeliveryBaseline:
             "constraint_validator": constraint_validator,
             "ooda_engine": ooda_engine,
             "lost_tasks": [db.get_task(2)],  # Package B
-            "package_b_weight": 2.0,
-            "max_spare_capacity": 0.7,  # UAV-3's spare
+            "package_b_weight": 0.4,
+            "max_spare_capacity": 0.15,  # UAV-3's spare
         }
 
     def test_no_adaptation_delivery(self, delivery_setup):
@@ -159,7 +160,7 @@ class TestD6DeliveryBaseline:
         )
 
         print(f"\n[Delivery No Adaptation] Coverage: {result.coverage_percentage:.1f}%")
-        print(f"[Delivery No Adaptation] Package B (Antibiotics) LOST")
+        print(f"[Delivery No Adaptation] Package B (Components) LOST")
 
         assert result.tasks_lost == 1
         assert result.tasks_reallocated == 0
@@ -191,7 +192,7 @@ class TestD6DeliveryBaseline:
         assert result.tasks_reallocated >= 0
 
         # But it SHOULD have violations!
-        # Package B (2.0kg) cannot fit in any UAV's spare capacity
+        # Package B (0.4kg) cannot fit in any UAV's spare capacity
         if result.tasks_reallocated > 0:
             print("\n[CRITICAL] Greedy assigned Package B despite payload constraint!")
             print(f"Package B weight: {setup['package_b_weight']}kg")
@@ -231,7 +232,7 @@ class TestD6DeliveryBaseline:
         assert len(result.safety_violations) == 0
 
         # OODA should recognize the constraint
-        # Since Package B (2.0kg) exceeds all spare capacity (max 0.7kg),
+        # Since Package B (0.4kg) exceeds all spare capacity (max 0.15kg),
         # it should NOT be allocated
         allocated_tasks = set()
         for task_ids in result.allocation.values():
@@ -266,7 +267,7 @@ class TestD6DeliveryBaseline:
         # Show the constraint situation
         print("\nPackage B (lost task):")
         print(f"  Weight: {setup['package_b_weight']} kg")
-        print(f"  Priority: 70 (HIGH - Antibiotics)")
+        print(f"  Priority: 70 (HIGH - Components)")
 
         print("\nAvailable UAV spare capacity:")
         for uav_id, spare in setup["fleet_state"].uav_payloads.items():
@@ -362,14 +363,15 @@ class TestD6EscalationAppropriate:
         current_time = time.time()
 
         # 5 packages within 9-zone grid, 2 will be lost
-        # Package B (2.0kg) - cannot reallocate (too heavy)
-        # Package F (0.5kg) - CAN reallocate (fits in spare)
+        # Package B (0.4kg) - cannot reallocate (too heavy for spare capacity)
+        # Package F (0.1kg) - CAN reallocate (fits in spare)
+        # Payload values scaled for 1.5 kg UAV platform (0.5-1.0 kg capacity)
         packages = [
-            (20, 100, 100, 2.5, 30, "Package A"),  # Zone 1
-            (100, 100, 70, 2.0, 45, "Package B - Heavy"),  # Zone 3 - Lost
-            (60, 100, 40, 1.2, 60, "Package C"),  # Zone 2
-            (100, 60, 40, 1.0, 60, "Package D"),  # Zone 6
-            (60, 20, 20, 0.5, 90, "Package F - Light"),  # Zone 8 - Lost, CAN reallocate
+            (20, 100, 100, 0.5, 30, "Package A"),  # Zone 1
+            (100, 100, 70, 0.4, 45, "Package B - Heavy"),  # Zone 3 - Lost
+            (60, 100, 40, 0.25, 60, "Package C"),  # Zone 2
+            (100, 60, 40, 0.2, 60, "Package D"),  # Zone 6
+            (60, 20, 20, 0.1, 90, "Package F - Light"),  # Zone 8 - Lost, CAN reallocate
         ]
 
         for i, (x, y, priority, payload, deadline_min, desc) in enumerate(packages, 1):
@@ -403,11 +405,11 @@ class TestD6EscalationAppropriate:
                 3: 75.0,
             },
             uav_payloads={
-                1: 0.5,
-                2: 0.3,  # Can take Package F (0.5kg)? No, only 0.3kg spare
-                3: 0.7,  # Can take Package F (0.5kg)? Yes!
+                1: 0.1,
+                2: 0.05,  # Can take Package F (0.1kg)? No, only 0.05kg spare
+                3: 0.15,  # Can take Package F (0.1kg)? Yes!
             },
-            lost_tasks=[2, 5],  # Package B (2.0kg) and Package F (0.5kg)
+            lost_tasks=[2, 5],  # Package B (0.4kg) and Package F (0.1kg)
         )
 
         ooda_engine = OODAEngine(gcs_config)
@@ -438,7 +440,7 @@ class TestD6EscalationAppropriate:
         )
 
         print(f"\n[Partial Reallocation Test]")
-        print(f"Lost tasks: 2 (Package B: 2.0kg, Package F: 0.5kg)")
+        print(f"Lost tasks: 2 (Package B: 0.4kg, Package F: 0.1kg)")
         print(f"Tasks reallocated: {result.tasks_reallocated}")
         print(f"Coverage: {result.coverage_percentage:.1f}%")
 
@@ -450,11 +452,11 @@ class TestD6EscalationAppropriate:
         package_b_allocated = 2 in allocated_tasks
         package_f_allocated = 5 in allocated_tasks
 
-        print(f"Package B (2.0kg) allocated: {package_b_allocated}")
-        print(f"Package F (0.5kg) allocated: {package_f_allocated}")
+        print(f"Package B (0.4kg) allocated: {package_b_allocated}")
+        print(f"Package F (0.1kg) allocated: {package_f_allocated}")
 
-        # Package F should be allocated (fits in UAV-3's 0.7kg spare)
-        # Package B should NOT be allocated (2.0kg > all spare capacity)
+        # Package F should be allocated (fits in UAV-3's 0.15kg spare)
+        # Package B should NOT be allocated (0.4kg > all spare capacity)
 
         if package_f_allocated and not package_b_allocated:
             print("\n[PASS] OODA correctly performed partial reallocation:")

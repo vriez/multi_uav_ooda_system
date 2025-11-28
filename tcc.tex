@@ -555,30 +555,29 @@ The architecture demonstrates flexibility across diverse mission profiles throug
 \begin{figure}[h!tbp]
     \centering
     \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/surveillance_loop.png}
-    \caption{Surveillance Mission}
+    \caption{Surveillance Mission OODA Workflow}
     \label{fig:surveillance}
 \end{figure}
 
-\textbf{Surveillance missions} emphasize continuous area coverage through patrol patterns with failures requiring coverage gap minimization and critical zone protection. Task characteristics include waypoint-based patrol routes, priority differentials between critical security zones and routine patrol areas, and deadline constraints for periodic revisit frequencies. Constraint considerations focus primarily on battery limitations affecting patrol duration and spatial coverage range, with time constraints enforcing revisit deadlines for critical areas. Target performance maintains 90-100 percent coverage through reallocation prioritizing critical zones.
+\textbf{Surveillance missions} (Figure~\ref{fig:surveillance}) emphasize continuous area coverage through patrol patterns with failures requiring coverage gap minimization and critical zone protection. The workflow depicts a 120m $\times$ 120m perimeter divided into 9 patrol zones (40m $\times$ 40m each) monitored by 6 UAVs with 30-minute endurance. Task characteristics include waypoint-based patrol routes, priority differentials between critical security zones ($P=0.9$ for top row) and routine patrol areas ($P=0.4$ for bottom row), and deadline constraints for periodic revisit frequencies. Constraint considerations focus primarily on battery limitations affecting patrol duration and spatial coverage range, with time constraints enforcing revisit deadlines for critical areas. When UAV-3 experiences battery anomaly (8\% vs.\ expected 55\%), the OODA cycle detects the failure, evaluates spare capacity in adjacent UAVs (UAV-2: 15\%, UAV-4: 12\%), and executes a split-zone reallocation strategy---Zone 5 divides between UAV-2 and UAV-4, achieving 100\% coverage recovery with 91.7\% surveillance quality in 0.7 milliseconds. Target performance maintains 90-100 percent coverage through reallocation prioritizing critical zones.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/sar_loop.png}
-    \caption{Search and Rescue Mission}
+    \caption{Search and Rescue Mission OODA Workflow}
     \label{fig:sar}
 \end{figure}
 
-
-\textbf{Search and rescue missions} emphasize time-critical area coverage through systematic grid search patterns with failures requiring rapid reallocation to maintain search efficiency. Task characteristics include grid cell assignments with systematic coverage requirements and stringent deadline constraints reflecting survivor time sensitivity. Equal priority across search cells applies in unknown target location scenarios, though priority may concentrate in high-probability areas when available intelligence suggests target location. Battery and time constraints dominate feasibility assessment. Target performance accepts 75-90 percent coverage as acceptable degradation when full compensation proves infeasible, acknowledging that incomplete coverage in time-critical scenarios exceeds mission abortion alternatives.
+\textbf{Search and rescue missions} (Figure~\ref{fig:sar}) emphasize time-critical area coverage through systematic grid search patterns with failures requiring rapid reallocation to maintain search efficiency. The workflow illustrates a 120m $\times$ 120m search area with 9 zones searched by 4 thermal-equipped UAVs under golden hour constraints. Zone priorities reflect distance from last known position (LKP): $P=0.9$ for the top row (closest to LKP), $P=0.6$ for the middle row (travel corridors), and $P=0.4$ for the bottom row (remote areas). Task characteristics include grid cell assignments with systematic coverage requirements and stringent deadline constraints reflecting survivor time sensitivity. Battery and time constraints dominate feasibility assessment. When UAV-2 loses GPS signal in a ravine, the system reallocates Zone 3 (HIGH priority) to UAV-1 and Zone 4 (MEDIUM priority) to UAV-3, achieving 100\% coverage recovery in 1.2 milliseconds while consuming only 0.00003\% of the golden hour window. Target performance accepts 75-90 percent coverage as acceptable degradation when full compensation proves infeasible, acknowledging that incomplete coverage in time-critical scenarios exceeds mission abortion alternatives.
 
 \begin{figure}[h!tbp]
     \centering
     \includegraphics[width=\textwidth, height=0.9\textheight, keepaspectratio]{images/delivery_loop.png}
-    \caption{Delivery Mission}
+    \caption{Delivery Mission OODA Workflow}
     \label{fig:delivery}
 \end{figure}
 
-\textbf{Delivery missions} emphasize reliable cargo transport to designated destinations with failures requiring payload-aware reallocation and potential return-to-base cargo swaps when reallocation proves infeasible. Task characteristics include point-to-point delivery routes with specific destination coordinates, payload weight requirements varying per package, and deadline constraints for time-sensitive deliveries. Payload constraints assume critical importance alongside battery limitations, with heavy cargo failures potentially requiring UAV return-to-launch for manual cargo transfer rather than mid-air reallocation. Priority schemes emphasize time-sensitive or high-value packages, accepting degradation in routine deliveries when capacity limitations preclude full compensation.
+\textbf{Delivery missions} (Figure~\ref{fig:delivery}) emphasize reliable cargo transport to designated destinations with failures requiring payload-aware reallocation and potential return-to-base cargo swaps when reallocation proves infeasible. The workflow depicts a heterogeneous 3-UAV fleet---UAV-1 (heavy lifter, 1.0 kg capacity), UAV-2 and UAV-3 (standard, 0.5 kg capacity each)---delivering 5 packages ranging from 0.2 to 0.5 kg. Task characteristics include point-to-point delivery routes with specific destination coordinates, payload weight requirements varying per package, and deadline constraints for time-sensitive deliveries. Payload constraints assume critical importance alongside battery limitations. When UAV-1 experiences battery anomaly while carrying Packages A and B (0.9 kg total), the system evaluates reallocation feasibility: Package B (0.4 kg) exceeds all available spare capacity (UAV-2: 0.05 kg spare, UAV-3: 0.15 kg spare), triggering operator escalation. The OODA cycle completes constraint analysis in 0.2 milliseconds, preserving 80\% autonomous coverage while correctly deferring the infeasible task to human judgment---demonstrating that mid-air cargo transfer remains impossible, constraining reallocation to base station cargo swaps. Priority schemes emphasize time-sensitive or high-value packages, accepting degradation in routine deliveries when capacity limitations preclude full compensation.
 
 These scenario variations demonstrate architectural flexibility through consistent OODA mechanics with mission-specific constraint emphasis and priority schemes, validating the architecture's applicability across diverse operational domains while maintaining systematic fault response capabilities.
 
@@ -606,7 +605,7 @@ Task reallocation following UAV failure constitutes a resource-constrained sched
 \end{tabular}
 \end{table}
 
-Each component of the scoring function addresses a distinct aspect of the prioritization problem. The temporal urgency term $\tau$ increases monotonically as deadlines approach, ensuring time-critical objectives receive elevated priority. The mission criticality weight $c$ encodes domain-specific importance hierarchies---medical emergencies receive maximum weighting (1.0) in delivery missions while routine packages score 0.4; in search and rescue, high-probability victim zones supersede peripheral patrols. The spatial cost term $\sigma$ penalizes tasks distant from available UAVs, implicitly incorporating battery expenditure into the priority calculus.
+Each component of the scoring function addresses a distinct aspect of the prioritization problem. The temporal urgency term $\tau$ increases monotonically as deadlines approach, ensuring time-critical objectives receive elevated priority. The mission criticality weight $c$ encodes domain-specific importance hierarchies---critical packages receive maximum weighting (1.0) in delivery missions while routine packages score 0.4; in search and rescue, high-probability victim zones supersede peripheral patrols. The spatial cost term $\sigma$ penalizes tasks distant from available UAVs, implicitly incorporating battery expenditure into the priority calculus.
 
 The default weight configuration ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasizes mission criticality as the primary determinant while maintaining responsiveness to temporal constraints; these parameters admit mission-specific customization as detailed in Section~3.5. This formulation extends auction-based allocation methods (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), with the principal distinction being the explicit integration of resource costs within the priority calculus rather than their treatment as post-hoc constraints. The theoretical foundations derive from the ST-SR-IA problem class in Gerkey and Matarić's (2004) taxonomy of multi-robot task allocation.
 
@@ -803,17 +802,20 @@ The objective function parameters are configured per mission type to reflect ope
 \centering
 \caption{Objective Function Parameters by Mission Type}
 \label{tab:objective_params}
-\rowcolors{2}{gray!15}{white}
 \begin{tabular}{|l|c|c|c|c|}
 \hline
 \rowcolor{gray!30}
 \textbf{Parameter} & \textbf{Symbol} & \textbf{Surveillance} & \textbf{SAR} & \textbf{Delivery} \\
 \hline
 Unallocated penalty & $\lambda$ & 0.3 & 0.5 & 0.4 \\
+\rowcolor{gray!15}
 Coverage gap weight & $\gamma$ & 0.2 & --- & --- \\
 Golden hour bonus & $\beta$ & --- & 0.5 & --- \\
-Priority weights & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
-                 & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
+\rowcolor{gray!15}
+                 & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+\rowcolor{gray!15}
+Priority weights & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
+\rowcolor{gray!15}
                  & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
 \hline
 \end{tabular}
@@ -1131,14 +1133,7 @@ The search area decomposes into 9 discrete zones arranged in a 3$\times$3 grid, 
 
 \subsection{Mission Setup}
 
-Unlike surveillance missions where all zones demand continuous attention, search and rescue prioritization follows probabilistic reasoning. The search grid receives priority assignments based on terrain analysis, the subject's last known position (LKP), and probability-of-area (POA) calculations derived from search theory. Figure~\ref{fig:priorities} illustrates the hierarchical priority structure guiding task allocation.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.6\textwidth]{images/priorities.png}
-\caption{Priority Tree for Search Zones}
-\label{fig:priorities}
-\end{figure}
+Unlike surveillance missions where all zones demand continuous attention, search and rescue prioritization follows probabilistic reasoning. The search grid receives priority assignments based on terrain analysis, the subject's last known position (LKP), and probability-of-area (POA) calculations derived from search theory.
 
 The fundamental insight driving this prioritization is that lost persons do not distribute randomly across terrain. Behavioral studies indicate predictable patterns: subjects seek water sources, follow trails, and gravitate toward visible shelter. These behavioral priors, combined with distance-decay models centered on the LKP, yield probability distributions that concentrate search resources where success is most likely.
 
@@ -1214,16 +1209,16 @@ The golden hour calculus reveals the stakes: every second of delay reduces survi
 
 Scenario R6 validates the permission system's flexibility. When the optimal reallocation requires UAV-4's out-of-grid capability, the system correctly identifies and leverages this permission, achieving the fastest computation time while respecting each vehicle's authorized operational envelope. This demonstrates that constraint awareness need not sacrifice performance when permissions are properly modeled.
 
-\section{SCENARIO 3: Medical Supply Delivery}
+\section{SCENARIO 3: Package Delivery}
 
 \subsection{Mission Context}
 
 \begin{itemize}
-    \item \textbf{Application:} Emergency medical supply delivery to rural clinics
+    \item \textbf{Application:} Package delivery to distributed destinations with payload constraints
     \item \textbf{Duration:} 1-hour delivery window
     \item \textbf{Fleet:} 3 UAVs (heterogeneous payload capacities)
     \item \textbf{Operational Area:} 120m $\times$ 120m (3$\times$3 grid, 40m $\times$ 40m zones)
-    \item \textbf{Delivery Points:} 5 clinics distributed across grid zones
+    \item \textbf{Delivery Points:} 5 destinations distributed across grid zones
 \end{itemize}
 
 \subsection{Mission Setup}
@@ -1239,9 +1234,9 @@ The heterogeneous three-UAV fleet comprises one heavy-lifter and two standard ve
 \hline
 \textbf{UAV} & \textbf{Type} & \textbf{Payload} & \textbf{Battery} & \textbf{Speed} & \textbf{Route} \\
 \hline
-UAV-1 & Heavy Lifter & 5.0 kg & 25 min & 12 m/s & Clinics 1-2 \\
-UAV-2 & Standard & 2.5 kg & 30 min & 15 m/s & Clinics 3-4 \\
-UAV-3 & Standard & 2.5 kg & 30 min & 15 m/s & Clinic 5 \\
+UAV-1 & Heavy Lifter & 1.0 kg & 25 min & 12 m/s & Dest. 1-2 \\
+UAV-2 & Standard & 0.5 kg & 30 min & 15 m/s & Dest. 3-4 \\
+UAV-3 & Standard & 0.5 kg & 30 min & 15 m/s & Dest. 5 \\
 \hline
 \end{tabular}
 \caption{Delivery Fleet Configuration}
@@ -1250,7 +1245,7 @@ UAV-3 & Standard & 2.5 kg & 30 min & 15 m/s & Clinic 5 \\
 
 \textbf{Package Priorities:}
 
-Algorithm 1 assigns priority scores based on medical urgency, temporal deadlines, and delivery distance, resulting in the stratified priority hierarchy shown in Table~\ref{tab:delivery_packages}.
+Algorithm 1 assigns priority scores based on package urgency, temporal deadlines, and delivery distance, resulting in the stratified priority hierarchy shown in Table~\ref{tab:delivery_packages}.
 
 \begin{table}[H]
 \centering
@@ -1259,33 +1254,22 @@ Algorithm 1 assigns priority scores based on medical urgency, temporal deadlines
 \hline
 \textbf{Pkg} & \textbf{Contents} & \textbf{Weight} & \textbf{Destination} & \textbf{Deadline} & \textbf{Priority} \\
 \hline
-A & Insulin & 2.5 kg & Clinic 1, Zone 1 (20, 100) & 30 min & \cellcolor{red!25}1.0 (CRITICAL) \\
-B & Antibiotics & 2.0 kg & Clinic 2, Zone 3 (100, 100) & 45 min & \cellcolor{yellow!25}0.7 (HIGH) \\
-C & Bandages & 1.2 kg & Clinic 3, Zone 2 (60, 100) & 60 min & 0.4 (MEDIUM) \\
-D & Gauze & 1.0 kg & Clinic 4, Zone 6 (100, 60) & 60 min & 0.4 (MEDIUM) \\
-E & Vitamins & 1.8 kg & Clinic 5, Zone 8 (60, 20) & 90 min & 0.2 (LOW) \\
+A & Electronics & 0.5 kg & Dest. 1, Zone 1 (20, 100) & 30 min & \cellcolor{red!25}1.0 (CRITICAL) \\
+B & Components & 0.4 kg & Dest. 2, Zone 3 (100, 100) & 45 min & \cellcolor{yellow!25}0.7 (HIGH) \\
+C & Tools & 0.25 kg & Dest. 3, Zone 2 (60, 100) & 60 min & 0.4 (MEDIUM) \\
+D & Supplies & 0.2 kg & Dest. 4, Zone 6 (100, 60) & 60 min & 0.4 (MEDIUM) \\
+E & Parts & 0.35 kg & Dest. 5, Zone 8 (60, 20) & 90 min & 0.2 (LOW) \\
 \hline
 \end{tabular}
-\caption{Package Prioritization by Medical Urgency}
+\caption{Package Prioritization by Urgency Level}
 \label{tab:delivery_packages}
 \end{table}
 
-\textbf{Delivery Route Map:}
-
-Figure~\ref{fig:delivery_map} illustrates the spatial distribution of clinic destinations across the operational area, with planned delivery routes connecting the central depot to each medical facility.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{images/delivery_route_map.png}
-\caption{Delivery Route Map with Clinic Locations}
-\label{fig:delivery_map}
-\end{figure}
-
 \subsection{Failure Scenario: Heavy Lifter Battery Anomaly}
 
-Fifteen minutes into the delivery mission, UAV-1 is fighting an unexpected headwind. The heavy lifter is carrying 4.5 kilograms of medical supplies---insulin vials that will degrade if not delivered within the hour. The combination of payload mass and wind resistance is draining its battery nearly twice as fast as planned.
+Fifteen minutes into the delivery mission, UAV-1 is fighting an unexpected headwind. The heavy lifter is carrying 0.9 kilograms of time-sensitive cargo that must be delivered within the hour. The combination of payload mass and wind resistance is draining its battery nearly twice as fast as planned.
 
-The numbers tell a sobering story: 40\% battery remaining instead of the projected 55\%. At this rate, UAV-1 cannot complete its route and return safely. It carries two critical packages---one destined for Clinic 2 (priority 0.95), another for Clinic 5 (priority 0.60). One of these deliveries will not happen as planned.
+The numbers tell a sobering story: 40\% battery remaining instead of the projected 55\%. At this rate, UAV-1 cannot complete its route and return safely. It carries two critical packages---one destined for Destination 1 (priority 1.0), another for Destination 2 (priority 0.7). One of these deliveries will not happen as planned.
 
 % \begin{figure}[H]
 % \centering
@@ -1298,13 +1282,13 @@ The numbers tell a sobering story: 40\% battery remaining instead of the project
 
 The delivery scenario demonstrates the OODA system's intelligent escalation capability---recognizing when autonomous recovery is physically impossible and deferring appropriately to human operators.
 
-\textbf{OBSERVE (T+0 to T+1.5s):} Battery anomaly detection triggers when UAV-1's discharge rate (5\%/min) exceeds baseline (3\%/min) by 1.5$\times$. Battery projection analysis reveals the current 40\% charge cannot support the full route: completing Package A delivery to Zone 1 (20m) leaves 38.6\%, but continuing to Package B at Zone 3 (80m additional) and returning to depot (100m) would deplete to 16.6\%---below the 20\% safety threshold. Package A (insulin, priority 1.0) remains deliverable; Package B (antibiotics, priority 0.7) becomes infeasible.
+\textbf{OBSERVE (T+0 to T+1.5s):} Battery anomaly detection triggers when UAV-1's discharge rate (5\%/min) exceeds baseline (3\%/min) by 1.5$\times$. Battery projection analysis reveals the current 40\% charge cannot support the full route: completing Package A delivery to Zone 1 (20m) leaves 38.6\%, but continuing to Package B at Zone 3 (80m additional) and returning to depot (100m) would deplete to 16.6\%---below the 20\% safety threshold. Package A (electronics, priority 1.0) remains deliverable; Package B (components, priority 0.7) becomes infeasible.
 
-\textbf{ORIENT (T+1.5s to T+3.0s):} Fleet capacity analysis reveals no autonomous solution exists. UAV-2 carries 2.2 kg (packages C+D) against 2.5 kg capacity, leaving 0.3 kg spare. UAV-3 carries 1.8 kg (package E), leaving 0.7 kg spare. Neither can absorb Package B's 2.0 kg weight---a 1.3 kg (65\%) capacity deficit. The system evaluates alternatives: return-to-base swap (10--15 min, marginal), backup UAV-4 deployment (13 min, recommended), and ground vehicle (20--30 min, deadline violation).
+\textbf{ORIENT (T+1.5s to T+3.0s):} Fleet capacity analysis reveals no autonomous solution exists. UAV-2 carries 0.45 kg (packages C+D) against 0.5 kg capacity, leaving 0.05 kg spare. UAV-3 carries 0.35 kg (package E), leaving 0.15 kg spare. Neither can absorb Package B's 0.4 kg weight---a 0.25 kg (62.5\%) capacity deficit. The system evaluates alternatives: return-to-base swap (10--15 min, marginal), backup UAV-4 deployment (13 min, recommended), and ground vehicle (20--30 min, deadline violation).
 
 \textbf{DECIDE (T+3.0s to T+4.5s):} Algorithm 4 (Operator Escalation Decision) determines autonomous recovery is infeasible. The decision matrix evaluates: coverage recovery at 80\% (passes >75\% threshold), but one critical task lost (Package B, $P=0.7$) and one constraint violation (payload), as summarized in Table~\ref{tab:delivery_escalation_decision}. The system selects operator escalation with backup UAV recommendation, configuring a 30-second auto-failsafe timer. Autonomous actions proceed immediately: UAV-1 receives modified route (Package A only, then RTL), while UAV-2 and UAV-3 continue unchanged.
 
-\textbf{ACT (T+4.5s to T+5.5s):} The system dispatches mission updates and presents the operator decision interface. The critical alert summarizes: Package B (2.0 kg, $P=0.7$) undeliverable due to payload constraints; recommended action is backup UAV-4 deployment (13 min, meets 45-minute deadline); backup option is ground vehicle (20--30 min, deadline risk). Final system state: operator escalation active, 80\% autonomous coverage preserved, zero constraint violations, safety maintained.
+\textbf{ACT (T+4.5s to T+5.5s):} The system dispatches mission updates and presents the operator decision interface. The critical alert summarizes: Package B (0.4 kg, $P=0.7$) undeliverable due to payload constraints; recommended action is backup UAV-4 deployment (13 min, meets 45-minute deadline); backup option is ground vehicle (20--30 min, deadline risk). Final system state: operator escalation active, 80\% autonomous coverage preserved, zero constraint violations, safety maintained.
 
 \begin{table}[H]
 \centering
@@ -1327,9 +1311,9 @@ Autonomous Feasibility & TRUE & \cellcolor{red!25}\textbf{FALSE} \\
 
 \subsection{Scenario Outcome}
 
-The delivery scenarios demonstrate constraint-aware design when physical reality defeats autonomous recovery. In D6, Package B (2.0 kg) exceeds all available spare payload capacity (maximum 0.7 kg); in D7, destination coordinates lie outside the operational grid with no UAV holding out-of-grid permission. The OODA system identified both as autonomously infeasible in 0.2 ms and 0.4 ms respectively, escalating to operators while preserving zero constraint violations.
+The delivery scenarios demonstrate constraint-aware design when physical reality defeats autonomous recovery. In D6, Package B (0.4 kg) exceeds all available spare payload capacity (maximum 0.15 kg); in D7, destination coordinates lie outside the operational grid with no UAV holding out-of-grid permission. The OODA system identified both as autonomously infeasible in 0.2 ms and 0.4 ms respectively, escalating to operators while preserving zero constraint violations.
 
-This outcome inverts the usual success metric. A greedy baseline would report 100\% coverage by overloading UAV-2 to 4.2 kg against 2.5 kg capacity---``success'' that would ground the vehicle or cause mid-flight failure. The OODA system's 0\% autonomous coverage represents constraint-aware intelligence refusing plans that physics cannot execute. The hybrid approach---80\% autonomous (Package A proceeds via abbreviated route) plus 20\% supervised (operator escalation with 30-second auto-failsafe)---proves more deployable than systems claiming full autonomy while ignoring physical constraints.
+This outcome inverts the usual success metric. A greedy baseline would report 100\% coverage by overloading UAV-2 to 0.85 kg against 0.5 kg capacity---``success'' that would ground the vehicle or cause mid-flight failure. The OODA system's 0\% autonomous coverage represents constraint-aware intelligence refusing plans that physics cannot execute. The hybrid approach---80\% autonomous (Package A proceeds via abbreviated route) plus 20\% supervised (operator escalation with 30-second auto-failsafe)---proves more deployable than systems claiming full autonomy while ignoring physical constraints.
 
 \section{Cross-Scenario Comparative Analysis}
 
@@ -1352,7 +1336,7 @@ Dominant Constraint & Battery & Time (golden hour) & Payload \\
 \end{tabular}
 \end{table}
 
-The three scenarios validate consistent OODA behavior across diverse operational contexts while revealing mission-specific constraint priorities. Surveillance and SAR achieved full autonomous recovery because their constraints (battery, time) permitted reallocation within fleet capacity. Delivery scenarios D6/D7 correctly escalated to operators when payload constraints (2.0 kg package vs. 0.7 kg maximum spare capacity) made autonomous recovery physically impossible---demonstrating that intelligent escalation is a feature, not a failure mode.
+The three scenarios validate consistent OODA behavior across diverse operational contexts while revealing mission-specific constraint priorities. Surveillance and SAR achieved full autonomous recovery because their constraints (battery, time) permitted reallocation within fleet capacity. Delivery scenarios D6/D7 correctly escalated to operators when payload constraints (0.4 kg package vs. 0.15 kg maximum spare capacity) made autonomous recovery physically impossible---demonstrating that intelligent escalation is a feature, not a failure mode.
 
 All scenarios completed OODA computation in under 1.5 milliseconds (range: 0.2--1.2 ms), nearly four orders of magnitude faster than the 4-6 second design target. Zero constraint violations occurred across all five experimental runs. The 80--100\% autonomous recovery rate in feasible scenarios, combined with appropriate escalation in infeasible cases, demonstrates that honest acknowledgment of physical limitations produces deployable systems rather than theoretical claims that cannot survive contact with reality.
 
@@ -1362,7 +1346,7 @@ All scenarios completed OODA computation in under 1.5 milliseconds (range: 0.2--
 
 Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce systematically. This research therefore employs software-in-the-loop simulation (SOARES et al., 2025), implementing physically-grounded vehicle dynamics within a controlled computational environment where failures can be injected deterministically and experiments repeated indefinitely.
 
-The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 2.5 kg maximum payload) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase (QUAD SIMCON, 2020) serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
+The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 0.5--1.0 kg payload capacity) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase (QUAD SIMCON, 2020) serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
 
 Communication between simulated UAVs and the Ground Control Station employs TCP/IP transport with JSON-RPC 2.0 protocol, mirroring the request-response patterns of real telemetry systems. The GCS server (port 5555) aggregates fleet state at 2 Hz, while a Flask-based web dashboard (port 8085) provides real-time visualization through WebSocket streaming via SocketIO.
 
@@ -1416,7 +1400,7 @@ Comprehensive validation demands testing at multiple abstraction levels, from is
 
 \textbf{Unit tests} (53 cases) validate individual algorithmic components in isolation. Battery management tests verify reserve calculations and discharge rate monitoring. Grid boundary tests confirm spatial constraint enforcement. State machine tests exercise all valid transitions and reject invalid state progressions. Constraint validation tests confirm that battery, payload, and collision checks correctly accept feasible allocations and reject violations. Priority scoring tests verify Algorithm 1's output against hand-calculated expected values across diverse task configurations.
 
-\textbf{Integration tests} (81 cases) exercise subsystem interactions and mission-specific workflows. Surveillance mission tests validate continuous coverage maintenance with rotation scheduling across simulated 2-hour operations. Search and rescue tests verify grid-based coverage patterns with golden hour deadline enforcement, confirming that the system correctly prioritizes time-critical cells. Medical delivery tests exercise the two-phase pickup-dropoff workflow with payload constraint tracking. Cross-cutting integration tests validate multi-UAV coordination, collision avoidance during concurrent operations, and complete OODA cycle execution from failure injection through recovery confirmation.
+\textbf{Integration tests} (81 cases) exercise subsystem interactions and mission-specific workflows. Surveillance mission tests validate continuous coverage maintenance with rotation scheduling across simulated 2-hour operations. Search and rescue tests verify grid-based coverage patterns with golden hour deadline enforcement, confirming that the system correctly prioritizes time-critical cells. Delivery tests exercise the two-phase pickup-dropoff workflow with payload constraint tracking. Cross-cutting integration tests validate multi-UAV coordination, collision avoidance during concurrent operations, and complete OODA cycle execution from failure injection through recovery confirmation.
 
 \textbf{Regression tests} (15 cases) preserve fixes for defects discovered during development. Each regression test encodes a specific failure mode—edge cases in constraint boundary conditions, race conditions in concurrent state updates, or numerical precision issues in distance calculations—ensuring that resolved issues do not resurface as the codebase evolves.
 
@@ -1610,9 +1594,9 @@ Figure~\ref{fig:sar_trajectory} illustrates the lawnmower search pattern executi
 
 \subsection{D6 \& D7: Delivery with Intelligent Escalation}
 
-The delivery scenarios (D6 and D7) presented perhaps the most philosophically significant experimental results by validating the system's capacity to recognize its own limitations and appropriately defer to human judgment. Scenario D6 configured a deliberately infeasible task reallocation: following primary delivery vehicle failure, the stranded Package B weighed 2.0 kilograms while the maximum spare payload capacity across all operational vehicles reached only 0.7 kilograms. This represents a fundamental physical impossibility---no combination of available resources could legally transport the package without exceeding structural load limits, as geometrically illustrated in Figure~\ref{fig:ch6_constraint}.
+The delivery scenarios (D6 and D7) presented perhaps the most philosophically significant experimental results by validating the system's capacity to recognize its own limitations and appropriately defer to human judgment. Scenario D6 configured a deliberately infeasible task reallocation: following primary delivery vehicle failure, the stranded Package B weighed 0.4 kilograms while the maximum spare payload capacity across all operational vehicles reached only 0.15 kilograms. This represents a fundamental physical impossibility---no combination of available resources could legally transport the package without exceeding structural load limits, as geometrically illustrated in Figure~\ref{fig:ch6_constraint}.
 
-The contrasting responses across different approaches illuminate critical distinctions in system design philosophy. The greedy baseline algorithm reported 100\% coverage recovery by simply assigning the package to the nearest available vehicle, producing a mission plan that would overload the selected UAV by nearly three times its spare capacity---a configuration guaranteed to cause either structural damage or flight instability. The OODA system correctly identified the infeasibility, completing constraint analysis in 0.2 milliseconds before escalating to operator intervention with explicit explanation: "Package B (2.0 kg) exceeds maximum available spare capacity (0.7 kg). Recommend backup UAV deployment or ground vehicle dispatch."
+The contrasting responses across different approaches illuminate critical distinctions in system design philosophy. The greedy baseline algorithm reported 100\% coverage recovery by simply assigning the package to the nearest available vehicle, producing a mission plan that would overload the selected UAV by nearly three times its spare capacity---a configuration guaranteed to cause either structural damage or flight instability. The OODA system correctly identified the infeasibility, completing constraint analysis in 0.2 milliseconds before escalating to operator intervention with explicit explanation: "Package B (0.4 kg) exceeds maximum available spare capacity (0.15 kg). Recommend backup UAV deployment or ground vehicle dispatch."
 
 Scenario D7 examined boundary constraint violations by positioning a delivery destination at coordinates (150, 100) meters---well outside the authorized 120m $\times$ 120m operational grid. Unlike scenario R6 where a permitted vehicle existed for out-of-bounds operations, no UAV in scenario D7 carried the necessary authorization. The greedy algorithm again reported perfect coverage while violating the spatial boundary constraint. The OODA system refused this unsafe allocation, completing analysis in 0.4 milliseconds before escalating with regulatory justification: "Destination outside authorized flight zone. No vehicle possesses out-of-grid permission. Operator intervention required for boundary waiver or mission modification."
 
@@ -1771,7 +1755,7 @@ Velocity obstacle approaches, particularly Reciprocal Velocity Obstacles, enable
 
 \section{Application Scope}
 
-The system addresses three mission classes: long-duration surveillance, emergency search and rescue, and medical supply delivery. These applications share waypoint-based navigation, quantifiable task priorities, and tolerance for mission degradation under resource constraints.
+The system addresses three mission classes: long-duration surveillance, emergency search and rescue, and priority-based delivery. These applications share waypoint-based navigation, quantifiable task priorities, and tolerance for mission degradation under resource constraints.
 
 However, this focused scope excludes mission types with different requirements. Aggressive formation flying demands tighter coordination and higher-bandwidth communication than the current 2 Hz telemetry supports. Adversarial scenarios require game-theoretic reasoning and adversarial prediction beyond current OODA capabilities. Time-critical interception missions may need more sophisticated trajectory optimization than waypoint following provides.
 
@@ -1781,25 +1765,23 @@ Extending the system to these domains represents important future work. Formatio
 
 \subsection{Near-Term Enhancements}
 
-Comprehensive validation across all twenty-seven planned test scenarios would provide robust statistical characterization. Comparative evaluation against baseline strategies would quantify the value of explicit capacity modeling and priority-based allocation. Sensitivity analysis of safety reserve parameters from 5 to 20 percent battery would establish performance trade-offs between mission completion probability and safety margins. Enhanced environmental modeling incorporating turbulence, precipitation, and visibility limitations would improve prediction fidelity.
+Comprehensive validation across all twenty-seven planned test scenarios would provide robust statistical characterization. Sensitivity analysis of safety reserve parameters (5--20\% battery) would establish trade-offs between mission completion probability and safety margins. Enhanced environmental modeling incorporating turbulence and visibility limitations would improve prediction fidelity.
 
 \subsection{Medium-Term Objectives}
 
-Hardware-in-the-loop testing using PX4 Software-In-The-Loop would validate OODA cycle timing under realistic computational constraints. Field demonstrations with small fleets would reveal operational challenges including GPS accuracy limitations and radio frequency interference effects. Detailed instrumentation would generate empirical data to refine system parameters and validate simulation accuracy.
+Hardware-in-the-loop testing using PX4 SITL would validate OODA cycle timing under realistic computational constraints. Field demonstrations with small fleets would reveal operational challenges including GPS accuracy limitations and RF interference effects.
 
-Distributed OODA architectures with consensus-based decision-making would enhance robustness against single-point failures. Implementing auction mechanisms like the Consensus-Based Bundle Algorithm would require careful attention to Byzantine fault tolerance and network partition handling. Comparative studies between centralized and distributed approaches would elucidate trade-offs between optimization quality, communication overhead, and system resilience.
+Distributed OODA architectures with consensus-based decision-making would enhance robustness against single-point failures. Auction mechanisms like the Consensus-Based Bundle Algorithm require attention to Byzantine fault tolerance and network partition handling.
 
-Formal verification using model checking techniques could verify that OODA cycle logic maintains battery reserve constraints and collision avoidance guarantees under all reachable states. Temporal logic specifications could capture liveness properties ensuring eventual response to failures. While requiring substantial expertise, formal methods provide mathematical assurance complementing empirical testing.
+Formal verification using model checking could verify that OODA cycle logic maintains battery and collision constraints under all reachable states. Temporal logic specifications could capture liveness properties ensuring eventual response to failures.
 
 \subsection{Long-Term Frontiers}
 
-Machine learning could optimize priority weighting parameters based on historical mission outcomes, adapting scoring functions to operational contexts. Neural networks could predict battery consumption more accurately by learning vehicle-specific efficiency characteristics. Reinforcement learning might enable adaptive OODA cycle tuning based on observed performance patterns.
+Machine learning could optimize priority weighting based on historical outcomes. Neural networks could predict battery consumption by learning vehicle-specific characteristics. Reinforcement learning might enable adaptive OODA tuning based on observed performance.
 
-Game-theoretic analysis becomes essential for adversarial scenarios. Stackelberg game formulations could model hierarchical decision-making in contested surveillance missions. Nash equilibrium concepts might characterize stable operating points with competing autonomous systems. These theoretical frameworks would require substantial OODA extension incorporating opponent modeling and robust optimization.
+Game-theoretic analysis becomes essential for adversarial scenarios. Stackelberg formulations could model hierarchical decision-making in contested missions, while Nash equilibrium concepts might characterize stable operating points with competing systems.
 
-Fleet heterogeneity introduces additional complexity. Real-world deployments increasingly employ mixed fleets with different endurance, payload capacity, and sensor suites. Addressing heterogeneity requires extending constraint verification for vehicle-specific capabilities and developing allocation strategies exploiting complementary strengths.
-
-Large-scale swarm coordination with fifty or more vehicles demands hierarchical control architectures, efficient communication protocols avoiding broadcast storm effects, and possibly bio-inspired coordination strategies emerging from local interactions. Research at this scale intersects with complex systems theory, distributed computing, and collective intelligence.
+Fleet heterogeneity and large-scale swarm coordination (50+ vehicles) demand hierarchical architectures, efficient communication protocols, and allocation strategies exploiting complementary vehicle capabilities.
 
 \section{Concluding Perspective}
 

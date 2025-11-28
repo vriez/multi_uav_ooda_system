@@ -486,12 +486,12 @@ class ExperimentRunner:
         """Run D6: Delivery baseline comparison
 
         3x3 grid (40m x 40m zones), centers at [20, 60, 100] on both axes.
-        5 clinics distributed across grid zones:
-        - Clinic 1: Zone 1 (20, 100) - Package A
-        - Clinic 2: Zone 3 (100, 100) - Package B (lost)
-        - Clinic 3: Zone 2 (60, 100) - Package C
-        - Clinic 4: Zone 6 (100, 60) - Package D
-        - Clinic 5: Zone 8 (60, 20) - Package E
+        5 destinations distributed across grid zones:
+        - Dest. 1: Zone 1 (20, 100) - Package A
+        - Dest. 2: Zone 3 (100, 100) - Package B (lost)
+        - Dest. 3: Zone 2 (60, 100) - Package C
+        - Dest. 4: Zone 6 (100, 60) - Package D
+        - Dest. 5: Zone 8 (60, 20) - Package E
         """
         print("\n" + "=" * 70)
         print("EXPERIMENT D6: DELIVERY BASELINE COMPARISON")
@@ -500,13 +500,14 @@ class ExperimentRunner:
         db = MockMissionDatabase()
         current_time = time.time()
 
-        # 5 packages to 5 clinics within 9-zone grid (40m x 40m each)
+        # 5 packages to 5 destinations within 9-zone grid (40m x 40m each)
+        # Payload values scaled for 1.5 kg UAV platform (0.5-1.0 kg capacity)
         packages = [
-            (20, 100, 100, 2.5, 30),   # Clinic 1, Zone 1 - Package A
-            (100, 100, 70, 2.0, 45),   # Clinic 2, Zone 3 - Package B (lost)
-            (60, 100, 40, 1.2, 60),    # Clinic 3, Zone 2 - Package C
-            (100, 60, 40, 1.0, 60),    # Clinic 4, Zone 6 - Package D
-            (60, 20, 20, 1.8, 90),     # Clinic 5, Zone 8 - Package E
+            (20, 100, 100, 0.5, 30),   # Dest. 1, Zone 1 - Package A
+            (100, 100, 70, 0.4, 45),   # Dest. 2, Zone 3 - Package B (lost)
+            (60, 100, 40, 0.25, 60),   # Dest. 3, Zone 2 - Package C
+            (100, 60, 40, 0.2, 60),    # Dest. 4, Zone 6 - Package D
+            (60, 20, 20, 0.35, 90),    # Dest. 5, Zone 8 - Package E
         ]
 
         for i, (x, y, priority, payload, deadline_min) in enumerate(packages, 1):
@@ -530,12 +531,12 @@ class ExperimentRunner:
             operational_uavs=[2, 3],
             failed_uavs=[1],
             uav_positions={
-                1: np.array([20.0, 100.0, 15.0]),   # Near Clinic 1 (Zone 1)
-                2: np.array([60.0, 100.0, 15.0]),   # En route to Clinic 3 (Zone 2)
-                3: np.array([60.0, 20.0, 15.0]),    # En route to Clinic 5 (Zone 8)
+                1: np.array([20.0, 100.0, 15.0]),   # Near Dest. 1 (Zone 1)
+                2: np.array([60.0, 100.0, 15.0]),   # En route to Dest. 3 (Zone 2)
+                3: np.array([60.0, 20.0, 15.0]),    # En route to Dest. 5 (Zone 8)
             },
             uav_battery={1: 40.0, 2: 70.0, 3: 75.0},
-            uav_payloads={1: 0.5, 2: 0.3, 3: 0.7},  # Package B (2.0kg) cannot fit
+            uav_payloads={1: 0.1, 2: 0.05, 3: 0.15},  # Package B (0.4kg) cannot fit
             lost_tasks=[2],
         )
 
@@ -581,7 +582,7 @@ class ExperimentRunner:
         }
 
         findings = [
-            f"Package B (2.0kg) exceeds all spare capacity (max 0.7kg)",
+            f"Package B (0.4kg) exceeds all spare capacity (max 0.15kg)",
             f"Greedy would overload UAV ({greedy['violations']} violations)",
             "OODA correctly identifies infeasible reallocation",
             "Intelligent escalation is the CORRECT response (0% autonomous = safe)",
@@ -647,7 +648,7 @@ class ExperimentRunner:
                 3: np.array([60.0, 20.0, 15.0]),    # Zone 8
             },
             uav_battery={1: 30.0, 2: 80.0, 3: 85.0},
-            uav_payloads={1: 0.5, 2: 1.5, 3: 1.5},  # Plenty of payload capacity
+            uav_payloads={1: 0.1, 2: 0.4, 3: 0.4},  # Plenty of payload capacity (constraint is boundary, not payload)
             lost_tasks=[3],  # Package C needs reallocation
             uav_permissions={
                 # No UAV has out-of-grid permission
