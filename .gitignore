@@ -152,3 +152,18 @@ Thumbs.db
 
 # Project specific
 *.pyc
+
+# Experiment outputs (reproducible - run with 'make experiments')
+results.json
+results.md
+experiment_results.json
+experiment_results.md
+
+# Temporary/generated files
+output.txt
+*.lot
+
+# Generated thesis/presentation artifacts
+*.pptx
+tcc_preliminar.pdf
+chapter6_*.png

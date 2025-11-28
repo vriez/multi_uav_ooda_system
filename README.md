@@ -29,53 +29,17 @@ make gui
 
 ## System Architecture
 
-```mermaid
-flowchart TB
-    subgraph GCS["Ground Control Station (Port 5555)"]
-        FM[Fleet Monitor<br/>2 Hz Telemetry]
-        OODA[OODA Engine]
-        MM[Mission Manager]
-        CV[Constraint Validator]
-
-        FM --> OODA
-        OODA --> MM
-        MM --> CV
-        CV --> OODA
-    end
-
-    subgraph Dashboard["Web Dashboard (Port 8085)"]
-        FLASK[Flask + SocketIO]
-        MAP[Interactive Map]
-        LOG[Event Log]
-    end
-
-    subgraph Fleet["UAV Fleet"]
-        UAV1[UAV 1<br/>6-DOF Dynamics]
-        UAV2[UAV 2<br/>6-DOF Dynamics]
-        UAV3[UAV 3<br/>6-DOF Dynamics]
-        UAV4[...]
-    end
-
-    GCS <-->|TCP/IP JSON-RPC| Fleet
-    GCS -->|WebSocket| Dashboard
-```
+<p align="center">
+  <img src="images/architecture_diagram.png" alt="System Architecture" width="700">
+</p>
 
 ## OODA Loop Decision Cycle
 
 When a UAV failure is detected, the system executes a four-phase decision cycle:
 
-```mermaid
-flowchart LR
-    O[OBSERVE<br/>Collect Telemetry] --> OR[ORIENT<br/>Analyze Impact]
-    OR --> D[DECIDE<br/>Optimize Allocation]
-    D --> A[ACT<br/>Dispatch Commands]
-    A -.->|Next Cycle| O
-
-    style O fill:#e1f5fe
-    style OR fill:#fff3e0
-    style D fill:#f3e5f5
-    style A fill:#e8f5e9
-```
+<p align="center">
+  <img src="images/ooda_cycle_diagram.png" alt="OODA Loop Decision Cycle" width="600">
+</p>
 
 | Phase | Duration | Actions |
 |-------|----------|---------|
@@ -90,26 +54,9 @@ flowchart LR
 
 ## Mission Scenarios
 
-```mermaid
-graph TD
-    subgraph S["Surveillance"]
-        S1[5 UAVs]
-        S2[9 Patrol Zones]
-        S3[3x3 Grid - 120m x 120m]
-    end
-
-    subgraph R["Search & Rescue"]
-        R1[5 UAVs]
-        R2[9 Search Zones]
-        R3[Golden Hour Constraint]
-    end
-
-    subgraph D["Delivery"]
-        D1[3 UAVs]
-        D2[5 Packages]
-        D3[Payload Constraints]
-    end
-```
+<p align="center">
+  <img src="images/mission_scenarios_diagram.png" alt="Mission Scenarios" width="600">
+</p>
 
 | Scenario | Fleet | Tasks | Key Constraint |
 |----------|-------|-------|----------------|
@@ -136,28 +83,9 @@ graph TD
 
 ## Failure Detection & Recovery
 
-```mermaid
-sequenceDiagram
-    participant UAV as UAV Fleet
-    participant FM as Fleet Monitor
-    participant OODA as OODA Engine
-    participant MM as Mission Manager
-
-    UAV->>FM: Telemetry (2 Hz)
-    Note over FM: Detect: Timeout > 1.5s
-    FM->>OODA: UAV-3 FAILED
-
-    rect rgb(255, 240, 240)
-        Note over OODA: OODA Cycle Triggered
-        OODA->>OODA: Observe fleet state
-        OODA->>OODA: Orient: 3 tasks orphaned
-        OODA->>MM: Request reallocation
-        MM->>OODA: Optimized assignment
-        OODA->>UAV: Dispatch to UAV-1, UAV-2
-    end
-
-    UAV->>FM: Acknowledge new tasks
-```
+<p align="center">
+  <img src="images/failure_detection_diagram.png" alt="Failure Detection & Recovery Flow" width="600">
+</p>
 
 ### Failure Modes Detected
 
@@ -308,24 +236,9 @@ uv run pytest tests/integration/ -k "surveillance" -vv
 
 ## Constraint Validation Flow
 
-```mermaid
-flowchart TD
-    START[Task Assignment Request] --> B{Battery Check}
-    B -->|Insufficient| REJECT1[REJECT: Low Battery]
-    B -->|OK| P{Payload Check}
-    P -->|Overweight| REJECT2[REJECT: Payload Exceeded]
-    P -->|OK| G{Grid Boundary}
-    G -->|Outside + No Permission| REJECT3[REJECT: Out of Bounds]
-    G -->|OK or Permitted| C{Collision Check}
-    C -->|Conflict| REJECT4[REJECT: Path Conflict]
-    C -->|Clear| ACCEPT[ACCEPT Assignment]
-
-    style ACCEPT fill:#c8e6c9
-    style REJECT1 fill:#ffcdd2
-    style REJECT2 fill:#ffcdd2
-    style REJECT3 fill:#ffcdd2
-    style REJECT4 fill:#ffcdd2
-```
+<p align="center">
+  <img src="images/constraint_validation_diagram.png" alt="Constraint Validation Flow" width="600">
+</p>
 
 ---
 
