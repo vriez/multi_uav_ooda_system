@@ -1,0 +1,86 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#E1BEE7'
+    primaryTextColor: '#000'
+    primaryBorderColor: '#7B1FA2'
+    lineColor: '#333'
+    secondaryColor: '#FFE082'
+    tertiaryColor: '#BBDEFB'
+  layout: elk
+---
+flowchart TB
+    subgraph INIT["Mission Initialization"]
+        START([Start Delivery Mission])
+        INIT_MISSION["Initialize Mission<br/>• Operational area: 120m × 120m<br/>• 5 destinations across 3×3 grid<br/>• 1-hour delivery window<br/>• Fleet: 3 UAVs heterogeneous"]
+        FLEET["Fleet Configuration<br/>• UAV-1 Heavy Lifter: 1.0 kg, 25 min, 12 m/s<br/>• UAV-2 Standard: 0.5 kg, 30 min, 15 m/s<br/>• UAV-3 Standard: 0.5 kg, 30 min, 15 m/s"]
+        PACKAGES["Package Priorities<br/>• Pkg A: 0.5 kg Electronics P=1.0 CRITICAL<br/>• Pkg B: 0.4 kg Components P=0.7 HIGH<br/>• Pkg C: 0.25 kg Tools P=0.4 MEDIUM<br/>• Pkg D: 0.2 kg Supplies P=0.4 MEDIUM<br/>• Pkg E: 0.35 kg Parts P=0.2 LOW"]
+        ASSIGN["Route Assignment<br/>• UAV-1: Dest 1-2 Pkg A+B 0.9 kg<br/>• UAV-2: Dest 3-4 Pkg C+D 0.45 kg<br/>• UAV-3: Dest 5 Pkg E 0.35 kg"]
+    end
+
+    subgraph EXEC["Execution Phase"]
+        EXECUTE["Execute Deliveries<br/>• Monitor payload release<br/>• Track battery consumption<br/>• Confirm deliveries at each destination"]
+        FAILURE{Failure<br/>Detected?}
+    end
+
+    subgraph OODA_OBSERVE["OBSERVE Phase (T+0 to T+1.5s)"]
+        OBSERVE["Battery Anomaly Detection<br/>• UAV-1 discharge: 5%/min vs 3%/min baseline<br/>• Battery: 40% vs projected 55%<br/>• Route analysis:<br/>  - Pkg A Zone 1 20m: leaves 38.6% ✓<br/>  - Pkg B Zone 3 +80m: needs 16.6% ✗<br/>• Pkg A deliverable, Pkg B infeasible"]
+    end
+
+    subgraph OODA_ORIENT["ORIENT Phase (T+1.5s to T+3.0s)"]
+        ORIENT["Fleet Capacity Analysis<br/>• UAV-2: 0.45 kg loaded, 0.05 kg spare<br/>• UAV-3: 0.35 kg loaded, 0.15 kg spare<br/>• Pkg B 0.4 kg > max spare 0.15 kg<br/>• Capacity deficit: 0.25 kg 62.5%<br/>• No autonomous solution exists"]
+
+        CHECK_UAV2["Constraint Check UAV-2<br/>• Current: 0.45 kg C+D<br/>• Add Pkg B: 0.45 + 0.4 = 0.85 kg<br/>• Capacity: 0.5 kg<br/>• Result: PAYLOAD_EXCEEDED"]
+
+        CHECK_UAV3["Constraint Check UAV-3<br/>• Current: 0.35 kg E<br/>• Add Pkg B: 0.35 + 0.4 = 0.75 kg<br/>• Capacity: 0.5 kg<br/>• Result: PAYLOAD_EXCEEDED"]
+    end
+
+    subgraph OODA_DECIDE["DECIDE Phase (T+3.0s to T+4.5s)"]
+        DECIDE["Escalation Decision Matrix<br/>• Coverage Recovery: 80% 4/5 ✓<br/>• Critical Tasks Lost P>0.7: 1 Pkg B ✗<br/>• Constraint Violations: 1 payload ✗<br/>• Autonomous Feasibility: FALSE<br/>• Decision: ESCALATE TO OPERATOR"]
+    end
+
+    subgraph OODA_ACT["ACT Phase (T+4.5s to T+5.5s)"]
+        ACT["Command Dispatch & Escalation<br/>• UAV-1: Modified route Pkg A only, then RTL<br/>• UAV-2, UAV-3: Continue unchanged<br/>• Operator Alert: Pkg B 0.4 kg undeliverable<br/>• Recommended: Backup UAV-4 13 min<br/>• Auto-failsafe: 30-second timer"]
+    end
+
+    subgraph CONTINUE["Mission Continuation"]
+        MISSION_CONT["Post-Adaptation Status<br/>• Autonomous Coverage: 80% 4/5 packages<br/>• Pkg A: Delivered CRITICAL preserved<br/>• Pkg B: Operator escalation<br/>• Constraint Violations: 0<br/>• OODA Time: 0.2 milliseconds<br/>• Hybrid: 80% auto + 20% supervised"]
+    end
+
+    %% Flow connections
+    START --> INIT_MISSION
+    INIT_MISSION --> FLEET
+    FLEET --> PACKAGES
+    PACKAGES --> ASSIGN
+    ASSIGN --> EXECUTE
+    EXECUTE --> FAILURE
+
+    FAILURE -->|No| EXECUTE
+    FAILURE -->|Yes| OBSERVE
+
+    OBSERVE --> ORIENT
+    ORIENT --> CHECK_UAV2
+    ORIENT --> CHECK_UAV3
+    CHECK_UAV2 --> DECIDE
+    CHECK_UAV3 --> DECIDE
+    DECIDE --> ACT
+    ACT --> MISSION_CONT
+    MISSION_CONT --> EXECUTE
+
+    %% Styling
+    classDef startEnd fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    classDef init fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    classDef process fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    classDef decision fill:#FFE082,stroke:#F57C00,stroke-width:3px
+    classDef ooda fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    classDef constraint fill:#FFCDD2,stroke:#D32F2F,stroke-width:2px
+    classDef success fill:#C8E6C9,stroke:#388E3C,stroke-width:2px
+
+    class START startEnd
+    class INIT_MISSION,FLEET,PACKAGES,ASSIGN init
+    class EXECUTE process
+    class FAILURE decision
+    class OBSERVE,ORIENT,DECIDE,ACT ooda
+    class CHECK_UAV2,CHECK_UAV3 constraint
+    class MISSION_CONT success
