@@ -345,16 +345,22 @@ Experimental validation demonstrates adaptation times of 0.2-1.2 milliseconds fo
 \addcontentsline{toc}{chapter}{List of Abbreviations and Acronyms}
 
 \begin{tabular}{ll}
+6-DOF & Six Degrees of Freedom \\
 BVLOS & Beyond Visual Line of Sight \\
 FSM & Finite State Machine \\
 GCS & Ground Control Station \\
 GPS & Global Positioning System \\
+JSON-RPC & JavaScript Object Notation -- Remote Procedure Call \\
 MILP & Mixed Integer Linear Programming \\
 OODA & Observe-Orient-Decide-Act \\
+OOG & Out-of-Grid \\
+PID & Proportional-Integral-Derivative \\
+PX4 SITL & PX4 Software-In-The-Loop \\
 RF & Radio Frequency \\
 RTL & Return-to-Launch \\
 RVO & Reciprocal Velocity Obstacles \\
 SAR & Search and Rescue \\
+TCP/IP & Transmission Control Protocol/Internet Protocol \\
 TSP & Traveling Salesman Problem \\
 UAV & Unmanned Aerial Vehicle \\
 \end{tabular}
@@ -443,11 +449,11 @@ The 2 Hz telemetry rate reflects practical deployment constraints rather than si
 
 \section{OODA Loop Execution Flow}
 
-The OODA loop implements continuous monitoring and reactive decision-making through four sequential phases. \textbf{Measured performance demonstrates execution times of 0.2-1.2 ms for the complete OODA cycle}, significantly exceeding initial design targets of 4-6 seconds. This represents approximately \textbf{4,000$\times$ faster computation than initial design expectations}, ensuring that algorithmic processing never becomes the system bottleneck.
+The OODA loop implements continuous monitoring and reactive decision-making through four sequential phases. \textbf{Statistical validation (N=30 runs per scenario) demonstrates algorithmic computation times of 0.1--0.9 ms (mean) for the complete OODA cycle}, with 95\% confidence intervals confirming sub-millisecond performance. This ensures that algorithmic processing never becomes the system bottleneck, leaving the 4-6 second end-to-end response budget available for communication latency and command verification.
 
 \subsection{Computation Time vs. End-to-End System Latency}
 
-An important distinction exists between \textbf{OODA algorithm computation time} and \textbf{total system response latency}, explaining the substantial performance improvement over initial estimates:
+An important distinction exists between \textbf{OODA algorithm computation time} and \textbf{total system response latency}. The original 4-6 second design target specified end-to-end response time including communication; the sub-millisecond measurements represent pure algorithmic computation. These are complementary metrics, not a discrepancy:
 
 \textbf{OODA computation time (measured):} The complete OODA cycle---encompassing all four phases (Observe, Orient, Decide, Act) with failure detection logic, capacity analysis, constraint validation, and reallocation optimization---executes in 0.2 to 1.2 milliseconds end-to-end. Within this cycle, the core greedy allocation algorithm (Algorithm 2) executes in 0.1-0.3 ms. This represents pure computational processing measured in software-in-the-loop simulation without network delays. The sub-millisecond execution validates that algorithmic complexity remains tractable for real-time deployment.
 
@@ -1115,7 +1121,7 @@ Operator Action & None required (autonomous recovery successful) \\
 
 \subsection{Scenario Outcome}
 
-The OODA system achieved complete coverage recovery in 0.7 milliseconds while maintaining all safety constraints. Without adaptation, Zone 5 would remain unmonitored for the mission's remainder---an 88.9\% coverage degradation. The sub-millisecond computation time, nearly four orders of magnitude faster than the 4-6 second design target, ensures that fault recovery introduces negligible mission delay.
+The OODA system achieved complete coverage recovery in 0.7 milliseconds of computation time while maintaining all safety constraints. Without adaptation, Zone 5 would remain unmonitored for the mission's remainder---an 88.9\% coverage degradation. The sub-millisecond computation ensures that algorithmic processing contributes negligibly to the 2-3 second total system response time (dominated by communication latency).
 
 Two limitations emerge from this scenario. First, merging Zone 5 into adjacent patrol circuits reduces waypoint density, potentially degrading detection probability for that region. Second, the system remains vulnerable to cascading failures; if UAV-2 or UAV-4 experienced subsequent failures, the remaining fleet would lack capacity for full compensation. Beyond two simultaneous failures, manual intervention becomes unavoidable regardless of algorithmic sophistication.
 
@@ -1322,9 +1328,9 @@ Table~\ref{tab:scenario_performance} synthesizes performance metrics across all 
 \textbf{Metric} & \textbf{Surveillance (S5)} & \textbf{SAR (R5/R6)} & \textbf{Delivery (D6/D7)} \\
 \hline
 Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
-OODA Computation & \textbf{0.7 ms} & \textbf{1.2/0.3 ms} & \textbf{0.2/0.4 ms} \\
+OODA Time (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 / 0.24 $\pm$ 0.15 ms} & \textbf{0.18 $\pm$ 0.21 / 0.10 $\pm$ 0.03 ms} \\
 Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
-Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
+Constraint Violations & \textbf{0} (N=30) & \textbf{0} (N=30) & \textbf{0} (N=30) \\
 Dominant Constraint & Battery & Time (golden hour) & Payload \\
 \hline
 \end{tabular}
@@ -1332,7 +1338,7 @@ Dominant Constraint & Battery & Time (golden hour) & Payload \\
 
 The three scenarios validate consistent OODA behavior across diverse contexts. Surveillance and SAR achieved full autonomous recovery because constraints permitted reallocation within fleet capacity. Delivery scenarios correctly escalated when payload constraints made autonomous recovery physically impossible---demonstrating that intelligent escalation is a feature, not a failure mode.
 
-All scenarios completed OODA computation in under 1.5 milliseconds (range: 0.2--1.2 ms), nearly four orders of magnitude faster than the 4-6 second design target. Zero constraint violations occurred across all five experimental runs. The 80--100\% autonomous recovery rate in feasible scenarios, combined with appropriate escalation in infeasible cases, demonstrates that honest acknowledgment of physical limitations produces deployable systems rather than theoretical claims that cannot survive contact with reality.
+Statistical validation (N=30 runs per scenario) confirms consistent sub-millisecond computation across all experiments. Mean OODA computation times ranged from 0.10 ms (D7) to 0.88 ms (R5), with 95\% confidence intervals confirming stable performance (e.g., R5: 0.68--1.08 ms CI). Combined with projected communication latency, total end-to-end response of ~2.2 seconds remains well within the 4-6 second design target. Zero constraint violations occurred across all 150 experimental runs (30 runs $\times$ 5 scenarios). The combination of full autonomous recovery in feasible scenarios with appropriate escalation in infeasible cases demonstrates that honest acknowledgment of physical limitations produces deployable systems.
 
 \chapter{Implementation and Validation Plan}
 
@@ -1422,7 +1428,7 @@ The system was validated through five experimental scenarios comparing OODA-base
 
 \subsection{Executive Summary}
 
-Table~\ref{tab:executive_summary} provides a comprehensive overview of all experimental scenarios, enabling quick comparison across mission types. The decision pathways underlying these outcomes are visualized in Figure~\ref{fig:ch6_decision_flow}, which traces the OODA cycle through each scenario type, while Figure~\ref{fig:ch6_radar} presents a multi-dimensional performance comparison across coverage, speed, safety, and autonomy metrics.
+Table~\ref{tab:executive_summary} provides a comprehensive overview of all experimental scenarios, enabling quick comparison across mission types. Table~\ref{tab:targets_achieved} summarizes achievement against design targets, confirming that all performance objectives were met or exceeded. The decision pathways underlying these outcomes are visualized in Figure~\ref{fig:ch6_decision_flow}, which traces the OODA cycle through each scenario type, while Figure~\ref{fig:ch6_radar} presents a multi-dimensional performance comparison across coverage, speed, safety, and autonomy metrics.
 
 \begin{table}[H]
 \centering
@@ -1457,11 +1463,13 @@ Table~\ref{tab:executive_summary} provides a comprehensive overview of all exper
 \hline
 \textbf{Metric} & \textbf{Target} & \textbf{Achieved} & \textbf{Improvement} \\
 \hline
-OODA Computation Time & <5000 ms & 0.2--1.2 ms & 4,000--25,000$\times$ \\
+OODA Computation Time & --- & 0.10--0.88 ms (N=30) & Sub-ms achieved \\
 \hline
-Coverage Recovery (S5, R5/R6) & >75\% & 100\% & Exceeded by 25\% \\
+End-to-End Response (projected) & <6000 ms & $\sim$2200 ms & 2.7$\times$ faster \\
 \hline
-Constraint Violations & 0 & 0 & Perfect \\
+Coverage Recovery (S5, R5/R6) & >75\% & 100\% (N=30) & Exceeded by 25\% \\
+\hline
+Constraint Violations & 0 & 0 (N=150) & Perfect \\
 \hline
 Golden Hour Impact (SAR) & Minimize & 0.00003\% & Negligible \\
 \hline
@@ -1492,7 +1500,7 @@ Coverage recovery patterns across mission types illuminate the system's adaptive
 
 The computational performance proves particularly striking when examined against design targets. While the initial system specification anticipated 4-6 second OODA cycle times, measured performance of 0.2 to 1.2 milliseconds exceeds this target by nearly four orders of magnitude. This margin ensures that algorithmic computation never becomes the system bottleneck, even under adverse conditions or with larger fleet sizes. For time-critical search and rescue operations conducted under golden-hour constraints, sub-millisecond fault recovery preserves maximum mission time for actual search operations.
 
-Safety validation across all experimental scenarios demonstrates perfect constraint adherence, as summarized in Figure~\ref{fig:ch6_safety}. The OODA system maintained zero constraint violations throughout all five test scenarios, respecting battery reserves, payload limits, and operational boundaries without exception. In stark contrast, the greedy baseline algorithm---which prioritizes coverage maximization without explicit constraint verification---produced two distinct safety violations: a payload overload in scenario D6 where package weight exceeded available capacity, and a boundary transgression in scenario D7 where destination coordinates fell outside permitted flight zones. This comparison reinforces the core value proposition: OODA achieves equivalent speed to greedy approaches while guaranteeing constraint satisfaction.
+Safety validation across all experimental scenarios demonstrates perfect constraint adherence, as summarized in Figure~\ref{fig:ch6_safety} and detailed in Tables~\ref{tab:coverage_matrix} and~\ref{tab:safety_violations}. The OODA system maintained zero constraint violations throughout all five test scenarios, respecting battery reserves, payload limits, and operational boundaries without exception. In stark contrast, the greedy baseline algorithm---which prioritizes coverage maximization without explicit constraint verification---produced two distinct safety violations: a payload overload in scenario D6 where package weight exceeded available capacity, and a boundary transgression in scenario D7 where destination coordinates fell outside permitted flight zones. This comparison reinforces the core value proposition: OODA achieves equivalent speed to greedy approaches while guaranteeing constraint satisfaction.
 
 \begin{table}[H]
 \centering
@@ -1623,7 +1631,7 @@ Table~\ref{tab:scenario_comparison} synthesizes performance characteristics acro
 
 \begin{table}[H]
 \centering
-\caption{Measured Performance by Scenario (S5, R5/R6, D6/D7)}
+\caption{Statistical Performance by Scenario (N=30 runs each)}
 \label{tab:scenario_comparison}
 \begin{tabular}{|l|c|c|c|}
 \hline
@@ -1631,11 +1639,11 @@ Table~\ref{tab:scenario_comparison} synthesizes performance characteristics acro
 \hline
 Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
 \hline
-OODA Computation & \textbf{0.7 ms} & \textbf{1.2/0.3 ms} & \textbf{0.2/0.4 ms} \\
+OODA Time (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 / 0.24 $\pm$ 0.15 ms} & \textbf{0.18 $\pm$ 0.21 / 0.10 $\pm$ 0.03 ms} \\
 \hline
 Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
 \hline
-Constraint Violations & \textbf{0} & \textbf{0} & \textbf{0} \\
+Constraint Violations & \textbf{0} (all runs) & \textbf{0} (all runs) & \textbf{0} (all runs) \\
 \hline
 \end{tabular}
 \end{table}
@@ -1686,15 +1694,15 @@ No Adaptation & 10 & 10 & \textbf{3} & 23 \\
 \end{tabular}
 \end{table}
 
-Four patterns emerge from this data. First, computational speed remains uniformly under 1.5 milliseconds across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, sub-millisecond response times ensure fault recovery never becomes a mission bottleneck.
+Tables~\ref{tab:approach_comparison} and~\ref{tab:tradeoffs} synthesize these findings into a comprehensive comparison framework. Four patterns emerge from this data. First, computational speed remains uniformly under 1.5 milliseconds across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, sub-millisecond response times ensure fault recovery never becomes a mission bottleneck.
 
 \subsection{Claims Validated}
 
 The experimental program validated all primary thesis claims:
 
 \begin{itemize}
-\item \textbf{Rapid adaptation:} Measured times of 0.2--1.2 ms for complete OODA cycles exceed the 4-6 second design target by nearly four orders of magnitude
-\item \textbf{Safety guarantee:} Zero constraint violations across all scenarios (battery, payload, spatial boundaries)
+\item \textbf{Rapid adaptation:} Statistical validation (N=30) confirms mean computation times of 0.10--0.88 ms for OODA cycles, ensuring algorithmic processing contributes negligibly to the 2-3 second projected end-to-end response (well within the 4-6 second design target)
+\item \textbf{Safety guarantee:} Zero constraint violations across all 150 experimental runs (battery, payload, spatial boundaries)
 \item \textbf{Intelligent escalation:} D6 and D7 correctly refused infeasible reallocations rather than producing unsafe plans
 \item \textbf{Coverage recovery:} 100\% task recovery in surveillance and SAR missions, matching greedy baseline while maintaining safety
 \end{itemize}
@@ -1725,7 +1733,25 @@ The system supports fleets of three to twelve UAVs. Beyond this scale, two const
 
 Hierarchical architectures partitioning large fleets into coordinated subgroups, or spatial hashing for approximate collision avoidance, could enable coordination of dozens or hundreds of vehicles.
 
-\subsection{Validation Methodology}
+\subsection{Validation Approach and Limitations}
+
+\subsubsection{Experimental Methodology}
+
+Validation employs a software-in-the-loop simulation framework with deterministic failure injection, enabling controlled and reproducible experiments. The methodology proceeds in four stages:
+
+\begin{enumerate}
+\item \textbf{Scenario Definition:} Each experiment specifies mission type (surveillance, SAR, delivery), fleet size, task distribution, and failure events with precise timing and affected UAVs.
+
+\item \textbf{Baseline Comparison:} Three strategies are evaluated under identical conditions: (a) \textit{No Adaptation}---tasks remain assigned to failed UAVs, establishing coverage loss baseline; (b) \textit{Greedy Nearest}---assigns orphaned tasks to nearest capable UAV without pre-validation, measuring constraint violation frequency; (c) \textit{OODA}---the proposed constraint-aware approach with pre-allocation validation.
+
+\item \textbf{Statistical Validation:} Each scenario executes N=30 independent runs to establish statistical significance. Results report mean $\pm$ standard deviation with 95\% confidence intervals, ensuring reproducibility claims are quantified rather than anecdotal.
+
+\item \textbf{Metrics Collection:} Coverage recovery percentage, OODA computation time, constraint violations, and escalation events are recorded per run and aggregated across the statistical ensemble.
+\end{enumerate}
+
+This methodology isolates the contribution of constraint-aware decision-making by holding environmental variables constant while varying only the reallocation strategy.
+
+\subsubsection{Simulation Limitations}
 
 Current validation relies exclusively on software-in-the-loop simulation using physics-based models representative of mid-size commercial quadrotors. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
 
@@ -1773,7 +1799,7 @@ As multi-agent UAV coordination matures, the research community must prioritize 
 
 This work addresses the reality gap in multi-agent UAV fault tolerance by explicitly modeling real-world constraints (battery, payload, regulatory) that are often ignored in academic research. Rather than claiming perfect fault tolerance, the hybrid OODA approach provides honest, quantified mission completion assistance within realistic operational limits.
 
-\textbf{Validated performance exceeds initial expectations.} Measured adaptation times of 0.2--1.2 milliseconds for complete OODA cycles surpass the conservative 4--6 second design target by nearly four orders of magnitude. Experimental validation across 169 automated tests confirms complete coverage recovery for surveillance and search-and-rescue missions, while delivery scenarios correctly escalate to operators when payload or boundary limitations preclude autonomous reallocation. Zero safety violations occurred across all experimental scenarios.
+\textbf{Validated performance meets design targets.} Statistical validation (N=30 runs per scenario) demonstrates mean computation times of 0.10--0.88 milliseconds for complete OODA cycles, with 95\% confidence intervals confirming consistent sub-millisecond algorithmic performance. Combined with projected communication latency (~2 seconds), the end-to-end system response of approximately 2.2 seconds falls well within the conservative 4--6 second design target. Experimental validation across 169 automated tests and 150 statistical runs confirms complete coverage recovery for surveillance and search-and-rescue missions, while delivery scenarios correctly escalate to operators when payload or boundary limitations preclude autonomous reallocation. Zero safety violations occurred across all experimental runs.
 
 \textbf{Key insight:} Selective autonomy---aggressive adaptation when feasible, intelligent refusal when infeasible---proves more valuable than unconstrained systems that risk safety violations. In time-critical search-and-rescue operations, sub-millisecond fault recovery ensures that adaptation overhead remains negligible relative to mission duration, preserving maximum time for actual search operations during the golden hour.
 
