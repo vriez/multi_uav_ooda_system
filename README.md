@@ -311,14 +311,23 @@ All technical decisions, system architecture, and algorithm design are the autho
 
 ## License
 
-This project is developed as part of academic research at the University of São Paulo (USP).
+This project is developed as part of academic research at the University of São Paulo (USP) and is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
-**Academic Use:** This software is provided for educational and research purposes. You are free to use, modify, and distribute this code for non-commercial academic purposes with proper attribution.
+**You are free to:**
+- Use this software for any purpose (academic, commercial, personal)
+- Modify and distribute the code
+- Use it in commercial products
 
-**Attribution:** If you use this work in your research, please cite:
+**Requirements:**
+- Include the original copyright notice and license
+- Provide attribution when using in academic work
+
+**Academic Citation:**
+
+If you use this work in your research, please cite:
 
 > Reis, V. E. (2025). *Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop*. Specialization Thesis, School of Engineering of São Carlos, University of São Paulo.
 
-**Commercial Use:** For commercial licensing inquiries, please contact the author.
+**Third-Party Components:**
 
-**Third-Party Components:** The quadcopter dynamics model is adapted from [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon) under its original license terms.
+The quadcopter dynamics model (`uav/simulation.py`) is adapted from [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon) by John Bass, also under MIT License.
