@@ -1,7 +1,7 @@
 """
 Test OODA loop monitoring of charging UAVs and immediate reassignment.
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 Verifies that when all UAVs are charging and packages are pending,
@@ -87,8 +87,8 @@ class TestDeliveryOODACharging:
             uavs["uav_1"]["state"] = "recovered"
             uavs["uav_1"]["operational"] = True
 
-            print(f"  ✓ uav_1 transitioned to 'recovered' state")
-            print(f"  ✓ uav_1 set to operational=True")
+            print(f"  OK uav_1 transitioned to 'recovered' state")
+            print(f"  OK uav_1 set to operational=True")
             print(f"  Battery: {uavs['uav_1']['battery']:.0f}%\n")
 
             # IMMEDIATE ASSIGNMENT CHECK (happens in same tick)
@@ -130,13 +130,13 @@ class TestDeliveryOODACharging:
         ), "Package should be assigned to uav_1"
 
         print("Verification:")
-        print(f"  ✓ uav_1 state = {uavs['uav_1']['state']} (expected: delivering)")
+        print(f"  OK uav_1 state = {uavs['uav_1']['state']} (expected: delivering)")
         print(
-            f"  ✓ uav_1 assigned_task = {uavs['uav_1']['assigned_task']} (expected: pkg_1)"
+            f"  OK uav_1 assigned_task = {uavs['uav_1']['assigned_task']} (expected: pkg_1)"
         )
-        print(f"  ✓ pkg_1 status = {packages['pkg_1']['status']} (expected: assigned)")
-        print(f"  ✓ pkg_1 assigned to uav_1")
-        print(f"  ✓ Assignment happened IMMEDIATELY (no 2-second wait)\n")
+        print(f"  OK pkg_1 status = {packages['pkg_1']['status']} (expected: assigned)")
+        print(f"  OK pkg_1 assigned to uav_1")
+        print(f"  OK Assignment happened IMMEDIATELY (no 2-second wait)\n")
 
         print("=== TEST PASSED ===")
         print("Summary:")
@@ -214,7 +214,7 @@ class TestDeliveryOODACharging:
         uavs["uav_1"]["state"] = "delivering"
 
         assert uavs["uav_1"]["assigned_task"] == "pkg_1"
-        print(f"  ✓ uav_1 → pkg_1 (priority={packages['pkg_1']['priority']:.1f})\n")
+        print(f"  OK uav_1 → pkg_1 (priority={packages['pkg_1']['priority']:.1f})\n")
 
         # UAV 2 finishes charging
         print("T=11.0s: uav_2 finishes charging (70% -> 80%)")
@@ -233,7 +233,7 @@ class TestDeliveryOODACharging:
         uavs["uav_2"]["state"] = "delivering"
 
         assert uavs["uav_2"]["assigned_task"] == "pkg_2"
-        print(f"  ✓ uav_2 → pkg_2 (priority={packages['pkg_2']['priority']:.1f})\n")
+        print(f"  OK uav_2 → pkg_2 (priority={packages['pkg_2']['priority']:.1f})\n")
 
         # UAV 3 finishes charging
         print("T=21.0s: uav_3 finishes charging (60% -> 80%)")
@@ -252,7 +252,7 @@ class TestDeliveryOODACharging:
         uavs["uav_3"]["state"] = "delivering"
 
         assert uavs["uav_3"]["assigned_task"] == "pkg_3"
-        print(f"  ✓ uav_3 → pkg_3 (priority={packages['pkg_3']['priority']:.1f})\n")
+        print(f"  OK uav_3 → pkg_3 (priority={packages['pkg_3']['priority']:.1f})\n")
 
         # Check remaining packages
         remaining_pending = [p for p in packages if packages[p]["status"] == "pending"]
@@ -285,15 +285,15 @@ if __name__ == "__main__":
         test_suite.test_multiple_uavs_charging_sequential_assignment()
 
         print("\n" + "=" * 70)
-        print("ALL TESTS PASSED ✓")
+        print("ALL TESTS PASSED OK")
         print("=" * 70)
         print("\nOODA loop correctly monitors charging UAVs:")
-        print("  ✓ Immediate assignment upon charging completion")
-        print("  ✓ No waiting for periodic OODA cycle")
-        print("  ✓ Priority-based package selection")
-        print("  ✓ Sequential assignment as UAVs become available")
-        print("  ✓ Zero-latency recovery from battery failures\n")
+        print("  OK Immediate assignment upon charging completion")
+        print("  OK No waiting for periodic OODA cycle")
+        print("  OK Priority-based package selection")
+        print("  OK Sequential assignment as UAVs become available")
+        print("  OK Zero-latency recovery from battery failures\n")
 
     except AssertionError as e:
-        print(f"\n✗ TEST FAILED: {e}\n")
+        print(f"\nFAIL TEST FAILED: {e}\n")
         raise

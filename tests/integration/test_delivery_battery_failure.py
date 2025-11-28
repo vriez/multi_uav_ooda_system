@@ -1,7 +1,7 @@
 """
 Integration tests for delivery mission battery failure scenarios.
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 Tests the behavior when UAVs run out of battery during delivery missions,
@@ -62,7 +62,7 @@ class TestDeliveryBatteryFailure:
         uav["position"] = [0, 0, 10]
         package["status"] = "picked_up"
         assert package["status"] == "picked_up"
-        print(f"✓ Package picked up by {uav_id}")
+        print(f"OK Package picked up by {uav_id}")
         print(f"  Battery: {uav['battery']:.1f}%\n")
 
         # Phase 2: UAV reaches grid boundary
@@ -78,7 +78,7 @@ class TestDeliveryBatteryFailure:
 
         assert uav["awaiting_permission"] is True
         assert uav["battery"] > 15.0  # Still above critical
-        print(f"✓ {uav_id} stopped at boundary {boundary_pos}")
+        print(f"OK {uav_id} stopped at boundary {boundary_pos}")
         print(f"  Awaiting permission for target [80, 80, 0]")
         print(f"  Battery: {uav['battery']:.1f}%\n")
 
@@ -89,7 +89,7 @@ class TestDeliveryBatteryFailure:
         uav["state"] = "delivering"
 
         assert uav["permission_granted_for_target"] == (80, 80)
-        print(f"✓ Permission granted - {uav_id} proceeding to [80, 80, 0]")
+        print(f"OK Permission granted - {uav_id} proceeding to [80, 80, 0]")
         print(f"  Battery: {uav['battery']:.1f}%\n")
 
         # Phase 4: Battery drains to critical level while outside grid
@@ -100,7 +100,7 @@ class TestDeliveryBatteryFailure:
         # Simulate battery drain (8% drained)
         uav["battery"] = 15.0  # Hit critical threshold
 
-        print(f"✓ {uav_id} at position [70, 70, 10] (outside grid)")
+        print(f"OK {uav_id} at position [70, 70, 10] (outside grid)")
         print(f"  Battery: {uav['battery']:.1f}% - CRITICAL!\n")
 
         # Phase 5: Check if UAV should abort (battery <= 15%)
@@ -128,7 +128,7 @@ class TestDeliveryBatteryFailure:
         assert package["assigned_uav"] is None
         assert uav["assigned_task"] is None
 
-        print(f"✓ {uav_id} ABORTED delivery - returning to base")
+        print(f"OK {uav_id} ABORTED delivery - returning to base")
         print(f"  Package {package_id} reset to PENDING")
         print(f"  Battery: {uav['battery']:.1f}%\n")
 
@@ -145,7 +145,7 @@ class TestDeliveryBatteryFailure:
 
         assert uav["state"] == "recovered"
         assert uav["battery"] >= 80.0
-        print(f"✓ {uav_id} returned home and charged")
+        print(f"OK {uav_id} returned home and charged")
         print(f"  State: {uav['state']}")
         print(f"  Battery: {uav['battery']:.1f}%\n")
 
@@ -193,7 +193,7 @@ class TestDeliveryBatteryFailure:
         assert package["status"] == "assigned"
         assert uav_2["state"] == "delivering"
 
-        print(f"✓ OODA reassigned {package_id} to {uav_2_id}")
+        print(f"OK OODA reassigned {package_id} to {uav_2_id}")
         print(
             f"  {uav_2_id} battery: {uav_2['battery']:.1f}% (better than {uav_id}: {uav['battery']:.1f}%)"
         )
@@ -275,7 +275,7 @@ class TestDeliveryBatteryFailure:
         assert uav["awaiting_permission"] is False
         assert package["status"] == "pending"
 
-        print("✓ UAV aborted while waiting at boundary")
+        print("OK UAV aborted while waiting at boundary")
         print(f"  {uav_id} returning to base (battery: {uav['battery']:.1f}%)")
         print(f"  Package {package_id} reset to PENDING")
         print(f"  No permission needed - emergency return\n")
@@ -347,7 +347,7 @@ class TestDeliveryBatteryFailure:
         package["status"] = "pending"
         package["assigned_uav"] = None
 
-        print(f"  ✗ uav_1 FAILED (battery: 14%)")
+        print(f"  FAIL uav_1 FAILED (battery: 14%)")
         print(f"  Package reset to PENDING\n")
 
         # Attempt 2: UAV 2 (18% battery)
@@ -367,7 +367,7 @@ class TestDeliveryBatteryFailure:
         package["status"] = "pending"
         package["assigned_uav"] = None
 
-        print(f"  ✗ uav_2 FAILED (battery: 13%)")
+        print(f"  FAIL uav_2 FAILED (battery: 13%)")
         print(f"  Package reset to PENDING again\n")
 
         # Attempt 3: UAV 3 (90% battery) - should succeed
@@ -385,7 +385,7 @@ class TestDeliveryBatteryFailure:
         assert package["status"] == "delivered"
         assert package["assigned_uav"] == "uav_3"
 
-        print(f"  ✓ uav_3 SUCCEEDED (battery sufficient)")
+        print(f"  OK uav_3 SUCCEEDED (battery sufficient)")
         print(f"  Package DELIVERED\n")
 
         print("=== TEST PASSED ===")
@@ -409,15 +409,15 @@ if __name__ == "__main__":
         test_suite.test_multiple_uavs_battery_failure_cascade()
 
         print("\n" + "=" * 70)
-        print("ALL TESTS PASSED ✓")
+        print("ALL TESTS PASSED OK")
         print("=" * 70)
         print("\nDelivery mission battery failure handling is working correctly:")
-        print("  ✓ UAVs abort when battery drops to 15%")
-        print("  ✓ Packages reset to pending for reassignment")
-        print("  ✓ OODA loop reassigns to UAVs with better battery")
-        print("  ✓ System recovers from multiple failures")
-        print("  ✓ Outside-grid deliveries handled safely\n")
+        print("  OK UAVs abort when battery drops to 15%")
+        print("  OK Packages reset to pending for reassignment")
+        print("  OK OODA loop reassigns to UAVs with better battery")
+        print("  OK System recovers from multiple failures")
+        print("  OK Outside-grid deliveries handled safely\n")
 
     except AssertionError as e:
-        print(f"\n✗ TEST FAILED: {e}\n")
+        print(f"\nFAIL TEST FAILED: {e}\n")
         raise

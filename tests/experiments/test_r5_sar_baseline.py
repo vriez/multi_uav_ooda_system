@@ -1,7 +1,7 @@
 """
 R5: Search & Rescue Mission Baseline Comparison Experiment
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This experiment validates that the OODA-based system achieves critical

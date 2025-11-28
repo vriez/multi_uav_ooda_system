@@ -1,7 +1,7 @@
 """
 Realistic Mission Completion Assistance - Web Dashboard
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 Advanced multi-UAV coordination system with workload distribution,
@@ -1051,10 +1051,10 @@ class WorkloadBalancer:
                             icon = "→"
                             desc = "Going to pickup"
                         elif status == "picked_up":
-                            icon = "✓"
+                            icon = "OK"
                             desc = "Delivering"
                         elif status == "delivered":
-                            icon = "✓"
+                            icon = "OK"
                             desc = "Delivered"
                         else:
                             icon = "?"

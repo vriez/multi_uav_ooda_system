@@ -2,7 +2,7 @@
 """
 Realistic Mission Completion Assistance - Dashboard Launcher
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 """
 import sys
@@ -15,6 +15,6 @@ from visualization.web_dashboard import start_dashboard  # noqa: E402
 
 if __name__ == "__main__":
     print("Realistic Mission Completion Assistance")
-    print("Author: Vítor Eulálio Reis <vitor.reis@proton.me>")
+    print("Author: Vítor Eulálio Reis")
     print("=" * 50)
     start_dashboard(port=8085)

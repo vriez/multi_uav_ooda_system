@@ -1,7 +1,7 @@
 """
 Pytest fixtures and configuration for UAV system tests
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This file contains shared fixtures used across all test modules.

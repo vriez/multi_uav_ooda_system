@@ -1,7 +1,7 @@
 """
 Integration tests for surveillance missions
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 Tests cover:

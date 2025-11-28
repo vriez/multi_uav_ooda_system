@@ -1,7 +1,7 @@
 """
 Objective Function and Optimization Strategy for OODA Loop DECIDE Phase
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This module implements the formal objective function J(A) that quantifies

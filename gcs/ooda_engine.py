@@ -1,7 +1,7 @@
 """
 OODA Loop Engine - Core decision-making system for fault-tolerant fleet control.
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This module implements the four-phase OODA (Observe-Orient-Decide-Act) decision

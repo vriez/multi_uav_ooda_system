@@ -1,7 +1,7 @@
 """
 Constraint Validator - Sequential verification of battery, payload, and time constraints.
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This module implements constraint checking for task-to-UAV assignments during the

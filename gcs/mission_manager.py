@@ -1,7 +1,7 @@
 """
 Mission Manager - Task database and assignment management.
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 This module provides the authoritative task database for mission management.

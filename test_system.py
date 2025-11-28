@@ -2,7 +2,7 @@
 """
 Quick system test
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 """
 import sys
@@ -17,9 +17,9 @@ try:
     from gcs.mission_manager import MissionDatabase  # noqa: F401
     from uav.simulation import UAVSimulation
 
-    print("✓ All imports successful")
+    print("All imports successful")
 except Exception as e:
-    print(f"✗ Import failed: {e}")
+    print(f"Import failed: {e}")
     sys.exit(1)
 
 print("\nTesting configuration...")
@@ -30,17 +30,17 @@ try:
         gcs_config = yaml.safe_load(f)
     with open("config/uav_config.yaml") as f:
         uav_config = yaml.safe_load(f)
-    print("✓ Configuration files valid")
+    print("Configuration files valid")
 except Exception as e:
-    print(f"✗ Config failed: {e}")
+    print(f"Config failed: {e}")
     sys.exit(1)
 
 print("\nTesting OODA engine...")
 try:
     engine = OODAEngine(gcs_config)
-    print(f"✓ OODA engine initialized")
+    print(f"OODA engine initialized")
 except Exception as e:
-    print(f"✗ OODA engine failed: {e}")
+    print(f"OODA engine failed: {e}")
     sys.exit(1)
 
 print("\nTesting UAV simulation...")
@@ -49,9 +49,9 @@ try:
 
     uav = UAVSimulation(1, uav_config, np.array([0, 0, 10]))
     telemetry = uav.get_telemetry()
-    print(f"✓ UAV simulation working: {telemetry['uav_id']}")
+    print(f"UAV simulation working: {telemetry['uav_id']}")
 except Exception as e:
-    print(f"✗ UAV simulation failed: {e}")
+    print(f"UAV simulation failed: {e}")
     sys.exit(1)
 
 print("\n" + "=" * 50)

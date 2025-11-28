@@ -1,7 +1,7 @@
 """
 Regression tests for fixed bugs
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 These tests ensure that previously fixed bugs do not reappear.

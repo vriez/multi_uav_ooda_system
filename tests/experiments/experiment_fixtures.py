@@ -1,7 +1,7 @@
 """
 Experiment Fixtures - Shared test infrastructure for baseline comparison experiments
 
-Author: Vítor Eulálio Reis <vitor.reis@proton.me>
+Author: Vítor Eulálio Reis
 Copyright (c) 2025
 
 Provides:

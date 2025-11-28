@@ -6,10 +6,6 @@
 
 > **OODA loop demonstration platform for autonomous drone fleet management with real-time failure recovery.**
 
-<p align="center">
-  <img src="docs/images/dashboard_screenshot.png" alt="Dashboard Screenshot" width="600">
-</p>
-
 ## Quick Start
 
 ```bash
@@ -23,8 +19,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 3. Install dependencies
 uv sync
 
-# 4. Run the dashboard
-make dash
+# 4. Run the Simulator
+make gui
 ```
 
 **Open browser:** http://localhost:8085
@@ -108,7 +104,7 @@ graph TD
         R3[Golden Hour Constraint]
     end
 
-    subgraph D["Medical Delivery"]
+    subgraph D["Delivery"]
         D1[3 UAVs]
         D2[5 Packages]
         D3[Payload Constraints]
@@ -120,6 +116,21 @@ graph TD
 | **Surveillance** | 5 UAVs | 9 zones | Zone contiguity |
 | **Search & Rescue** | 5 UAVs | 9 zones | Time-critical (golden hour) |
 | **Medical Delivery** | 3 UAVs | 5 packages | Payload capacity (kg) |
+
+### Surveillance Mission
+<p align="center">
+  <img src="images/surveillance_dashboard.png" alt="Surveillance Dashboard" width="700">
+</p>
+
+### Search & Rescue Mission
+<p align="center">
+  <img src="images/sar_dashboard.png" alt="Search & Rescue Dashboard" width="700">
+</p>
+
+### Medical Delivery Mission
+<p align="center">
+  <img src="images/delivery_dashboard.png" alt="Medical Delivery Dashboard" width="700">
+</p>
 
 ---
 
@@ -189,7 +200,7 @@ pip install -r requirements.txt
 make test
 
 # Expected output:
-# ==================== 169 passed in 0.22s ====================
+# ==================== 199 passed in 1.00s ====================
 ```
 
 ### Run Experiments
@@ -281,8 +292,8 @@ control:
 make test
 
 # By category
-make test-unit         # 53 unit tests
-make test-integration  # 81 integration tests
+make test-unit         # 71 unit tests
+make test-integration  # 88 integration tests
 make test-regression   # 15 regression tests
 
 # With coverage report
@@ -365,13 +376,6 @@ flowchart TD
 
 ---
 
-## References
-
-- **Thesis:** "Constraint-Aware Fault-Tolerant Control for Multi-Agent UAV Systems"
-- **Quadcopter Dynamics:** Adapted from [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon)
-
----
-
 ## Author
 
 **Vítor Eulálio Reis**
@@ -394,4 +398,14 @@ All technical decisions, system architecture, and algorithm design are the autho
 
 ## License
 
-See project specifications document.
+This project is developed as part of academic research at the University of São Paulo (USP).
+
+**Academic Use:** This software is provided for educational and research purposes. You are free to use, modify, and distribute this code for non-commercial academic purposes with proper attribution.
+
+**Attribution:** If you use this work in your research, please cite:
+
+> Reis, V. E. (2025). *Constraint-Aware Fault-Tolerant Multi-Agent UAV System Using OODA Loop*. Specialization Thesis, School of Engineering of São Carlos, University of São Paulo.
+
+**Commercial Use:** For commercial licensing inquiries, please contact the author.
+
+**Third-Party Components:** The quadcopter dynamics model is adapted from [bobzwik/Quadcopter_SimCon](https://github.com/bobzwik/Quadcopter_SimCon) under its original license terms.
