@@ -1763,25 +1763,11 @@ Extending the system to these domains represents important future work. Formatio
 
 \section{Future Research Directions}
 
-\subsection{Near-Term Enhancements}
+\textbf{Near-term enhancements} include validation across all twenty-seven planned scenarios, sensitivity analysis of safety reserves (5--20\% battery), and environmental modeling incorporating turbulence effects.
 
-Comprehensive validation across all twenty-seven planned test scenarios would provide robust statistical characterization. Sensitivity analysis of safety reserve parameters (5--20\% battery) would establish trade-offs between mission completion probability and safety margins. Enhanced environmental modeling incorporating turbulence and visibility limitations would improve prediction fidelity.
+\textbf{Medium-term objectives} encompass hardware-in-the-loop testing via PX4 SITL, field demonstrations revealing GPS and RF interference challenges, and distributed OODA architectures with consensus-based decision-making. Auction mechanisms such as the Consensus-Based Bundle Algorithm require attention to Byzantine fault tolerance. Formal verification using model checking and temporal logic could guarantee constraint satisfaction and liveness properties.
 
-\subsection{Medium-Term Objectives}
-
-Hardware-in-the-loop testing using PX4 SITL would validate OODA cycle timing under realistic computational constraints. Field demonstrations with small fleets would reveal operational challenges including GPS accuracy limitations and RF interference effects.
-
-Distributed OODA architectures with consensus-based decision-making would enhance robustness against single-point failures. Auction mechanisms like the Consensus-Based Bundle Algorithm require attention to Byzantine fault tolerance and network partition handling.
-
-Formal verification using model checking could verify that OODA cycle logic maintains battery and collision constraints under all reachable states. Temporal logic specifications could capture liveness properties ensuring eventual response to failures.
-
-\subsection{Long-Term Frontiers}
-
-Machine learning could optimize priority weighting based on historical outcomes. Neural networks could predict battery consumption by learning vehicle-specific characteristics. Reinforcement learning might enable adaptive OODA tuning based on observed performance.
-
-Game-theoretic analysis becomes essential for adversarial scenarios. Stackelberg formulations could model hierarchical decision-making in contested missions, while Nash equilibrium concepts might characterize stable operating points with competing systems.
-
-Fleet heterogeneity and large-scale swarm coordination (50+ vehicles) demand hierarchical architectures, efficient communication protocols, and allocation strategies exploiting complementary vehicle capabilities.
+\textbf{Long-term frontiers} involve machine learning for priority optimization---neural networks for battery prediction, reinforcement learning for adaptive OODA tuning---and game-theoretic analysis for adversarial scenarios (Stackelberg formulations, Nash equilibria). Fleet heterogeneity with mixed vehicle capabilities and swarm coordination for fleets exceeding fifty vehicles demand hierarchical architectures and allocation strategies exploiting complementary strengths.
 
 \section{Concluding Perspective}
 
