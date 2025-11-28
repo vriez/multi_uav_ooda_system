@@ -1338,9 +1338,9 @@ All scenarios completed OODA computation in under 1.5 milliseconds (range: 0.2--
 
 \section{Simulation Environment}
 
-Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce systematically. This research therefore employs software-in-the-loop simulation (SOARES et al., 2025), implementing physically-grounded vehicle dynamics within a controlled computational environment where failures can be injected deterministically and experiments repeated indefinitely.
+Validating fault-tolerant control systems presents a fundamental challenge: real-world UAV failures are dangerous, expensive, and difficult to reproduce. This research employs software-in-the-loop simulation (SOARES et al., 2025), implementing physically-grounded vehicle dynamics where failures can be injected deterministically and experiments repeated indefinitely.
 
-The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control for attitude stabilization and waypoint tracking. Vehicle parameters represent a generic mid-size quadrotor platform (1.5 kg mass, 100 Wh battery capacity, 0.5--1.0 kg payload capacity) characteristic of commercial multi-rotor systems deployed in surveillance and delivery applications. The Quad SimCon codebase (QUAD SIMCON, 2020) serves as the foundational reference for dynamics modeling, adapted to support multi-vehicle coordination and centralized fault management.
+The simulation framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control. Vehicle parameters represent a generic mid-size quadrotor (1.5 kg mass, 100 Wh battery, 0.5--1.0 kg payload capacity) characteristic of commercial systems. The Quad SimCon codebase (QUAD SIMCON, 2020) serves as the foundational reference, adapted to support multi-vehicle coordination and centralized fault management.
 
 Communication between simulated UAVs and the Ground Control Station employs TCP/IP transport with JSON-RPC 2.0 protocol, mirroring the request-response patterns of real telemetry systems. The GCS server (port 5555) aggregates fleet state at 2 Hz, while a Flask-based web dashboard (port 8085) provides real-time visualization through WebSocket streaming via SocketIO.
 
@@ -1348,7 +1348,7 @@ The implementation distributes functionality across purpose-specific modules. Th
 
 \section{Validation Metrics}
 
-Quantifying fault-tolerance effectiveness requires metrics that capture both recovery completeness and temporal responsiveness. Four primary metrics anchor the validation framework, each with established targets derived from operational requirements and baseline human performance.
+Four primary metrics anchor the validation framework, each with targets derived from operational requirements and baseline human performance.
 
 \textbf{Coverage Recovery} measures the fraction of orphaned tasks successfully reassigned to healthy UAVs:
 
@@ -1366,7 +1366,7 @@ T_{\text{adapt}} = T_{\text{ACT\_complete}} - T_{\text{failure\_detected}}
 \label{eq:adaptation}
 \end{equation}
 
-This interval encompasses the complete OODA cycle plus any communication latency. The target $T_{\text{adapt}} < 5$ seconds ensures that mission disruption remains bounded; longer delays allow coverage gaps to propagate and time-critical tasks to expire.
+This interval encompasses the complete OODA cycle plus communication latency. The target $T_{\text{adapt}} < 5$ seconds ensures bounded mission disruption.
 
 \textbf{Battery Efficiency} evaluates how effectively the system exploits available fleet capacity:
 
@@ -1384,37 +1384,35 @@ This interval encompasses the complete OODA cycle plus any communication latency
 \label{eq:completion}
 \end{equation}
 
-A mission counts as completed if primary objectives are achieved despite failures, with the target $\xi > 90\%$ for single-failure scenarios acknowledging that some failure combinations inevitably exceed compensatory capacity.
+A mission counts as completed if primary objectives are achieved despite failures, with target $\xi > 90\%$ for single-failure scenarios.
 
 Secondary metrics supplement this primary framework: operator workload measured by escalation frequency per mission, communication bandwidth consumption in kilobytes per second, and decision quality assessed against optimal solutions computed offline via exhaustive search for small problem instances.
 
 \section{Test Scenarios}
 
-Comprehensive validation demands testing at multiple abstraction levels, from isolated algorithmic components to complete mission execution under failure conditions. The test suite comprises 169 automated cases organized into three hierarchical categories, executable in approximately 0.22 seconds via pytest—enabling continuous validation throughout development without impeding iteration velocity.
+The test suite comprises 169 automated cases organized into three hierarchical categories, executable in approximately 0.22 seconds via pytest.
 
 \textbf{Unit tests} (53 cases) validate individual algorithmic components in isolation. Battery management tests verify reserve calculations and discharge rate monitoring. Grid boundary tests confirm spatial constraint enforcement. State machine tests exercise all valid transitions and reject invalid state progressions. Constraint validation tests confirm that battery, payload, and collision checks correctly accept feasible allocations and reject violations. Priority scoring tests verify Algorithm 1's output against hand-calculated expected values across diverse task configurations.
 
 \textbf{Integration tests} (81 cases) exercise subsystem interactions and mission-specific workflows. Surveillance mission tests validate continuous coverage maintenance with rotation scheduling across simulated 2-hour operations. Search and rescue tests verify grid-based coverage patterns with golden hour deadline enforcement, confirming that the system correctly prioritizes time-critical cells. Delivery tests exercise the two-phase pickup-dropoff workflow with payload constraint tracking. Cross-cutting integration tests validate multi-UAV coordination, collision avoidance during concurrent operations, and complete OODA cycle execution from failure injection through recovery confirmation.
 
-\textbf{Regression tests} (15 cases) preserve fixes for defects discovered during development. Each regression test encodes a specific failure mode—edge cases in constraint boundary conditions, race conditions in concurrent state updates, or numerical precision issues in distance calculations—ensuring that resolved issues do not resurface as the codebase evolves.
+\textbf{Regression tests} (15 cases) preserve fixes for defects discovered during development, encoding specific failure modes (constraint boundary edge cases, race conditions, numerical precision issues) to prevent regression.
 
 Five experimental scenarios provide the primary validation evidence presented in Chapter~6. Scenario S5 exercises surveillance mission recovery from single-UAV battery depletion. Scenarios R5 and R6 test search and rescue operations under GPS loss, with R6 introducing an out-of-grid zone requiring operator permission. Scenarios D6 and D7 challenge the delivery mission with payload constraint violations and out-of-grid destinations respectively, validating the intelligent escalation behavior that distinguishes constraint-aware autonomy from naive allocation strategies.
 
 \section{Baseline Comparisons}
 
-Demonstrating the value of constraint-aware fault tolerance requires comparison against alternative approaches. Three baseline strategies establish the comparative framework.
+Three baseline strategies establish the comparative framework.
 
-\textbf{No Adaptation} represents the null hypothesis: missions proceed with fixed assignments, and any UAV failure results in permanent loss of that vehicle's tasks. This baseline establishes the cost of ignoring failures entirely—expected coverage recovery of 0\% with guaranteed mission degradation proportional to the failed UAV's assignment load. While obviously suboptimal, this baseline quantifies the improvement attributable to any adaptive strategy.
+\textbf{No Adaptation} represents the null hypothesis: missions proceed with fixed assignments, and UAV failure results in permanent task loss. This baseline establishes the cost of ignoring failures---expected coverage recovery of 0\% with mission degradation proportional to failed assignment load.
 
-\textbf{Greedy Nearest-Neighbor} implements the simplest autonomous reallocation: assign each orphaned task to the nearest UAV without constraint verification. This approach achieves rapid computation but ignores battery limitations, payload capacity, and collision risks. Expected coverage recovery may reach 100\% in unconstrained scenarios, but the approach risks safety violations when assignments exceed vehicle capabilities—producing plans that appear successful but fail during execution when vehicles exhaust batteries or exceed payload limits.
+\textbf{Greedy Nearest-Neighbor} implements the simplest autonomous reallocation: assign each orphaned task to the nearest UAV without constraint verification. Expected coverage may reach 100\% in unconstrained scenarios, but risks safety violations when assignments exceed vehicle capabilities---plans that appear successful but fail during execution.
 
-\textbf{Hybrid OODA} (this work) combines priority-based allocation with comprehensive constraint validation. By integrating Algorithm 1's priority scoring with Algorithm 2's constraint-aware assignment, the system achieves equivalent coverage to greedy approaches while guaranteeing zero constraint violations. The key differentiator is not speed—both algorithmic approaches complete in millisecond-scale time—but safety: OODA refuses infeasible allocations and escalates appropriately, whereas greedy approaches blindly assign tasks regardless of physical constraints.
+\textbf{Hybrid OODA} (this work) combines priority-based allocation with comprehensive constraint validation. The key differentiator is not speed---both approaches complete in milliseconds---but safety: OODA refuses infeasible allocations and escalates appropriately, whereas greedy approaches blindly assign tasks regardless of physical constraints.
 
 \section{Visualization and Logging}
 
-The implementation provides real-time monitoring and post-hoc analysis through complementary interfaces. The web dashboard (port 8085) renders fleet state via Flask with WebSocket streaming: a geographic map displays UAV positions with color-coded task coverage (green completed, amber pending, red failed), battery bars updated at 2 Hz with 20\% reserve threshold marked, an OODA timeline panel showing phase execution and computation times, and an operator alert log with escalation events, urgency levels, and recommended actions.
-
-Post-mission analysis generates structured outputs: coverage traces over time revealing recovery dynamics, adaptation time distributions across trials, priority-allocation correlation plots, and battery efficiency heatmaps by UAV. All results export to JSON format for reproducible analysis.
+The web dashboard renders fleet state via Flask with WebSocket streaming: UAV positions with color-coded coverage, battery bars at 2 Hz with 20\% reserve marked, OODA timeline with phase timing, and operator alert log. Post-mission analysis generates coverage traces, adaptation time distributions, and battery efficiency heatmaps, all JSON exportable.
 
 \chapter{Experimental Results and Validation}
 
@@ -1711,7 +1709,7 @@ The philosophical contribution may prove most significant: demonstrating that re
 
 \chapter{Limitations and Future Work}
 
-This chapter presents a critical assessment of the proposed OODA-based fault-tolerant control system, examining current limitations and future research directions. Understanding these constraints is essential for establishing realistic performance expectations and identifying opportunities for system enhancement.
+This chapter examines current limitations and future research directions for the OODA-based fault-tolerant control system.
 
 \section{Architectural Constraints}
 
@@ -1719,7 +1717,7 @@ This chapter presents a critical assessment of the proposed OODA-based fault-tol
 
 The system employs a centralized Ground Control Station for OODA loop execution, creating a single point of failure. Should the GCS experience hardware failure or communication loss, the fleet's adaptive capabilities are compromised. Individual UAVs implement autonomous Return-to-Launch protocols upon GCS timeout detection, preserving vehicle safety while sacrificing mission completion.
 
-Future work could explore distributed OODA architectures using consensus algorithms for peer-to-peer coordination, building on hierarchical decentralized control approaches that handle communication failures (IZADI; GORDON; ZHANG, 2013). This approach would eliminate the centralization vulnerability while introducing new challenges including increased communication complexity, network partitioning risks, and Byzantine fault tolerance requirements. The transition to distributed coordination must carefully balance robustness against implementation complexity.
+Distributed OODA architectures using consensus algorithms (IZADI; GORDON; ZHANG, 2013) could eliminate this vulnerability while introducing communication complexity, network partitioning risks, and Byzantine fault tolerance requirements.
 
 \subsection{Fleet Scalability}
 
