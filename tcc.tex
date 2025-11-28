@@ -1723,13 +1723,13 @@ Distributed OODA architectures using consensus algorithms (IZADI; GORDON; ZHANG,
 
 The system supports fleets of three to twelve UAVs. Beyond this scale, two constraints become significant. Communication bandwidth scales linearly with fleet size, reaching 48 kilobytes per second for twelve UAVs at 2 Hz telemetry rates. Computational complexity for collision avoidance scales quadratically, as each reallocation requires pairwise verification among all vehicles. At twenty UAVs, collision checking workload increases 2.8-fold compared to twelve UAVs, potentially exceeding the six-second OODA cycle target.
 
-Hierarchical architectures that partition large fleets into coordinated subgroups could address these limitations. Alternatively, computationally efficient approximate collision avoidance methods using spatial hashing could reduce verification complexity. These extensions would enable applications requiring coordination of dozens or hundreds of vehicles.
+Hierarchical architectures partitioning large fleets into coordinated subgroups, or spatial hashing for approximate collision avoidance, could enable coordination of dozens or hundreds of vehicles.
 
 \subsection{Validation Methodology}
 
 Current validation relies exclusively on software-in-the-loop simulation using physics-based models representative of mid-size commercial quadrotors. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
 
-Hardware-in-the-loop testing with physical flight controllers would provide intermediate validation capturing timing constraints and communication latencies. Field trials with two to three physical UAVs would expose the system to genuine environmental challenges and enable parameter refinement. Future validation should prioritize systematic characterization of performance degradation under realistic operating conditions, establishing the operational envelope for reliable performance.
+Hardware-in-the-loop testing with physical flight controllers would capture timing constraints and communication latencies. Field trials with two to three UAVs would expose the system to genuine environmental challenges, establishing the operational envelope for reliable performance.
 
 \section{Algorithmic Limitations}
 
@@ -1737,13 +1737,13 @@ Hardware-in-the-loop testing with physical flight controllers would provide inte
 
 The constraint-aware reallocation algorithm employs a greedy heuristic that assigns tasks to the nearest UAV satisfying capacity constraints. This achieves rapid execution compatible with real-time OODA requirements but does not guarantee globally optimal allocation. Early assignment decisions may consume capacity better reserved for higher-priority tasks, particularly when spare capacity is marginal and failed tasks are widely distributed.
 
-Mixed-integer linear programming could guarantee optimal solutions for small to medium problems, though solution times may exceed OODA cycle budgets. Auction-based algorithms, particularly the Consensus-Based Bundle Algorithm, offer a promising middle ground achieving near-optimal solutions through distributed iterative bidding with polynomial-time complexity. Comparing these alternatives under diverse scenarios would quantify allocation quality trade-offs.
+Mixed-integer linear programming could guarantee optimal solutions though solution times may exceed OODA cycle budgets. Auction-based algorithms, particularly the Consensus-Based Bundle Algorithm, offer near-optimal solutions through distributed iterative bidding with polynomial-time complexity.
 
 \subsection{Simplified Collision Avoidance}
 
 The collision avoidance strategy maintains fifteen-meter spatial separation with temporal deconfliction when conflicts arise. This proves sufficient for sparse operational densities but exhibits limitations in dense flight patterns. The fixed safety buffer does not adapt to relative velocities, and the pairwise verification approach does not efficiently handle complex multi-vehicle conflicts.
 
-Velocity obstacle approaches, particularly Reciprocal Velocity Obstacles, enable reactive collision avoidance accounting for relative velocities with smooth trajectory modifications. Model predictive control formulations could jointly optimize task execution and collision avoidance. These advanced methods would extend applicability to urban air mobility scenarios with higher flight densities.
+Velocity obstacle approaches (Reciprocal Velocity Obstacles) and model predictive control formulations could extend applicability to urban air mobility scenarios with higher flight densities.
 
 \section{Application Scope}
 
@@ -1751,7 +1751,7 @@ The system addresses three mission classes: long-duration surveillance, emergenc
 
 However, this focused scope excludes mission types with different requirements. Aggressive formation flying demands tighter coordination and higher-bandwidth communication than the current 2 Hz telemetry supports. Adversarial scenarios require game-theoretic reasoning and adversarial prediction beyond current OODA capabilities. Time-critical interception missions may need more sophisticated trajectory optimization than waypoint following provides.
 
-Extending the system to these domains represents important future work. Formation flying could be addressed through augmented OODA loops reasoning about relative positioning constraints. Adversarial scenarios might integrate game-theoretic task allocation anticipating opponent responses. These extensions would broaden applicability while preserving core OODA principles.
+Extending to these domains could involve augmented OODA loops for formation flying or game-theoretic task allocation for adversarial scenarios, broadening applicability while preserving core OODA principles.
 
 \section{Future Research Directions}
 
@@ -1765,7 +1765,7 @@ Extending the system to these domains represents important future work. Formatio
 
 The limitations discussed reflect conscious design choices prioritizing practical deployability over theoretical completeness. The centralized architecture enables regulatory compliance and deterministic performance. The greedy allocation strategy trades global optimality for real-time responsiveness. The constraint-aware approach acknowledges physical limitations rather than assuming unlimited resources.
 
-This honest assessment distinguishes the present work from research claiming comprehensive autonomy while abstracting real-world constraints. A system achieving 65 to 95 percent autonomous coverage recovery within realistic bounds provides substantially more value than theoretical frameworks promising perfect adaptation under idealized assumptions. The identified future work charts a path toward enhanced capabilities while maintaining the fundamental principle of honest, deployable autonomy.
+A system achieving 65--95\% autonomous coverage recovery within realistic bounds provides more value than theoretical frameworks promising perfect adaptation under idealized assumptions. The identified future work charts a path toward enhanced capabilities while maintaining honest, deployable autonomy.
 
 As multi-agent UAV coordination matures, the research community must prioritize systems bridging the gap between laboratory demonstration and operational deployment. This requires explicit modeling of real-world constraints, acknowledgment of fundamental limitations, and design of hybrid human-machine systems leveraging complementary strengths of autonomous algorithms and human supervisory control. The present work contributes to this maturation by demonstrating that constraint-aware, operator-supervised fault tolerance represents the appropriate architecture for near-term UAV fleet deployments in regulated, safety-critical applications.
 
