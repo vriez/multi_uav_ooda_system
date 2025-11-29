@@ -341,10 +341,12 @@ FSM & Finite State Machine \\
 GCS & Ground Control Station \\
 GPS & Global Positioning System \\
 JSON-RPC & JavaScript Object Notation -- Remote Procedure Call \\
+LKP & Last Known Position \\
 MILP & Mixed Integer Linear Programming \\
 OODA & Observe-Orient-Decide-Act \\
 OOG & Out-of-Grid \\
 PID & Proportional-Integral-Derivative \\
+POA & Probability of Area \\
 PX4 SITL & PX4 Software-In-The-Loop \\
 RF & Radio Frequency \\
 RTL & Return-to-Launch \\
@@ -623,7 +625,7 @@ Figure~\ref{fig:ooda_loop} illustrates the complete OODA loop execution flow, de
 
 \subsection{OBSERVE Phase: Failure Detection and State Aggregation}
 
-The OBSERVE phase (1.0-1.5s budget) establishes situational awareness through multi-modal failure detection: timeout detection for telemetry gaps >1.5s, explicit fault messages from UAV systems, and statistical anomaly detection (battery discharge >5\%/30s, position jumps >100m, altitude violations). \textit{Note: Computation executes in microseconds; time budget accommodates 2 Hz RF telemetry aggregation.} Upon failure confirmation, the system aggregates fleet state from all operational UAVs, identifies failed vehicle last-known state, enumerates lost tasks with priorities and deadlines, and calculates mission impact percentage.
+The OBSERVE phase (1.0-1.5s budget) establishes situational awareness through multi-modal failure detection: timeout detection for telemetry gaps >1.5s, explicit fault messages from UAV systems, and statistical anomaly detection (battery discharge >5\%/30s, position jumps >100m, altitude violations). Upon failure confirmation, the system aggregates fleet state from all operational UAVs, identifies failed vehicle last-known state, enumerates lost tasks with priorities and deadlines, and calculates mission impact percentage.
 
 \subsection{ORIENT Phase: Situation Assessment and Capacity Analysis}
 
@@ -738,6 +740,41 @@ These scenario variations demonstrate architectural flexibility through consiste
 
 Task reallocation following UAV failure constitutes a resource-constrained scheduling problem under uncertainty, wherein orphaned tasks must be systematically evaluated to determine allocation precedence. This evaluation reconciles three potentially competing objectives: temporal urgency imposed by mission deadlines, intrinsic task criticality derived from domain-specific requirements, and the resource expenditure necessary to execute reallocation. Algorithm~1 formalizes this multi-objective prioritization through a weighted scoring function that synthesizes these dimensions into a unified, comparable metric.
 
+Before presenting the algorithm, we formally define the key data structures that encode the system state and operational context.
+
+\textbf{Definition 1 (Fleet State).} The fleet state $\mathcal{F}$ is a tuple $\mathcal{F} = (\mathcal{U}, \mathcal{U}_{\text{healthy}}, \mathcal{U}_{\text{failed}})$ where:
+\begin{itemize}
+\item $\mathcal{U} = \{u_1, u_2, \ldots, u_n\}$ is the set of all UAVs in the fleet
+\item $\mathcal{U}_{\text{healthy}} \subseteq \mathcal{U}$ is the subset of operational UAVs available for task assignment
+\item $\mathcal{U}_{\text{failed}} \subseteq \mathcal{U}$ is the subset of UAVs that have experienced failures
+\end{itemize}
+Each UAV $u \in \mathcal{U}$ is characterized by a state vector:
+\begin{equation}
+u = (\text{pos}, \text{battery}, \text{committed}, \text{payload}, \text{speed}, \eta, \text{status}, \text{permissions})
+\end{equation}
+where $\text{pos} \in \mathbb{R}^3$ is the current position, $\text{battery} \in [0, 100]$ is the remaining charge percentage, $\text{committed} \in [0, 100]$ is the battery percentage already allocated to pending tasks, $\text{payload} \in \mathbb{R}_{\geq 0}$ is the current cargo weight, $\text{speed} \in \mathbb{R}_{> 0}$ is the cruise velocity, $\eta \in \mathbb{R}_{> 0}$ is the energy efficiency (meters per percent battery), $\text{status} \in \{\text{idle}, \text{active}, \text{failed}, \text{returning}\}$ is the operational state, and $\text{permissions}$ encodes regulatory authorizations (e.g., out-of-grid flight).
+
+\textbf{Definition 2 (Mission Context).} The mission context $\mathcal{M}$ encapsulates the operational parameters and constraints:
+\begin{equation}
+\mathcal{M} = (\text{type}, \mathcal{T}, \mathcal{G}, W, \Theta)
+\end{equation}
+where:
+\begin{itemize}
+\item $\text{type} \in \{\text{surveillance}, \text{SAR}, \text{delivery}\}$ specifies the mission category
+\item $\mathcal{T} = \{t_1, t_2, \ldots, t_k\}$ is the set of tasks, where each task $t_i = (\text{pos}, \text{type}, t_i^{\text{start}}, t_i^{\text{deadline}}, \text{priority}_{\text{base}}, \text{payload})$ contains position, type, start time, deadline, base priority, and payload weight
+\item $\mathcal{G} \subset \mathbb{R}^2$ defines the authorized operational grid boundaries, with $R_{\max} = \text{diag}(\mathcal{G})$ denoting the maximum operational range (grid diagonal, e.g., $\sqrt{120^2 + 120^2} \approx 170$m)
+\item $W: \text{type} \times \text{task\_type} \to [0, 1]$ is the criticality weight lookup table
+\item $\Theta = (B_{\text{reserve}}, D_{\text{safe}}, T_{\text{safe}})$ contains safety thresholds: battery reserve (20\%), spatial separation (15m), and temporal buffer (10s)
+\end{itemize}
+
+These formal definitions establish the mathematical foundation for the algorithms that follow, ensuring precise specification of inputs and enabling rigorous analysis of algorithmic behavior.
+
+Additionally, we define the clamping function used throughout the algorithms:
+\begin{equation}
+\text{clamp}(x, a, b) = \max(a, \min(b, x))
+\end{equation}
+which constrains $x$ to the interval $[a, b]$. When written as $\text{clamp}(x)$, the default interval $[0, 1]$ is assumed.
+
 \begin{table}[H]
 \centering
 \begin{tabular}{|p{12cm}|}
@@ -746,7 +783,7 @@ Task reallocation following UAV failure constitutes a resource-constrained sched
 \hline
 \textbf{Input:} Task $t_i$ with position, type, and deadline; fleet state $\mathcal{F}$; mission context $\mathcal{M}$ \\
 \textbf{Output:} Priority score $P_i \in [0, 1]$ \\[6pt]
-\textbf{1.} Compute temporal urgency: $\tau \gets 1 - \dfrac{t_i.\text{deadline} - t_{\text{now}}}{t_i.\text{deadline} - t_i.\text{start}}$ \\[6pt]
+\textbf{1.} Compute temporal urgency: $\tau \gets 1 - \dfrac{t_i^{\text{deadline}} - t_{\text{now}}}{t_i^{\text{deadline}} - t_i^{\text{start}}}$ \\[6pt]
 \textbf{2.} Look up mission criticality weight: $c \gets W_{\mathcal{M}.\text{type}}[t_i.\text{type}]$ \\[6pt]
 \textbf{3.} Find minimum distance to healthy UAV: $d_{\min} \gets \min_{u \in \mathcal{F}.\text{healthy}} \| u.\text{pos} - t_i.\text{pos} \|$ \\[6pt]
 \textbf{4.} Normalize spatial cost: $\sigma \gets d_{\min} \,/\, R_{\max}$ \\[6pt]
@@ -758,7 +795,7 @@ Task reallocation following UAV failure constitutes a resource-constrained sched
 
 Each component of the scoring function addresses a distinct aspect of the prioritization problem. The temporal urgency term $\tau$ increases monotonically as deadlines approach, ensuring time-critical objectives receive elevated priority. The mission criticality weight $c$ encodes domain-specific importance hierarchies---critical packages receive maximum weighting (1.0) in delivery missions while routine packages score 0.4; in search and rescue, high-probability victim zones supersede peripheral patrols. The spatial cost term $\sigma$ penalizes tasks distant from available UAVs, implicitly incorporating battery expenditure into the priority calculus.
 
-The default weight configuration ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasizes mission criticality as the primary determinant while maintaining responsiveness to temporal constraints; these parameters admit mission-specific customization as detailed in Section~3.5. This formulation extends auction-based allocation methods (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), with the principal distinction being the explicit integration of resource costs within the priority calculus rather than their treatment as post-hoc constraints. The theoretical foundations derive from the ST-SR-IA problem class in Gerkey and Matarić's (2004) taxonomy of multi-robot task allocation.
+The default weight configuration ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasizes mission criticality as the primary determinant while maintaining responsiveness to temporal constraints; these parameters admit mission-specific customization as detailed in Section~4.4. This formulation extends auction-based allocation methods (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), with the principal distinction being the explicit integration of resource costs within the priority calculus rather than their treatment as post-hoc constraints. The theoretical foundations derive from the ST-SR-IA problem class in Gerkey and Matarić's (2004) taxonomy of multi-robot task allocation.
 
 \section{Constraint-Aware Task Reallocation with Collision Avoidance}
 
@@ -864,22 +901,63 @@ The preceding algorithms define \textit{how} tasks are prioritized and allocated
 
 \subsection{Allocation Quality Metric}
 
-The quality of a task reallocation is quantified through an objective function $J(\mathcal{A})$ that the optimizer seeks to maximize. Given an allocation $\mathcal{A} = \{(t_i, u_j)\}$ mapping failed tasks $t_i$ to healthy UAVs $u_j$, the objective function is defined as:
+The quality of a task reallocation is quantified through an objective function $J(\mathcal{A})$ that the optimizer seeks to maximize. The optimization problem can be formally stated as:
+
+\textbf{Problem Statement (Task Reallocation Optimization).} Given a set of orphaned tasks $\mathcal{T}_{\text{failed}} = \{t_1, \ldots, t_k\}$ from failed UAVs and a set of healthy UAVs $\mathcal{U}_{\text{healthy}} = \{u_1, \ldots, u_m\}$, find an allocation $\mathcal{A}^* \subseteq \mathcal{T}_{\text{failed}} \times \mathcal{U}_{\text{healthy}}$ that maximizes mission value while satisfying operational constraints.
+
+\textbf{Decision Variable.} The optimization variable is the allocation $\mathcal{A} = \{(t_i, u_j)\}$, a set of task-UAV pairs indicating that task $t_i$ is assigned to UAV $u_j$. Each task may be assigned to at most one UAV (or remain unallocated if no feasible assignment exists).
+
+\textbf{Objective Function.} The allocation quality is quantified as:
 
 \begin{equation}
-J(\mathcal{A}) = \sum_{(t_i, u_j) \in \mathcal{A}} \left[ P_i \cdot \phi_m(t_i, u_j) \right] - \lambda \cdot |\mathcal{T}_{\text{unalloc}}|
+\mathcal{A}^* = \arg\max_{\mathcal{A}} J(\mathcal{A}) = \arg\max_{\mathcal{A}} \left\{ \sum_{(t_i, u_j) \in \mathcal{A}} \left[ P_i \cdot \phi_m(t_i, u_j) \right] - \lambda \cdot |\mathcal{T}_{\text{unalloc}}| \right\}
 \label{eq:objective}
 \end{equation}
 
 \noindent where:
 \begin{itemize}
 \item $P_i \in [0,1]$ is the priority score of task $t_i$ computed by Algorithm 1
-\item $\phi_m(t_i, u_j) \in [0,1]$ is a mission-specific modifier function
+\item $\phi_m(t_i, u_j) \in [0,1]$ is a mission-specific modifier function (defined in Equation~\ref{eq:modifier})
 \item $\lambda > 0$ is the penalty weight for unallocated tasks
-\item $|\mathcal{T}_{\text{unalloc}}|$ is the count of tasks that could not be feasibly assigned
+\item $\mathcal{T}_{\text{unalloc}} = \mathcal{T}_{\text{failed}} \setminus \{t_i : (t_i, u_j) \in \mathcal{A}\}$ is the set of tasks that could not be feasibly assigned
 \end{itemize}
 
-The mission-specific modifier $\phi_m$ adjusts task value based on operational context:
+\textbf{Constraint Set.} The allocation $\mathcal{A}$ must satisfy the following constraints for each assignment $(t_i, u_j) \in \mathcal{A}$:
+
+\begin{enumerate}
+\item \textbf{Battery constraint:} The UAV must retain sufficient energy to reach the task and return safely:
+\begin{equation}
+b_{u_j} - \frac{\|u_j.\text{pos} - t_i.\text{pos}\|}{\eta_{u_j}} \geq B_{\text{reserve}}
+\end{equation}
+where $b_{u_j}$ is the current battery level, $\eta_{u_j}$ is energy efficiency, and $B_{\text{reserve}} = 20\%$ is the safety margin.
+
+\item \textbf{Payload constraint} (delivery missions only): The UAV must have sufficient spare capacity:
+\begin{equation}
+p_{u_j}^{\text{max}} - p_{u_j}^{\text{current}} \geq t_i.\text{payload}
+\end{equation}
+
+\item \textbf{Spatial constraint:} The task location must be within authorized boundaries or the UAV must hold appropriate permissions:
+\begin{equation}
+t_i.\text{pos} \in \mathcal{G} \quad \lor \quad \text{``out-of-grid''} \in u_j.\text{permissions}
+\end{equation}
+
+\item \textbf{Collision avoidance constraint:} The proposed trajectory must maintain safe separation from all other UAVs (verified by Algorithm 3).
+
+\item \textbf{Uniqueness constraint:} Each task is assigned to at most one UAV:
+\begin{equation}
+\forall t_i \in \mathcal{T}_{\text{failed}}: |\{u_j : (t_i, u_j) \in \mathcal{A}\}| \leq 1
+\end{equation}
+\end{enumerate}
+
+\textbf{Solution Method.} This constrained optimization problem is an instance of the generalized assignment problem, which is NP-hard. Given the real-time requirement (solution within 1.0--1.5 seconds), exact methods such as mixed-integer linear programming (MILP) or branch-and-bound are computationally infeasible. The system instead employs a \textbf{greedy heuristic with local search refinement} (Algorithm 5), which guarantees constraint satisfaction by construction and achieves 70--85\% of optimal objective value in sub-millisecond computation time. This trade-off prioritizes operational responsiveness over theoretical optimality---a suboptimal solution computed immediately provides greater mission value than an optimal solution computed after deadlines have elapsed.
+
+The mission-specific modifier $\phi_m$ adjusts task value based on operational context. We define the following temporal variables:
+\begin{itemize}
+\item $\Delta t_{\text{gap}}(t_i)$ --- time elapsed since the last coverage of task $t_i$'s zone (normalized to $[0, 1]$)
+\item $t_{\text{golden}}$ --- the golden hour duration for SAR missions (typically 60 minutes)
+\item $t_{\text{completion}}(t_i, u_j)$ --- estimated completion time if task $t_i$ is assigned to UAV $u_j$
+\item $t_{\text{deadline}}$ --- the delivery deadline for task $t_i$
+\end{itemize}
 
 \begin{equation}
 \phi_m(t_i, u_j) =
@@ -894,7 +972,7 @@ The mission-specific modifier $\phi_m$ adjusts task value based on operational c
 \label{eq:modifier}
 \end{equation}
 
-For surveillance missions, the modifier penalizes coverage gaps through parameter $\gamma$, where $\Delta t_{\text{gap}}$ represents the time since last coverage of the task's zone. For search and rescue operations, tasks completed before the golden hour receive a bonus weighted by $\beta$, incentivizing rapid coverage of high-probability areas. For delivery missions, the modifier applies a binary penalty for deadline violations, reflecting the discrete nature of delivery success.
+For surveillance missions, the modifier penalizes coverage gaps through parameter $\gamma$, incentivizing prompt re-coverage of zones that have gone unmonitored. For search and rescue operations, tasks completed before the golden hour receive a bonus weighted by $\beta$, incentivizing rapid coverage of high-probability areas. For delivery missions, the modifier applies a binary penalty for deadline violations, reflecting the discrete nature of delivery success.
 
 \subsection{Optimization Strategy}
 
@@ -963,11 +1041,10 @@ Unallocated penalty & $\lambda$ & 0.3 & 0.5 & 0.4 \\
 Coverage gap weight & $\gamma$ & 0.2 & --- & --- \\
 Golden hour bonus & $\beta$ & --- & 0.5 & --- \\
 \rowcolor{gray!15}
-                 & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+Priority weight (temporal) & $w_{\text{temporal}}$ & 0.3 & 0.5 & 0.2 \\
+Priority weight (criticality) & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
 \rowcolor{gray!15}
-Priority weights & $w_{\text{criticality}}$ & 0.5 & 0.3 & 0.6 \\
-\rowcolor{gray!15}
-                 & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
+Priority weight (spatial) & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
 \hline
 \end{tabular}
 \end{table}
@@ -1466,6 +1543,7 @@ Table~\ref{tab:scenario_performance} synthesizes performance metrics across all 
 
 \begin{table}[H]
 \centering
+\small
 \caption{Measured Performance by Scenario}
 \label{tab:scenario_performance}
 \begin{tabular}{|l|c|c|c|}
@@ -1473,7 +1551,8 @@ Table~\ref{tab:scenario_performance} synthesizes performance metrics across all 
 \textbf{Metric} & \textbf{Surveillance (S5)} & \textbf{SAR (R5/R6)} & \textbf{Delivery (D6/D7)} \\
 \hline
 Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
-OODA Time (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 / 0.24 $\pm$ 0.15 ms} & \textbf{0.18 $\pm$ 0.21 / 0.10 $\pm$ 0.03 ms} \\
+OODA Time R5/D6 (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 ms} & \textbf{0.18 $\pm$ 0.21 ms} \\
+OODA Time R6/D7 (mean $\pm$ std) & --- & \textbf{0.24 $\pm$ 0.15 ms} & \textbf{0.10 $\pm$ 0.03 ms} \\
 Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
 Constraint Violations & \textbf{0} (N=30) & \textbf{0} (N=30) & \textbf{0} (N=30) \\
 Dominant Constraint & Battery & Time (golden hour) & Payload \\
@@ -1497,7 +1576,19 @@ The simulation framework implements six-degree-of-freedom quaternion dynamics wi
 
 Communication between simulated UAVs and the Ground Control Station employs TCP/IP transport with JSON-RPC 2.0 protocol, mirroring the request-response patterns of real telemetry systems. The GCS server (port 5555) aggregates fleet state at 2 Hz, while a Flask-based web dashboard (port 8085) provides real-time visualization through WebSocket streaming via SocketIO.
 
-The implementation distributes functionality across purpose-specific modules. The OODA engine (\texttt{gcs/ooda\_engine.py}) orchestrates phase timing and state transitions. Fleet monitoring (\texttt{gcs/fleet\_monitor.py}) implements multi-modal failure detection. Constraint validation (\texttt{gcs/constraint\_validator.py}) enforces battery, payload, and collision safety margins. The mission manager (\texttt{gcs/mission\_manager.py}) maintains the task database with assignment tracking, while the objective function module (\texttt{gcs/objective\_function.py}) implements the two-stage optimization strategy. Vehicle dynamics reside in \texttt{uav/simulation.py}, with GCS communication handled by \texttt{uav/client.py}. The complete source is publicly available (EULÁLIO REIS, 2025).
+The implementation distributes functionality across purpose-specific modules:
+
+\begin{itemize}
+    \item \texttt{gcs/ooda\_engine.py} --- orchestrates phase timing and state transitions
+    \item \texttt{gcs/fleet\_monitor.py} --- implements multi-modal failure detection
+    \item \texttt{gcs/constraint\_validator.py} --- enforces battery, payload, and collision safety margins
+    \item \texttt{gcs/mission\_manager.py} --- maintains the task database with assignment tracking
+    \item \texttt{gcs/objective\_function.py} --- implements the two-stage optimization strategy
+    \item \texttt{uav/simulation.py} --- vehicle dynamics
+    \item \texttt{uav/client.py} --- GCS communication
+\end{itemize}
+
+\noindent The complete source is publicly available (EULÁLIO REIS, 2025).
 
 \section{Validation Metrics}
 
@@ -1778,6 +1869,7 @@ Table~\ref{tab:scenario_comparison} synthesizes performance characteristics acro
 
 \begin{table}[H]
 \centering
+\small
 \caption{Statistical Performance by Scenario (N=30 runs each)}
 \label{tab:scenario_comparison}
 \begin{tabular}{|l|c|c|c|}
@@ -1786,7 +1878,9 @@ Table~\ref{tab:scenario_comparison} synthesizes performance characteristics acro
 \hline
 Coverage Recovery & \textbf{100\%} & \textbf{100\%} & \textbf{0\% (escalated)} \\
 \hline
-OODA Time (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 / 0.24 $\pm$ 0.15 ms} & \textbf{0.18 $\pm$ 0.21 / 0.10 $\pm$ 0.03 ms} \\
+OODA Time R5/D6 (mean $\pm$ std) & \textbf{0.42 $\pm$ 0.15 ms} & \textbf{0.88 $\pm$ 0.56 ms} & \textbf{0.18 $\pm$ 0.21 ms} \\
+\hline
+OODA Time R6/D7 (mean $\pm$ std) & --- & \textbf{0.24 $\pm$ 0.15 ms} & \textbf{0.10 $\pm$ 0.03 ms} \\
 \hline
 Operator Escalation & 0\% (autonomous) & 0\% (autonomous) & 100\% (correct) \\
 \hline
