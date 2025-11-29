@@ -372,67 +372,33 @@ UAV & Unmanned Aerial Vehicle \\
 
 \chapter{Introduction}
 
-\section{The Reality Gap in Multi-Agent UAV Research}
+\section{Motivation and Problem Statement}
 
 Multi-UAV coordination has emerged as a key enabler of scalable autonomy in logistics, environmental monitoring, and emergency response. Yet much fault-tolerant multi-agent research still operates within idealized boundaries (ZHANG; JIANG, 2008; YU; JIANG, 2015), presuming unlimited energy, unrestricted payload capacity, instantaneous communication, and fully autonomous decision authority—assumptions that mask real-world complexities.
 
 In practice, UAV operations face strict physical and regulatory limits: batteries must retain 10–20\% safety reserves, payloads deplete irreversibly mid-mission, communication links introduce latencies up to two seconds, and beyond visual line of sight operations require constant operator supervision. The resulting ``reality gap'' means systems reliable in laboratory conditions may struggle in the field. Closing this gap requires architectures that adapt to uncertainty and resource constraints while maintaining situational awareness and regulatory compliance.
 
-\section{The OODA Loop: From Combat Theory to Autonomous Resilience}
-
-The OODA loop—Observe, Orient, Decide, Act—originated from Colonel John Boyd's studies of aerial combat dynamics (BOYD, 1987), proposing that success depends on processing information and adapting faster than adversaries. For autonomous systems, it provides a recursive cycle: ``Observe'' collects sensor and telemetry data; ``Orient'' establishes situational awareness; ``Decide'' selects actions under constraints; and ``Act'' executes decisions while feeding outcomes back into subsequent observations.
-
-Applied to UAV fleets, OODA extends beyond traditional feedback control by integrating situational reasoning with awareness of resource states, communication health, and mission progress. Most existing coordination systems emphasize either rapid reaction or long-term planning, but rarely both (BALA et al., 2025).
-
-\section{Bridging the Gap: OODA-Based Fault-Tolerant Mission Control}
+The OODA loop—Observe, Orient, Decide, Act—originated from Colonel John Boyd's studies of aerial combat dynamics (BOYD, 1987), proposing that success depends on processing information and adapting faster than adversaries. For autonomous systems, it provides a recursive cycle: ``Observe'' collects sensor and telemetry data; ``Orient'' establishes situational awareness; ``Decide'' selects actions under constraints; and ``Act'' executes decisions while feeding outcomes back into subsequent observations. Applied to UAV fleets, OODA extends beyond traditional feedback control by integrating situational reasoning with awareness of resource states, communication health, and mission progress. Most existing coordination systems emphasize either rapid reaction or long-term planning, but rarely both (BALA et al., 2025).
 
 Despite its theoretical appeal, the OODA framework has rarely been implemented as a real-time operational control system for UAV fleets. Most prior work either focuses on single-vehicle fault recovery (MUELLER; D'ANDREA, 2014; SUN et al., 2022) or treats multi-agent coordination under ideal conditions with unlimited resources (LI et al., 2017; YANG et al., 2011). Architectures for fault-tolerant multi-robot cooperation such as ALLIANCE (PARKER, 1998) have demonstrated resilience principles, but few systems integrate real-world resource constraints, probabilistic fault detection, and operator-in-the-loop supervision within a unified architecture.
 
-This research addresses that gap through the development of a hybrid OODA-based fault-tolerant mission control system designed for real-time UAV fleet management. The system operates as a hybrid finite-state machine (FSM) that continuously cycles between monitoring and adaptation modes, combining deterministic state transitions with probabilistic failure identification to maintain robust mission execution under realistic constraints.
+\section{Proposed Solution and Contributions}
 
-\section{System Overview and Contributions}
+This research addresses that gap through the development of a hybrid OODA-based fault-tolerant mission control system designed for real-time UAV fleet management. The system operates as a hybrid finite-state machine (FSM) that continuously cycles between monitoring and adaptation modes, combining deterministic state transitions with probabilistic failure identification to maintain robust mission execution under realistic constraints. The principal contributions are:
 
-\subsection{Hybrid OODA–FSM Architecture}
+\textbf{Hybrid OODA–FSM Architecture.} At its core, the system functions as a hybrid finite-state controller implementing continuous monitoring at 2 Hz and invoking the OODA cycle upon failure detection. Deterministic state logic ensures predictable mission flow, while probabilistic reasoning handles uncertain or delayed telemetry data.
 
-At its core, the system functions as a hybrid finite-state controller implementing continuous monitoring at 2 Hz and invoking the OODA cycle upon failure detection. Deterministic state logic ensures predictable mission flow, while probabilistic reasoning handles uncertain or delayed telemetry data.
+\textbf{Real-Time Failure Detection.} The system implements multi-modal failure detection through 2 Hz telemetry polling, feeding three detection pathways: communication timeout alerts for telemetry gaps exceeding 1.5 seconds, explicit fault codes from onboard diagnostics, and statistical anomaly detection for subtle degradation patterns (battery discharge >5\%/30s, position jumps >100m, altitude violations). This fusion achieves sub-second fault identification while minimizing false positives.
 
-\subsection{Real-Time Failure Detection}
+\textbf{OODA Execution for Fault Recovery.} Upon fault detection, the system executes a structured OODA cycle completing in 4 to 5.5 seconds. The Observe phase (1.0–1.5s) aggregates fleet telemetry and quantifies mission impact. The Orient phase (1.0–1.5s) evaluates remaining capacity—battery reserves, payload availability, temporal constraints—and re-prioritizes orphaned tasks. The Decide phase (1.0–1.5s) classifies feasibility: full reallocation when >75\% of tasks are recoverable, partial reallocation for 50–75\%, or operator escalation below 50\%. The Act phase (0.5–1.5s) dispatches commands and updates the operator dashboard.
 
-The system implements multi-modal failure detection through 2 Hz telemetry polling, feeding three detection pathways: communication timeout alerts for telemetry gaps exceeding 1.5 seconds, explicit fault codes from onboard diagnostics, and statistical anomaly detection for subtle degradation patterns (battery discharge >5\%/30s, position jumps >100m, altitude violations). This fusion achieves sub-second fault identification while minimizing false positives.
+\textbf{Constraint-Aware Strategy Layer.} Three recovery strategies address different failure severities. \emph{Full Reallocation} engages when the fleet retains sufficient capacity to absorb all orphaned tasks, executing a constraint-aware optimization routine that integrates new waypoints while minimizing travel distance through heuristic TSP solutions. \emph{Partial Reallocation} prioritizes tasks exceeding a 0.7 priority threshold while issuing coverage-gap alerts quantifying the impact. \emph{Operator Escalation} activates when autonomous decision-making would produce unacceptable outcomes, initiating a supervised decision protocol with a 30-second countdown that defaults to the safest available action if no operator input arrives.
 
-\subsection{OODA Execution for Fault Recovery}
-
-Upon fault detection, the system executes a structured OODA cycle completing in 4 to 5.5 seconds. The \textbf{Observe} phase (1.0–1.5s) aggregates fleet telemetry and quantifies mission impact. The \textbf{Orient} phase (1.0–1.5s) evaluates remaining capacity—battery reserves, payload availability, temporal constraints—and re-prioritizes orphaned tasks. The \textbf{Decide} phase (1.0–1.5s) classifies feasibility: full reallocation when >75\% of tasks are recoverable, partial reallocation for 50–75\%, or operator escalation below 50\%. The \textbf{Act} phase (0.5–1.5s) dispatches commands and updates the operator dashboard.
-
-\subsection{Constraint-Aware Strategy Layer}
-
-The three recovery strategies represent fundamentally different operational philosophies, each tailored to the severity and characteristics of the failure scenario.
-
-\textbf{Full Reallocation} engages when the fleet retains sufficient capacity to absorb all orphaned tasks. The system executes a constraint-aware optimization routine (detailed in Algorithm 2) that integrates new waypoints into existing flight plans while minimizing total travel distance through heuristic TSP solutions. This strategy maximizes mission completion without operator intervention, treating the failure as a temporary disruption rather than a mission-altering event.
-
-\textbf{Partial Reallocation} acknowledges resource limitations honestly. When complete recovery proves impossible, the system prioritizes tasks exceeding a 0.7 priority threshold—ensuring that mission-critical objectives receive available resources while lower-priority tasks are deferred or abandoned. Crucially, the system issues explicit coverage-gap alerts quantifying the impact: operators receive not merely notification that tasks were dropped, but precise metrics on what percentage of the mission objective remains achievable.
-
-\textbf{Operator Escalation} activates when autonomous decision-making would produce unacceptable outcomes. Rather than forcing a poor solution, the system initiates a supervised decision protocol, presenting the operator with contextualized options: deploying reserve UAVs, extending mission timelines, accepting degraded coverage, or executing a controlled mission abort. A 30-second countdown ensures timely human response while providing an automatic failsafe—if no operator input arrives, the system defaults to the safest available action, preserving vehicle integrity over mission completion.
-
-\subsection{Performance and Scalability}
-
-The complete OODA cycle achieves reaction times between 4 and 5.5 seconds under realistic communication latency conditions. Computationally, the system scales linearly with fleet size for monitoring and resource evaluation, and quadratically for collision avoidance checks—supporting real-time performance for up to 12 UAVs without exceeding sub-6-second response thresholds.
-
-\section{Document Organization}
-
-This monograph is organized as follows. Chapter~\ref{ch:literature} reviews the theoretical foundations and prior work in fault-tolerant UAV systems, multi-agent coordination, and the OODA loop framework, identifying the research gap this work addresses. Chapter~3 presents the system architecture, detailing the centralized OODA engine and distributed execution model. Chapter~4 describes the core algorithms and technical contributions, including the constraint-aware reallocation mechanism. Chapter~5 introduces the three mission scenarios used for validation. Chapter~6 details the experimental methodology and design. Chapter~7 presents the experimental results and statistical validation. Chapter~8 discusses limitations and future work. Chapter~9 concludes with a summary of contributions and their implications for autonomous UAV fleet operations.
-
-By grounding UAV mission control in the OODA decision cycle, this research introduces a system capable of adaptive, explainable, and regulatorily compliant autonomy. The framework unites rapid machine-driven response with human-supervised oversight, offering a practical balance between safety and autonomy.
-
-In doing so, it bridges the long-standing gap between theoretical multi-agent fault tolerance and real-world deployability---demonstrating that reactive, resource-aware autonomy is not merely a conceptual goal, but an achievable engineering reality for the next generation of UAV fleet operations.
+\textbf{Performance and Scalability.} The complete OODA cycle achieves reaction times between 4 and 5.5 seconds under realistic communication latency conditions. Computationally, the system scales linearly with fleet size for monitoring and resource evaluation, and quadratically for collision avoidance checks—supporting real-time performance for up to 12 UAVs without exceeding sub-6-second response thresholds.
 
 \section{Research Objectives}
 
-\subsection{General Objective}
-
-To design, implement, and validate a constraint-aware fault-tolerant multi-agent coordination framework for Unmanned Aerial Vehicle systems, employing the OODA (Observe-Orient-Decide-Act) loop paradigm to enable mission continuity under operational constraints. This research addresses the methodological gap between theoretical fault tolerance mechanisms and deployable autonomous systems through explicit computational modeling of energy limitations, payload capacity, regulatory airspace boundaries, and human-in-the-loop decision authority.
-
-\subsection{Specific Objectives}
+The general objective of this research is to design, implement, and validate a constraint-aware fault-tolerant multi-agent coordination framework for Unmanned Aerial Vehicle systems, employing the OODA (Observe-Orient-Decide-Act) loop paradigm to enable mission continuity under operational constraints. This research addresses the methodological gap between theoretical fault tolerance mechanisms and deployable autonomous systems through explicit computational modeling of energy limitations, payload capacity, regulatory airspace boundaries, and human-in-the-loop decision authority. The specific objectives are:
 
 \textbf{SO1: Hybrid OODA-FSM Architecture Design.}
 To design and implement a centralized OODA Loop Engine integrated with a deterministic finite-state machine for continuous fleet state monitoring, enabling formally verifiable state transitions coupled with probabilistic failure identification while maintaining compliance with regulatory requirements for Beyond Visual Line of Sight (BVLOS) operations.
@@ -455,10 +421,14 @@ To demonstrate OODA cycle execution within a 6-second end-to-end latency bound, 
 \textbf{SO7: Safety-Critical Constraint Satisfaction Guarantees.}
 To empirically validate zero safety constraint violations across all experimental trials with respect to battery reserve thresholds, payload structural limitations, spatial separation requirements, and regulatory boundary compliance, thereby demonstrating that the proposed constraint-aware architecture maintains safety invariants without compromising mission coverage objectives.
 
+\section{Document Organization}
+
+This monograph is organized as follows. Chapter~\ref{ch:literature} reviews the theoretical foundations and prior work in fault-tolerant UAV systems, multi-agent coordination, and the OODA loop framework, identifying the research gap this work addresses. Chapter~3 presents the system architecture, detailing the centralized OODA engine and distributed execution model. Chapter~4 describes the core algorithms and technical contributions, including the constraint-aware reallocation mechanism. Chapter~5 introduces the three mission scenarios used for validation. Chapter~6 details the experimental methodology and design. Chapter~7 presents the experimental results and statistical validation. Chapter~8 discusses limitations and future work. Chapter~9 concludes with a summary of contributions and their implications for autonomous UAV fleet operations.
+
+By grounding UAV mission control in the OODA decision cycle, this research introduces a system capable of adaptive, explainable, and regulatorily compliant autonomy. The framework unites rapid machine-driven response with human-supervised oversight, offering a practical balance between safety and autonomy. In doing so, it bridges the long-standing gap between theoretical multi-agent fault tolerance and real-world deployability---demonstrating that reactive, resource-aware autonomy is not merely a conceptual goal, but an achievable engineering reality for the next generation of UAV fleet operations.
+
 \chapter{Literature Review}
 \label{ch:literature}
-
-\section{Introduction}
 
 This chapter examines the theoretical foundations and prior work relevant to fault-tolerant multi-UAV coordination under operational constraints. The review is organized thematically: Section~\ref{sec:lit-single-uav} addresses fault tolerance at the vehicle level, Section~\ref{sec:lit-multi-agent} examines multi-agent coordination architectures, Section~\ref{sec:lit-task-allocation} surveys task allocation algorithms, Section~\ref{sec:lit-coverage} discusses coverage control methods, Section~\ref{sec:lit-communication} reviews communication-aware coordination, and Section~\ref{sec:lit-ooda} traces the OODA loop from military theory to autonomous systems. Section~\ref{sec:lit-gap} synthesizes these threads to identify the specific research gap this work addresses.
 
@@ -1642,7 +1612,7 @@ The test suite comprises 169 automated cases organized into three hierarchical c
 
 \textbf{Regression tests} (15 cases) preserve fixes for defects discovered during development, encoding specific failure modes (constraint boundary edge cases, race conditions, numerical precision issues) to prevent regression.
 
-Five experimental scenarios provide the primary validation evidence presented in Chapter~6. Scenario S5 exercises surveillance mission recovery from single-UAV battery depletion. Scenarios R5 and R6 test search and rescue operations under GPS loss, with R6 introducing an out-of-grid zone requiring operator permission. Scenarios D6 and D7 challenge the delivery mission with payload constraint violations and out-of-grid destinations respectively, validating the intelligent escalation behavior that distinguishes constraint-aware autonomy from naive allocation strategies.
+Five experimental scenarios provide the primary validation evidence presented in Chapter~7. The scenario codes use letter prefixes to indicate mission type: \textbf{S} for Surveillance, \textbf{R} for Rescue (SAR), and \textbf{D} for Delivery. Scenario S5 exercises surveillance mission recovery from single-UAV battery depletion. Scenarios R5 and R6 test search and rescue operations under GPS loss, with R6 introducing an out-of-grid zone requiring operator permission. Scenarios D6 and D7 challenge the delivery mission with payload constraint violations and out-of-grid destinations respectively, validating the intelligent escalation behavior that distinguishes constraint-aware autonomy from naive allocation strategies.
 
 \section{Baseline Comparisons}
 
