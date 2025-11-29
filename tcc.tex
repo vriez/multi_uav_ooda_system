@@ -398,101 +398,101 @@ This research addresses that gap through the development of a hybrid OODA-based 
 
 \section{Research Objectives}
 
-The general objective of this research is to design, implement, and validate a constraint-aware fault-tolerant multi-agent coordination framework for Unmanned Aerial Vehicle systems, employing the OODA (Observe-Orient-Decide-Act) loop paradigm to enable mission continuity under operational constraints. This research addresses the methodological gap between theoretical fault tolerance mechanisms and deployable autonomous systems through explicit computational modeling of energy limitations, payload capacity, regulatory airspace boundaries, and human-in-the-loop decision authority. The specific objectives are:
+The general objective is to design, implement, and validate a constraint-aware fault-tolerant multi-agent coordination framework for UAV systems, employing the OODA loop paradigm to enable mission continuity under operational constraints. This addresses the methodological gap between theoretical fault tolerance and deployable autonomous systems through explicit modeling of energy limitations, payload capacity, regulatory boundaries, and human-in-the-loop decision authority. The specific objectives are:
 
 \textbf{SO1: Hybrid OODA-FSM Architecture Design.}
-To design and implement a centralized OODA Loop Engine integrated with a deterministic finite-state machine for continuous fleet state monitoring, enabling formally verifiable state transitions coupled with probabilistic failure identification while maintaining compliance with regulatory requirements for Beyond Visual Line of Sight (BVLOS) operations.
+To design and implement a centralized OODA Loop Engine integrated with a deterministic finite-state machine for continuous fleet monitoring, enabling formally verifiable state transitions with probabilistic failure identification while maintaining BVLOS regulatory compliance.
 
 \textbf{SO2: Multi-Modal Real-Time Failure Detection.}
-To develop and evaluate fault detection mechanisms operating at 2 Hz telemetry acquisition frequency, incorporating three complementary detection pathways: (i) communication timeout detection exceeding 1.5-second threshold, (ii) explicit fault code recognition from onboard diagnostic subsystems, and (iii) statistical anomaly detection for gradual degradation patterns, including abnormal battery discharge rates (>5\% per 30-second window), position discontinuities (>100m), and altitude constraint violations.
+To develop fault detection mechanisms at 2 Hz telemetry frequency with three complementary pathways: (i) communication timeout detection (>1.5s threshold), (ii) explicit fault code recognition from onboard diagnostics, and (iii) statistical anomaly detection for gradual degradation (battery discharge >5\%/30s, position discontinuities >100m, altitude violations).
 
 \textbf{SO3: Constraint-Aware Task Reallocation.}
-To formalize and validate priority-based allocation algorithms that jointly optimize across multiple constraint dimensions: energy reserves (20\% safety margin), payload capacity limitations, temporal deadline satisfaction, and collision avoidance requirements (15m spatial separation buffer), employing sequential fail-fast constraint verification to guarantee physically realizable mission plans rather than theoretically optimal yet operationally infeasible allocations.
+To formalize priority-based allocation algorithms optimizing across energy reserves (20\% margin), payload capacity, temporal deadlines, and collision avoidance (15m buffer), employing sequential fail-fast constraint verification to guarantee physically realizable mission plans.
 
 \textbf{SO4: Operator Escalation Framework.}
-To establish formal decision rules distinguishing autonomously compensable failures from those necessitating human judgment, implementing graduated escalation policies: operator escalation for coverage recovery below 50\% or loss of high-priority tasks, partial reallocation for degradation within the 50--75\% recovery range, and autonomous full reallocation when coverage exceeds 75\%, thereby preserving operator authority over safety-critical determinations.
+To establish formal decision rules distinguishing autonomously compensable failures from those requiring human judgment: operator escalation for coverage recovery below 50\%, partial reallocation for 50--75\% recovery, and autonomous full reallocation above 75\%, preserving operator authority over safety-critical determinations.
 
 \textbf{SO5: Statistical Validation Across Mission Typologies.}
-To conduct rigorous statistical validation (N=30 independent trials per experimental condition) across three distinct mission typologies---persistent surveillance, search-and-rescue operations, and payload delivery---quantifying coverage recovery percentage, adaptation latency, constraint violation frequency, and escalation appropriateness relative to no-adaptation baseline and greedy reallocation strategies.
+To conduct statistical validation (N=30 trials per condition) across three mission types---surveillance, search-and-rescue, and delivery---quantifying coverage recovery, adaptation latency, constraint violations, and escalation appropriateness relative to baseline and greedy strategies.
 
-\textbf{SO6: Real-Time Response Performance Characterization.}
-To demonstrate OODA cycle execution within a 6-second end-to-end latency bound, with phase-specific targets (OBSERVE <500ms, ORIENT <500ms, DECIDE <1200ms, ACT <300ms), ensuring fault recovery computational overhead remains negligible relative to mission duration in time-critical operational contexts such as golden-hour search operations.
+\textbf{SO6: Real-Time Response Performance.}
+To demonstrate OODA cycle execution within 6-second latency (OBSERVE <500ms, ORIENT <500ms, DECIDE <1200ms, ACT <300ms), ensuring negligible computational overhead in time-critical contexts such as golden-hour search operations.
 
-\textbf{SO7: Safety-Critical Constraint Satisfaction Guarantees.}
-To empirically validate zero safety constraint violations across all experimental trials with respect to battery reserve thresholds, payload structural limitations, spatial separation requirements, and regulatory boundary compliance, thereby demonstrating that the proposed constraint-aware architecture maintains safety invariants without compromising mission coverage objectives.
+\textbf{SO7: Safety-Critical Constraint Satisfaction.}
+To validate zero safety constraint violations across all trials regarding battery reserves, payload limits, spatial separation, and regulatory compliance, demonstrating that the architecture maintains safety invariants without compromising coverage objectives.
 
 \section{Document Organization}
 
-This monograph is organized as follows. Chapter~\ref{ch:literature} reviews the theoretical foundations and prior work in fault-tolerant UAV systems, multi-agent coordination, and the OODA loop framework, identifying the research gap this work addresses. Chapter~3 presents the system architecture, detailing the centralized OODA engine and distributed execution model. Chapter~4 describes the core algorithms and technical contributions, including the constraint-aware reallocation mechanism. Chapter~5 introduces the three mission scenarios used for validation. Chapter~6 details the experimental methodology and design. Chapter~7 presents the experimental results and statistical validation. Chapter~8 discusses limitations and future work. Chapter~9 concludes with a summary of contributions and their implications for autonomous UAV fleet operations.
+This monograph is organized as follows. Chapter~\ref{ch:literature} reviews theoretical foundations and prior work, identifying the research gap. Chapter~3 presents the system architecture, detailing the centralized OODA engine and distributed execution model. Chapter~4 describes the core algorithms, including constraint-aware reallocation. Chapter~5 introduces the three mission scenarios used for validation. Chapter~6 details experimental methodology. Chapter~7 presents results and statistical validation. Chapter~8 discusses limitations and future work. Chapter~9 concludes with a summary of contributions.
 
-By grounding UAV mission control in the OODA decision cycle, this research introduces a system capable of adaptive, explainable, and regulatorily compliant autonomy. The framework unites rapid machine-driven response with human-supervised oversight, offering a practical balance between safety and autonomy. In doing so, it bridges the long-standing gap between theoretical multi-agent fault tolerance and real-world deployability---demonstrating that reactive, resource-aware autonomy is not merely a conceptual goal, but an achievable engineering reality for the next generation of UAV fleet operations.
+By grounding UAV mission control in the OODA decision cycle, this research introduces a system capable of adaptive, explainable, and regulatorily compliant autonomy—bridging the gap between theoretical multi-agent fault tolerance and real-world deployability.
 
 \chapter{Literature Review}
 \label{ch:literature}
 
-This chapter examines the theoretical foundations and prior work relevant to fault-tolerant multi-UAV coordination under operational constraints. The review is organized thematically: Section~\ref{sec:lit-single-uav} addresses fault tolerance at the vehicle level, Section~\ref{sec:lit-multi-agent} examines multi-agent coordination architectures, Section~\ref{sec:lit-task-allocation} surveys task allocation algorithms, Section~\ref{sec:lit-coverage} discusses coverage control methods, Section~\ref{sec:lit-communication} reviews communication-aware coordination, and Section~\ref{sec:lit-ooda} traces the OODA loop from military theory to autonomous systems. Section~\ref{sec:lit-gap} synthesizes these threads to identify the specific research gap this work addresses.
+This chapter examines prior work relevant to fault-tolerant multi-UAV coordination under operational constraints. The review covers fault tolerance at the vehicle level (Section~\ref{sec:lit-single-uav}), multi-agent coordination architectures (Section~\ref{sec:lit-multi-agent}), task allocation algorithms (Section~\ref{sec:lit-task-allocation}), coverage control (Section~\ref{sec:lit-coverage}), communication-aware coordination (Section~\ref{sec:lit-communication}), and the OODA loop in autonomous systems (Section~\ref{sec:lit-ooda}). Section~\ref{sec:lit-gap} synthesizes these threads to identify the research gap.
 
 \section{Fault Tolerance in Single Unmanned Aerial Vehicles}
 \label{sec:lit-single-uav}
 
-Vehicle-level fault tolerance has achieved substantial maturity through control-theoretic approaches. Mueller and D'Andrea \cite{mueller2014} demonstrated that quadrotors can maintain controlled flight despite the complete loss of one, two, or three propellers by exploiting the remaining actuator authority through control reallocation. Their experimental results showed stable hovering with a single propeller, albeit with reduced maneuverability and reliance on body rotation for attitude control.
+Vehicle-level fault tolerance has achieved substantial maturity through control-theoretic approaches. Mueller and D'Andrea \cite{mueller2014} demonstrated that quadrotors can maintain controlled flight despite loss of one to three propellers by exploiting remaining actuator authority through control reallocation, achieving stable hovering with a single propeller albeit with reduced maneuverability.
 
-Sun et al. \cite{sun2022} extended this capability to scenarios where the specific failed rotor is unknown a priori. Their model predictive control (MPC) formulation estimates failure configurations online and adapts control allocation accordingly, achieving stable recovery within 2.3 seconds of rotor failure onset in simulation trials.
+Sun et al. \cite{sun2022} extended this to scenarios where the failed rotor is unknown a priori, using model predictive control (MPC) to estimate failure configurations online and adapt allocation accordingly, achieving stable recovery within 2.3 seconds.
 
-\textbf{Critical Assessment:} These contributions establish that individual vehicles can survive actuator failures. However, both works assume (i) a ground-based operator or automated system to issue high-level commands post-recovery, (ii) no mission context requiring coordination with other vehicles, and (iii) unlimited time for recovery maneuvers. In fleet operations where failed vehicles hold assigned tasks and battery constraints limit mission duration, vehicle-level recovery alone proves insufficient---the mission layer must compensate for lost capacity.
+\textbf{Critical Assessment:} These contributions establish that individual vehicles can survive actuator failures. However, both assume (i) an operator or system to issue high-level commands post-recovery, (ii) no coordination with other vehicles, and (iii) unlimited recovery time. In fleet operations where failed vehicles hold assigned tasks and battery constraints limit duration, vehicle-level recovery alone proves insufficient.
 
 \section{Multi-Agent Coordination Architectures}
 \label{sec:lit-multi-agent}
 
-Parker's \cite{parker1998} ALLIANCE architecture represents foundational work in fault-tolerant multi-robot cooperation. ALLIANCE employs behavior-based control with motivational dynamics: each robot maintains internal motivation levels for available tasks, with impatience parameters causing robots to assume tasks when teammates fail to perform adequately. Experimental validation on box-pushing and hazardous waste cleanup tasks demonstrated graceful degradation under robot failures.
+Parker's \cite{parker1998} ALLIANCE architecture represents foundational work in fault-tolerant multi-robot cooperation, employing behavior-based control with motivational dynamics: each robot maintains motivation levels for available tasks, with impatience parameters causing robots to assume tasks when teammates fail. Experimental validation demonstrated graceful degradation under robot failures.
 
-\textbf{Limitations:} ALLIANCE assumes tasks are interchangeable among robots and does not model consumable resources. The motivational dynamics operate on implicit timeouts rather than explicit failure detection, introducing latency in failure response proportional to the impatience parameter settings.
+\textbf{Limitations:} ALLIANCE assumes tasks are interchangeable among robots and does not model consumable resources. The motivational dynamics operate on implicit timeouts rather than explicit failure detection, introducing response latency.
 
 Li et al. \cite{li2017} developed sliding-mode cooperative control for multiple UAVs, proving Lyapunov stability for the fleet under bounded actuator faults. Yang et al. \cite{yang2011} generalized this to nonlinear multi-agent systems, establishing theoretical fault tolerance through adaptive control laws that compensate for unknown fault magnitudes.
 
-\textbf{Critical Assessment:} Both works provide rigorous stability proofs but operate under assumptions that limit practical applicability: continuous communication, known system dynamics, and---critically---no resource constraints. Battery depletion, payload consumption, and regulatory boundaries do not appear in their problem formulations.
+\textbf{Critical Assessment:} Both provide rigorous stability proofs but assume continuous communication, known dynamics, and no resource constraints. Battery depletion, payload consumption, and regulatory boundaries do not appear in their formulations.
 
 \section{Task Allocation Under Resource Constraints}
 \label{sec:lit-task-allocation}
 
 Gerkey and Matarić \cite{gerkey2004} established the canonical taxonomy for multi-robot task allocation (MRTA), classifying problems along three dimensions: single-task versus multi-task robots, single-robot versus multi-robot tasks, and instantaneous versus time-extended assignment. Their complexity analysis proved that most MRTA variants are NP-hard, motivating heuristic approaches.
 
-The Consensus-Based Bundle Algorithm (CBBA) of Choi et al. \cite{choi2009} enables decentralized task allocation through iterated auctions. Robots bid on task bundles based on marginal utility, with a consensus phase resolving conflicts. CBBA guarantees convergence to conflict-free assignments within $O(NM)$ communication rounds for $N$ robots and $M$ tasks, and demonstrates 50\% conflict resolution within three iterations in their experimental evaluation.
+The Consensus-Based Bundle Algorithm (CBBA) of Choi et al. \cite{choi2009} enables decentralized task allocation through iterated auctions, with robots bidding on task bundles and a consensus phase resolving conflicts. CBBA guarantees convergence within $O(NM)$ communication rounds for $N$ robots and $M$ tasks.
 
-Market-based coordination, surveyed comprehensively by Dias et al. \cite{dias2006}, offers scalable allocation through economic mechanisms. Zlot and Stentz \cite{zlot2006} extended market approaches to complex tasks requiring decomposition, demonstrating allocation of exploration tasks among 80 simulated robots.
+Market-based coordination, surveyed by Dias et al. \cite{dias2006}, offers scalable allocation through economic mechanisms. Zlot and Stentz \cite{zlot2006} extended market approaches to complex tasks, demonstrating allocation among 80 simulated robots.
 
-\textbf{Critical Assessment:} These algorithms optimize allocation efficiency but typically model robot capabilities as static. Dias et al. explicitly note that ``incorporating resource consumption and task deadlines remains an open challenge.'' CBBA's utility functions can theoretically encode battery constraints, but the original formulation and most subsequent applications assume fixed robot capabilities throughout the mission.
+\textbf{Critical Assessment:} These algorithms optimize allocation efficiency but model robot capabilities as static. Dias et al. note that ``incorporating resource consumption and task deadlines remains an open challenge.'' CBBA can theoretically encode battery constraints, but most applications assume fixed capabilities throughout the mission.
 
 \section{Coverage Control and Spatial Coordination}
 \label{sec:lit-coverage}
 
-Voronoi-based coverage control, formalized by Cortés et al. \cite{cortes2004}, partitions the operational area among robots such that each robot is responsible for the region closest to its position. Their gradient-descent algorithm provably converges to locally optimal configurations that minimize a coverage cost functional.
+Voronoi-based coverage control, formalized by Cortés et al. \cite{cortes2004}, partitions the operational area among robots such that each is responsible for the region closest to its position, with gradient-descent convergence to locally optimal configurations.
 
-Schwager et al. \cite{schwager2009} extended this to adaptive coverage, where the density function representing coverage importance is learned online from sensor measurements. Their decentralized algorithm achieves coverage optimization without global communication, requiring only local neighbor information.
+Schwager et al. \cite{schwager2009} extended this to adaptive coverage, learning density functions online from sensor measurements with a decentralized algorithm requiring only local neighbor information.
 
-Elmaliach et al. \cite{elmaliach2009} addressed multi-robot patrol under frequency constraints, ensuring each point receives visits at intervals not exceeding a specified bound. Their cyclic patrol strategies guarantee frequency constraints for convex environments and provide approximation bounds for non-convex cases.
+Elmaliach et al. \cite{elmaliach2009} addressed multi-robot patrol under frequency constraints with cyclic strategies guaranteeing visit intervals for convex environments.
 
-\textbf{Critical Assessment:} Coverage algorithms assume robots operate continuously without resource depletion. When a robot must return to base for battery replacement or payload replenishment, the coverage guarantee breaks. None of these works address mid-mission robot loss or the resulting coverage gap quantification.
+\textbf{Critical Assessment:} Coverage algorithms assume continuous operation without resource depletion. When robots return to base for battery or payload replenishment, coverage guarantees break. None address mid-mission robot loss or coverage gap quantification.
 
 \section{Communication-Aware Multi-Vehicle Control}
 \label{sec:lit-communication}
 
-Communication constraints fundamentally affect multi-agent coordination feasibility. Abdessameud and Tayebi \cite{abdessameud2011} analyzed formation control for VTOL vehicles under communication delays, proving stability for delays below a computed threshold dependent on formation geometry and controller gains.
+Communication constraints fundamentally affect coordination feasibility. Abdessameud and Tayebi \cite{abdessameud2011} analyzed formation control for VTOL vehicles under communication delays, proving stability for delays below thresholds dependent on formation geometry.
 
-Izadi et al. \cite{izadi2009} developed decentralized receding horizon control (RHC) for cooperative vehicles with communication delays. Their approach partitions the fleet into subgroups with designated leaders, reducing communication requirements while maintaining coordination. Izadi et al. \cite{izadi2013} extended this to communication failures, demonstrating that hierarchical architectures with leader election protocols maintain formation stability despite intermittent link losses.
+Izadi et al. \cite{izadi2009} developed decentralized receding horizon control for cooperative vehicles with communication delays, partitioning fleets into subgroups with designated leaders. Izadi et al. \cite{izadi2013} extended this to communication failures, showing hierarchical architectures maintain stability despite intermittent link losses.
 
-Beard et al. \cite{beard2006} presented one of the few complete systems integrating cooperative surveillance with communication constraints, deploying fixed-wing UAVs for decentralized target tracking. Their architecture explicitly addresses communication bandwidth limitations through prioritized information sharing.
+Beard et al. \cite{beard2006} presented one of the few complete systems integrating cooperative surveillance with communication constraints, deploying fixed-wing UAVs for decentralized target tracking with prioritized information sharing.
 
-\textbf{Critical Assessment:} These works establish that coordination remains possible under degraded communication but assume that communication eventually recovers or that the mission can tolerate permanent link losses. The interaction between communication failures and resource constraints---where delayed coordination may cause a UAV to exhaust its battery before receiving updated commands---remains unaddressed.
+\textbf{Critical Assessment:} These works establish that coordination remains possible under degraded communication but assume eventual recovery or tolerance for permanent link losses. The interaction between communication failures and resource constraints---where delayed coordination may exhaust battery before updated commands arrive---remains unaddressed.
 
 \section{The OODA Loop in Autonomous Systems}
 \label{sec:lit-ooda}
 
-Boyd's \cite{boyd1987} OODA loop---Observe, Orient, Decide, Act---originated from analysis of aerial combat, arguing that pilots who cycle through this loop faster gain decisive advantage. The framework emphasizes that ``Orient'' is the critical phase, where observations are filtered through experience, cultural traditions, genetic heritage, and previous analyses to create situational awareness.
+Boyd's \cite{boyd1987} OODA loop---Observe, Orient, Decide, Act---originated from analysis of aerial combat, arguing that faster cycling through this loop yields decisive advantage. The framework emphasizes ``Orient'' as the critical phase where observations are filtered through experience to create situational awareness.
 
-Recent work has adapted OODA to autonomous systems. Bala et al. \cite{bala2025} applied OODA to cloudlet-based autonomous drones, mapping each phase to edge computing primitives: Observe to sensor data ingestion, Orient to context aggregation, Decide to inference at the edge, and Act to actuation commands. Their implementation demonstrated 340ms average decision latency for obstacle avoidance scenarios.
+Bala et al. \cite{bala2025} applied OODA to cloudlet-based autonomous drones, mapping phases to edge computing primitives and demonstrating 340ms average decision latency for obstacle avoidance.
 
-\textbf{Critical Assessment:} Bala et al. demonstrate OODA's applicability to single-drone decisions at the edge. However, their work does not address fleet-level coordination, failure recovery across multiple vehicles, or constraint satisfaction. The OODA phases are mapped to individual drone operations rather than fleet-wide situational awareness and resource management.
+\textbf{Critical Assessment:} Bala et al. demonstrate OODA's applicability to single-drone decisions but do not address fleet-level coordination, failure recovery across vehicles, or constraint satisfaction. The phases map to individual operations rather than fleet-wide situational awareness.
 
 \section{Research Gap Analysis}
 \label{sec:lit-gap}
@@ -527,10 +527,8 @@ The reviewed literature reveals three distinct research trajectories that have n
 
 \begin{enumerate}
     \item \textbf{Vehicle-level fault tolerance} achieves robust recovery for individual UAVs but ignores fleet-level mission impact.
-
-    \item \textbf{Multi-agent coordination} demonstrates scalable task allocation and coverage control but assumes static robot capabilities and unlimited resources.
-
-    \item \textbf{Communication-aware control} addresses delays and link failures but does not integrate resource depletion or mission-level failure recovery.
+    \item \textbf{Multi-agent coordination} demonstrates scalable allocation and coverage but assumes static capabilities and unlimited resources.
+    \item \textbf{Communication-aware control} addresses delays and link failures but does not integrate resource depletion or mission-level recovery.
 \end{enumerate}
 
 No prior work integrates:
