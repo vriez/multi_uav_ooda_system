@@ -704,9 +704,9 @@ These variations demonstrate architectural flexibility through consistent OODA m
 
 \section{Priority-Based Task Scoring Algorithm}
 
-Task reallocation following UAV failure constitutes a resource-constrained scheduling problem under uncertainty, wherein orphaned tasks must be systematically evaluated to determine allocation precedence. This evaluation reconciles three potentially competing objectives: temporal urgency imposed by mission deadlines, intrinsic task criticality derived from domain-specific requirements, and the resource expenditure necessary to execute reallocation. Algorithm~1 formalizes this multi-objective prioritization through a weighted scoring function that synthesizes these dimensions into a unified, comparable metric.
+Task reallocation following UAV failure constitutes a resource-constrained scheduling problem. Algorithm~1 formalizes multi-objective prioritization through a weighted scoring function reconciling temporal urgency, task criticality, and resource expenditure.
 
-Before presenting the algorithm, we formally define the key data structures that encode the system state and operational context.
+We first define the data structures encoding system state.
 
 \textbf{Definition 1 (Fleet State).} The fleet state $\mathcal{F}$ is a tuple $\mathcal{F} = (\mathcal{U}, \mathcal{U}_{\text{healthy}}, \mathcal{U}_{\text{failed}})$ where:
 \begin{itemize}
@@ -718,9 +718,9 @@ Each UAV $u \in \mathcal{U}$ is characterized by a state vector:
 \begin{equation}
 u = (\text{pos}, \text{battery}, \text{committed}, \text{payload}, \text{speed}, \eta, \text{status}, \text{permissions})
 \end{equation}
-where $\text{pos} \in \mathbb{R}^3$ is the current position, $\text{battery} \in [0, 100]$ is the remaining charge percentage, $\text{committed} \in [0, 100]$ is the battery percentage already allocated to pending tasks, $\text{payload} \in \mathbb{R}_{\geq 0}$ is the current cargo weight, $\text{speed} \in \mathbb{R}_{> 0}$ is the cruise velocity, $\eta \in \mathbb{R}_{> 0}$ is the energy efficiency (meters per percent battery), $\text{status} \in \{\text{idle}, \text{active}, \text{failed}, \text{returning}\}$ is the operational state, and $\text{permissions}$ encodes regulatory authorizations (e.g., out-of-grid flight).
+where $\text{pos} \in \mathbb{R}^3$ is position, $\text{battery} \in [0, 100]$ is charge percentage, $\text{committed} \in [0, 100]$ is battery allocated to pending tasks, $\text{payload} \in \mathbb{R}_{\geq 0}$ is cargo weight, $\text{speed} \in \mathbb{R}_{> 0}$ is cruise velocity, $\eta \in \mathbb{R}_{> 0}$ is energy efficiency (meters per percent battery), $\text{status} \in \{\text{idle}, \text{active}, \text{failed}, \text{returning}\}$, and $\text{permissions}$ encodes regulatory authorizations.
 
-\textbf{Definition 2 (Mission Context).} The mission context $\mathcal{M}$ encapsulates the operational parameters and constraints:
+\textbf{Definition 2 (Mission Context).} The mission context $\mathcal{M}$ encapsulates operational parameters:
 \begin{equation}
 \mathcal{M} = (\text{type}, \mathcal{T}, \mathcal{G}, W, \Theta)
 \end{equation}
@@ -733,13 +733,13 @@ where:
 \item $\Theta = (B_{\text{reserve}}, D_{\text{safe}}, T_{\text{safe}})$ contains safety thresholds: battery reserve (20\%), spatial separation (15m), and temporal buffer (10s)
 \end{itemize}
 
-These formal definitions establish the mathematical foundation for the algorithms that follow, ensuring precise specification of inputs and enabling rigorous analysis of algorithmic behavior.
-
-Additionally, we define the clamping function used throughout the algorithms:
+Additionally, we define the clamping function:
 \begin{equation}
 \text{clamp}(x, a, b) = \max(a, \min(b, x))
 \end{equation}
-which constrains $x$ to the interval $[a, b]$. When written as $\text{clamp}(x)$, the default interval $[0, 1]$ is assumed.
+constraining $x$ to $[a, b]$. When written as $\text{clamp}(x)$, the default interval $[0, 1]$ is assumed.
+
+The priority scoring function uses configurable weights $w_\tau, w_c, w_\sigma \in [0,1]$ that balance temporal urgency, mission criticality, and spatial cost respectively.
 
 \begin{table}[H]
 \centering
@@ -759,15 +759,15 @@ which constrains $x$ to the interval $[a, b]$. When written as $\text{clamp}(x)$
 \end{tabular}
 \end{table}
 
-Each component of the scoring function addresses a distinct aspect of the prioritization problem. The temporal urgency term $\tau$ increases monotonically as deadlines approach, ensuring time-critical objectives receive elevated priority. The mission criticality weight $c$ encodes domain-specific importance hierarchies---critical packages receive maximum weighting (1.0) in delivery missions while routine packages score 0.4; in search and rescue, high-probability victim zones supersede peripheral patrols. The spatial cost term $\sigma$ penalizes tasks distant from available UAVs, implicitly incorporating battery expenditure into the priority calculus.
+The temporal urgency term $\tau$ increases as deadlines approach. The criticality weight $c$ encodes domain-specific importance---critical packages receive weight 1.0 in delivery while routine packages score 0.4; in SAR, high-probability victim zones supersede peripheral patrols. The spatial cost $\sigma$ penalizes distant tasks, incorporating battery expenditure into priority.
 
-The default weight configuration ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasizes mission criticality as the primary determinant while maintaining responsiveness to temporal constraints; these parameters admit mission-specific customization as detailed in Section~4.4. This formulation extends auction-based allocation methods (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006; ZLOT; STENTZ, 2006), with the principal distinction being the explicit integration of resource costs within the priority calculus rather than their treatment as post-hoc constraints. The theoretical foundations derive from the ST-SR-IA problem class in Gerkey and Matarić's (2004) taxonomy of multi-robot task allocation.
+The default weights ($w_\tau = 0.3$, $w_c = 0.5$, $w_\sigma = 0.2$) emphasize criticality while maintaining temporal responsiveness; parameters admit mission-specific customization (Section~4.4). This extends auction-based allocation (CHOI; BRUNET; HOW, 2009) and utility-theoretic coordination (DIAS et al., 2006), with explicit integration of resource costs within the priority calculus. The foundations derive from Gerkey and Matarić's (2004) ST-SR-IA problem class.
 
 \section{Constraint-Aware Task Reallocation with Collision Avoidance}
 
-With tasks ranked by Algorithm~1, the subsequent challenge involves constructing feasible assignments to the operational fleet while satisfying interdependent constraints. This task allocation problem constitutes an instance of the generalized assignment problem, known to be NP-hard, rendering exact optimization computationally intractable for real-time fault recovery where decision latency directly impacts mission outcomes.
+With tasks ranked by Algorithm~1, the challenge involves constructing feasible assignments while satisfying interdependent constraints. This task allocation problem is NP-hard, rendering exact optimization intractable for real-time fault recovery.
 
-Algorithm~2 resolves this complexity-feasibility tension through a greedy strategy that processes tasks in descending priority order, assigning each to the nearest constraint-satisfying UAV. This approach guarantees constraint satisfaction by construction while achieving deterministic polynomial-time execution---a trade-off justified by the temporal criticality of fault recovery, where a promptly executed suboptimal allocation provides greater operational value than an optimal solution computed after deadlines have elapsed.
+Algorithm~2 resolves this through a greedy strategy processing tasks in priority order, assigning each to the nearest constraint-satisfying UAV. This guarantees constraint satisfaction by construction with polynomial-time execution---a promptly executed suboptimal allocation provides greater value than an optimal solution computed after deadlines elapse.
 
 \begin{table}[H]
 \centering
@@ -797,7 +797,7 @@ Algorithm~2 resolves this complexity-feasibility tension through a greedy strate
 \end{tabular}
 \end{table}
 
-The algorithm enforces constraints through a hierarchical validation pipeline. Battery constraints constitute the primary filter, verifying that candidates retain sufficient energy to reach the task location while maintaining the 20\% safety margin that accounts for environmental uncertainties such as headwinds and navigation deviations. Payload constraints, activated exclusively in delivery contexts, ensure adequate lift capacity for specified cargo. Collision avoidance, delegated to Algorithm~3, evaluates spatiotemporal compatibility between proposed and committed trajectories.
+The algorithm enforces constraints through hierarchical validation. Battery constraints verify sufficient energy with 20\% safety margin. Payload constraints (delivery only) ensure lift capacity. Collision avoidance (Algorithm~3) evaluates spatiotemporal compatibility between trajectories.
 
 \begin{table}[H]
 \centering
@@ -821,11 +821,11 @@ The algorithm enforces constraints through a hierarchical validation pipeline. B
 \end{tabular}
 \end{table}
 
-Algorithm~3 implements spatiotemporal conflict detection derived from velocity obstacle methods (VAN DEN BERG; LIN; MANOCHA, 2008), simplified for centralized planning where global path information obviates distributed negotiation. Conflicts arise when trajectories bring UAVs within 15 meters---approximately three wingspans---during overlapping time windows, reflecting conservative separation standards for low-altitude operations. Upon conflict detection, the candidate assignment is rejected and the next-nearest UAV evaluated; when no conflict-free assignment exists, temporal deconfliction through departure delay scheduling provides an alternative resolution.
+Algorithm~3 implements spatiotemporal conflict detection derived from velocity obstacle methods (VAN DEN BERG; LIN; MANOCHA, 2008). Conflicts arise when trajectories bring UAVs within 15 meters during overlapping time windows. Upon conflict, the candidate is rejected and the next-nearest UAV evaluated; when no conflict-free assignment exists, departure delay scheduling provides deconfliction.
 
 \section{Operator Escalation Decision Rules}
 
-A distinguishing feature of this architecture is its capacity for honest self-assessment. Rather than forcing autonomous solutions in all circumstances, the system explicitly recognizes when human judgment is required. Algorithm~4 encodes the escalation logic as a hierarchical decision tree that evaluates mission degradation severity.
+A distinguishing feature is honest self-assessment: the system recognizes when human judgment is required. Algorithm~4 encodes escalation logic as a decision tree evaluating degradation severity.
 
 \begin{table}[H]
 \centering
@@ -855,23 +855,21 @@ A distinguishing feature of this architecture is its capacity for honest self-as
 \end{tabular}
 \end{table}
 
-The escalation hierarchy reflects operational risk tolerance. Coverage below 50\% indicates that the failure has exceeded the fleet's compensatory capacity—continuing autonomously would produce unacceptable mission outcomes. The presence of any unallocated high-priority task ($P > 0.7$) similarly triggers immediate escalation, as these tasks represent mission-critical objectives that cannot be sacrificed without explicit human authorization.
+Coverage below 50\% indicates the failure exceeds fleet capacity---continuing autonomously would produce unacceptable outcomes. Any unallocated high-priority task ($P > 0.7$) triggers immediate escalation. Moderate degradation (50--75\%) warrants operator awareness without demanding intervention. Above 75\%, the system proceeds autonomously.
 
-Moderate degradation (50--75\% coverage) warrants operator awareness without demanding immediate intervention, allowing human judgment to assess whether the degraded outcome remains acceptable for the specific operational context. Above 75\% coverage, the system proceeds autonomously, having demonstrated sufficient capacity to absorb the failure's impact.
-
-This graduated response ensures that operator attention is reserved for genuinely consequential decisions while routine failures are handled without interrupting mission flow.
+This graduated response reserves operator attention for consequential decisions while handling routine failures autonomously.
 
 \section{Objective Function and Optimization Strategy}
 
-The preceding algorithms define \textit{how} tasks are prioritized and allocated, but do not explicitly characterize \textit{what constitutes a good allocation}. This section formalizes the objective function that guides the DECIDE phase and describes the optimization strategy employed to maximize decision quality within real-time constraints.
+The preceding algorithms define \textit{how} tasks are allocated but not \textit{what constitutes a good allocation}. This section formalizes the objective function guiding the DECIDE phase.
 
 \subsection{Allocation Quality Metric}
 
-The quality of a task reallocation is quantified through an objective function $J(\mathcal{A})$ that the optimizer seeks to maximize. The optimization problem can be formally stated as:
+The quality of a task reallocation is quantified through objective function $J(\mathcal{A})$:
 
-\textbf{Problem Statement (Task Reallocation Optimization).} Given a set of orphaned tasks $\mathcal{T}_{\text{failed}} = \{t_1, \ldots, t_k\}$ from failed UAVs and a set of healthy UAVs $\mathcal{U}_{\text{healthy}} = \{u_1, \ldots, u_m\}$, find an allocation $\mathcal{A}^* \subseteq \mathcal{T}_{\text{failed}} \times \mathcal{U}_{\text{healthy}}$ that maximizes mission value while satisfying operational constraints.
+\textbf{Problem Statement.} Given orphaned tasks $\mathcal{T}_{\text{failed}} = \{t_1, \ldots, t_k\}$ and healthy UAVs $\mathcal{U}_{\text{healthy}} = \{u_1, \ldots, u_m\}$, find allocation $\mathcal{A}^* \subseteq \mathcal{T}_{\text{failed}} \times \mathcal{U}_{\text{healthy}}$ maximizing mission value under constraints.
 
-\textbf{Decision Variable.} The optimization variable is the allocation $\mathcal{A} = \{(t_i, u_j)\}$, a set of task-UAV pairs indicating that task $t_i$ is assigned to UAV $u_j$. Each task may be assigned to at most one UAV (or remain unallocated if no feasible assignment exists).
+\textbf{Decision Variable.} The allocation $\mathcal{A} = \{(t_i, u_j)\}$ assigns tasks to UAVs. Each task is assigned to at most one UAV.
 
 \textbf{Objective Function.} The allocation quality is quantified as:
 
@@ -915,9 +913,9 @@ t_i.\text{pos} \in \mathcal{G} \quad \lor \quad \text{``out-of-grid''} \in u_j.\
 \end{equation}
 \end{enumerate}
 
-\textbf{Solution Method.} This constrained optimization problem is an instance of the generalized assignment problem, which is NP-hard. Given the real-time requirement (solution within 1.0--1.5 seconds), exact methods such as mixed-integer linear programming (MILP) or branch-and-bound are computationally infeasible. The system instead employs a \textbf{greedy heuristic with local search refinement} (Algorithm 5), which guarantees constraint satisfaction by construction and achieves 70--85\% of optimal objective value in sub-millisecond computation time. This trade-off prioritizes operational responsiveness over theoretical optimality---a suboptimal solution computed immediately provides greater mission value than an optimal solution computed after deadlines have elapsed.
+\textbf{Solution Method.} This NP-hard problem precludes exact optimization within 1.0--1.5 seconds. The system employs \textbf{greedy heuristic with local search} (Algorithm 5), achieving 70--85\% of optimal value in sub-millisecond time.
 
-The mission-specific modifier $\phi_m$ adjusts task value based on operational context. We define the following temporal variables:
+The mission-specific modifier $\phi_m$ adjusts task value based on context:
 \begin{itemize}
 \item $\Delta t_{\text{gap}}(t_i)$ --- time elapsed since the last coverage of task $t_i$'s zone (normalized to $[0, 1]$)
 \item $t_{\text{golden}}$ --- the golden hour duration for SAR missions (typically 60 minutes)
@@ -938,15 +936,15 @@ The mission-specific modifier $\phi_m$ adjusts task value based on operational c
 \label{eq:modifier}
 \end{equation}
 
-For surveillance missions, the modifier penalizes coverage gaps through parameter $\gamma$, incentivizing prompt re-coverage of zones that have gone unmonitored. For search and rescue operations, tasks completed before the golden hour receive a bonus weighted by $\beta$, incentivizing rapid coverage of high-probability areas. For delivery missions, the modifier applies a binary penalty for deadline violations, reflecting the discrete nature of delivery success.
+For surveillance, $\gamma$ penalizes coverage gaps. For SAR, $\beta$ provides a bonus for completion before golden hour. For delivery, a binary penalty applies for deadline violations.
 
 \subsection{Optimization Strategy}
 
-The DECIDE phase operates under strict temporal constraints (1.0--1.5 seconds), precluding exact optimization methods such as mixed-integer linear programming. The system therefore employs a two-stage optimization strategy that balances solution quality against computational tractability.
+The DECIDE phase operates under 1.0--1.5 second constraints, precluding exact methods like MILP. The system employs two-stage optimization:
 
-\textbf{Stage 1: Greedy Initialization.} Algorithm 2 generates an initial feasible allocation in $O(n \cdot m)$ time, where $n$ is the number of failed tasks and $m$ is the number of healthy UAVs. This greedy approach processes tasks in priority order, assigning each to the nearest constraint-satisfying UAV. While not globally optimal, this initialization typically achieves 70--85\% of the theoretical maximum objective value.
+\textbf{Stage 1: Greedy Initialization.} Algorithm 2 generates a feasible allocation in $O(n \cdot m)$ time, achieving 70--85\% of optimal value.
 
-\textbf{Stage 2: Local Search Refinement.} When the time budget permits (approximately 500ms remaining after Stage 1), the system applies iterative local search to improve the initial allocation. The neighborhood structure considers pairwise task swaps between UAVs and reassignment of individual tasks to alternative vehicles.
+\textbf{Stage 2: Local Search Refinement.} When time permits (~500ms remaining), iterative local search explores pairwise task swaps between UAVs.
 
 \begin{table}[H]
 \centering
@@ -974,24 +972,22 @@ The DECIDE phase operates under strict temporal constraints (1.0--1.5 seconds), 
 \end{tabular}
 \end{table}
 
-The local search explores pairwise task swaps, proposing exchanges between UAVs and accepting improvements that increase the objective function while maintaining constraint feasibility. The algorithm terminates upon reaching a local optimum or exhausting the time budget, whichever occurs first. A 200ms reserve ($T_{\text{reserve}}$) ensures sufficient time for finalization and command dispatch.
+The algorithm terminates upon reaching a local optimum or exhausting the time budget. A 200ms reserve ensures time for finalization.
 
 \subsection{Optimality Gap Analysis}
 
-The greedy-plus-local-search strategy does not guarantee global optimality. To characterize solution quality, we define the optimality gap as:
+The strategy does not guarantee global optimality. The optimality gap is:
 
 \begin{equation}
 \text{Gap} = \frac{J^* - J(\mathcal{A}_{\text{heuristic}})}{J^*} \times 100\%
 \label{eq:gap}
 \end{equation}
 
-\noindent where $J^*$ is the optimal objective value computed offline via exhaustive search or MILP for small problem instances.
-
-Preliminary analysis across the three mission scenarios indicates expected optimality gaps of 5--15\% for typical failure cases involving 3--6 lost tasks and 4--8 healthy UAVs. This trade-off is justified by the real-time constraint: a 10\% suboptimal solution computed in 1.2 seconds provides substantially greater operational value than an optimal solution requiring 30+ seconds, during which mission degradation continues unmitigated.
+\noindent where $J^*$ is optimal value computed offline. Analysis indicates expected gaps of 5--15\% for typical failures (3--6 lost tasks, 4--8 healthy UAVs). A 10\% suboptimal solution in 1.2 seconds provides greater value than optimal requiring 30+ seconds.
 
 \subsection{Mission-Specific Parameter Configuration}
 
-The objective function parameters are configured per mission type to reflect operational priorities, as shown in Table~\ref{tab:objective_params}:
+Objective function parameters are configured per mission type (Table~\ref{tab:objective_params}):
 
 \begin{table}[H]
 \centering
@@ -1015,7 +1011,7 @@ Priority weight (spatial) & $w_{\text{spatial}}$ & 0.2 & 0.2 & 0.2 \\
 \end{tabular}
 \end{table}
 
-This parameterization enables the same OODA loop implementation to adapt its optimization behavior based on mission context, achieving domain-appropriate decision quality without requiring mission-specific algorithmic modifications.
+This parameterization enables the OODA loop to adapt optimization behavior based on mission context without algorithmic modifications.
 
 \chapter{Mission Scenarios and Performance Analysis}
 
