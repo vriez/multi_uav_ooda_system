@@ -727,7 +727,7 @@ where $\text{pos} \in \mathbb{R}^3$ is position, $\text{battery} \in [0, 100]$ i
 where:
 \begin{itemize}
 \item $\text{type} \in \{\text{surveillance}, \text{SAR}, \text{delivery}\}$ specifies the mission category
-\item $\mathcal{T} = \{t_1, t_2, \ldots, t_k\}$ is the set of tasks, where each task $t_i = (\text{pos}, \text{type}, t_i^{\text{start}}, t_i^{\text{deadline}}, \text{priority}_{\text{base}}, \text{payload})$ contains position, type, start time, deadline, base priority, and payload weight
+\item $\mathcal{T} = \{t_1, t_2, \ldots, t_k\}$ is the set of tasks, where each task $t_i$ contains position, type, start time, deadline, base priority, and payload weight
 \item $\mathcal{G} \subset \mathbb{R}^2$ defines the authorized operational grid boundaries, with $R_{\max} = \text{diag}(\mathcal{G})$ denoting the maximum operational range (grid diagonal, e.g., $\sqrt{120^2 + 120^2} \approx 170$m)
 \item $W: \text{type} \times \text{task\_type} \to [0, 1]$ is the criticality weight lookup table
 \item $\Theta = (B_{\text{reserve}}, D_{\text{safe}}, T_{\text{safe}})$ contains safety thresholds: battery reserve (20\%), spatial separation (15m), and temporal buffer (10s)
@@ -1015,7 +1015,7 @@ This parameterization enables the OODA loop to adapt optimization behavior based
 
 \chapter{Mission Scenarios and Performance Analysis}
 
-This chapter presents three mission scenarios demonstrating OODA-based fault tolerance across diverse operational contexts, each illustrating different constraint priorities, failure modes, and recovery strategies.
+This chapter presents three mission scenarios demonstrating OODA-based fault tolerance across diverse operational contexts.
 
 \section{Scenario Selection Rationale}
 
@@ -1027,11 +1027,11 @@ The three scenarios were selected to span the constraint space of real-world UAV
 \item \textbf{Delivery:} Payload-constrained with heterogeneous fleet capabilities
 \end{itemize}
 
-Each scenario represents a distinct operational domain with documented real-world deployment precedents.
+Each scenario represents a distinct operational domain with real-world deployment precedents.
 
 \section{SCENARIO 1: Long-Duration Perimeter Surveillance}
 
-Perimeter surveillance represents a canonical application of decentralized aerial monitoring, with established methodologies for coordinating multiple UAVs across extended operational periods (BEARD et al., 2006).
+Perimeter surveillance represents a canonical application of aerial monitoring with established multi-UAV coordination methodologies (BEARD et al., 2006).
 
 \subsection{Mission Context}
 
@@ -1045,9 +1045,7 @@ Perimeter surveillance represents a canonical application of decentralized aeria
 
 \subsection{Mission Setup}
 
-The surveillance mission partitions the 120m $\times$ 120m area into nine patrol zones (3$\times$3 grid, 40m $\times$ 40m each), ensuring complete coverage while allowing dedicated patrol circuits without inter-vehicle coordination overhead (Figure~\ref{fig:operational_environment}).
-
-The fundamental challenge lies in the mismatch between mission duration (2 hours) and vehicle endurance (30 minutes), necessitating coordinated rotation with at least 12 UAVs in alternating shifts---transforming a simple coverage problem into a sophisticated scheduling and fault-tolerance challenge.
+The mission partitions the 120m $\times$ 120m area into nine patrol zones (3$\times$3 grid, 40m $\times$ 40m each) as shown in Figure~\ref{fig:operational_environment}. The mismatch between mission duration (2 hours) and vehicle endurance (30 minutes) necessitates coordinated rotation with 12 UAVs in alternating shifts.
 
 \begin{figure}[H]
 \centering
@@ -1058,21 +1056,17 @@ The fundamental challenge lies in the mismatch between mission duration (2 hours
 
 \subsection{Patrol Zone Specifications}
 
-Not all perimeter sections demand equal vigilance. The zone prioritization reflects threat assessment based on facility layout and historical incident patterns. The top row (Zones 1--3) along the northern perimeter guards main entry points and receives the highest priority rating ($P = 0.9$), commanding the most intensive patrol patterns. The middle row (Zones 4--6) covers central access routes with moderate priority ($P = 0.6$), while the southern boundary (Zones 7--9) monitors low-risk terrain at standard priority ($P = 0.4$).
+Zone prioritization reflects threat assessment: Zones 1--3 (northern perimeter, main entry points) receive $P = 0.9$; Zones 4--6 (central access routes) have $P = 0.6$; Zones 7--9 (low-risk southern boundary) operate at $P = 0.4$.
 
-This priority differentiation manifests in patrol circuit complexity (ELMALIACH; AGMON; KAMINKA, 2009): high-priority zones require eight waypoints per circuit, medium-priority zones operate with six, and standard-priority zones employ four. Waypoint density directly influences energy expenditure---critical during failure recovery when remaining UAVs must absorb additional coverage responsibilities.
+Priority differentiation manifests in patrol circuit complexity (ELMALIACH; AGMON; KAMINKA, 2009): high-priority zones require eight waypoints, medium six, and standard four. Waypoint density influences energy expenditure---critical during failure recovery.
 
 \subsection{Rotation Strategy}
 
-Sustaining 2-hour coverage with 30-minute endurance vehicles requires orchestrated fleet rotation. The system manages this through four consecutive waves, each lasting approximately 30 minutes, with overlapping transition periods to prevent coverage gaps.
-
-The first wave deploys UAVs 1--6 across zones A--F at mission start. As vehicles approach the 20\% battery threshold around the 25-minute mark, they signal imminent departure, triggering deployment of the backup fleet. Wave 2 sees UAVs 7--12 assume patrol responsibilities while the primary fleet returns for battery exchange. This pattern alternates through Waves 3 and 4, with recharged vehicles cycling back into service.
-
-The 5-minute transition overlap provides fault tolerance against timing variations, though this redundancy introduces collision avoidance complexity that the OODA system must manage alongside its primary responsibilities.
+Sustaining 2-hour coverage with 30-minute endurance requires four consecutive waves with overlapping transitions. Wave 1 deploys UAVs 1--6; as vehicles approach 20\% battery (~25 minutes), Wave 2 (UAVs 7--12) assumes responsibilities. This pattern alternates through Waves 3--4. The 5-minute transition overlap prevents coverage gaps while introducing collision avoidance complexity.
 
 \subsection{Failure Scenario: Mid-Mission Battery Depletion}
 
-Forty-five minutes into the mission, UAV-3's battery plummets to 8\% (expected: 35\%)---well below the safety threshold. The vehicle is halfway through Zone 5; returning immediately leaves the zone dark, while continuing risks a forced landing. This is precisely the scenario the OODA system was designed to handle.
+At T+45 minutes, UAV-3's battery drops to 8\% (expected: 35\%)---below safety threshold. The vehicle is mid-patrol in Zone 5; returning leaves the zone uncovered, continuing risks forced landing.
 
 % \begin{figure}[H]
 % \centering
@@ -1085,7 +1079,7 @@ Forty-five minutes into the mission, UAV-3's battery plummets to 8\% (expected: 
 
 \textbf{Failure Detection:}
 
-The system detects battery anomalies through statistical monitoring, comparing observed discharge rates against expected baseline values. When the discharge rate exceeds 1.5$\times$ the expected threshold, the OODA cycle triggers immediately, as quantified in Table~\ref{tab:s5_anomaly}.
+The system detects battery anomalies through statistical monitoring. When discharge rate exceeds 1.5$\times$ expected threshold, the OODA cycle triggers (Table~\ref{tab:s5_anomaly}).
 
 \begin{table}[H]
 \centering
@@ -1105,7 +1099,7 @@ Threshold & --- & 1.5$\times$ baseline & \cellcolor{red!25}EXCEEDED \\
 
 \textbf{Fleet State Aggregation:}
 
-Upon detecting UAV-3's failure, the system aggregates the complete fleet state to assess available resources for task reallocation, as shown in Table~\ref{tab:s5_fleet_state}.
+The system aggregates fleet state to assess available resources (Table~\ref{tab:s5_fleet_state}).
 
 \begin{table}[H]
 \centering
@@ -1130,7 +1124,7 @@ UAV-5 & 80\% & 8 & 35\% & \cellcolor{blue!25}AVAILABLE \\
 
 \textbf{Impact Assessment:}
 
-The system evaluates the mission impact of losing Zone 5 coverage, determining temporal urgency and required response type (Table~\ref{tab:s5_impact}).
+The system evaluates mission impact (Table~\ref{tab:s5_impact}).
 
 \begin{table}[H]
 \centering
@@ -1151,7 +1145,7 @@ Response Required & Immediate reallocation (0-second tolerance) \\
 
 \textbf{Capacity Analysis:}
 
-The system calculates spare battery capacity for each candidate UAV by subtracting safety reserves (20\%) and committed energy from current battery levels, then evaluates feasibility against distance-to-target requirements (Table~\ref{tab:s5_capacity}).
+Spare capacity = current battery $-$ 20\% reserve $-$ committed energy (Table~\ref{tab:s5_capacity}).
 
 \begin{table}[H]
 \centering
@@ -1171,7 +1165,7 @@ UAV-4 & 40\% & 20\% & 8\% & \textbf{12\%} & 40m (req: 3\%) \\
 
 \textbf{Feasibility Determination:}
 
-Table~\ref{tab:s5_feasibility} confirms that both candidate UAVs satisfy the energy requirements for Zone 5 coverage.
+Both candidates satisfy energy requirements (Table~\ref{tab:s5_feasibility}).
 
 \begin{table}[H]
 \centering
@@ -1190,7 +1184,7 @@ UAV-4 & 12\% & 3\% & \cellcolor{green!25}\textbf{YES} (9\% margin) \\
 
 \textbf{Reallocation Strategy:}
 
-Both adjacent UAVs possess sufficient capacity to reach Zone 5. The system adopts a split-zone strategy to distribute the workload:
+The system adopts a split-zone strategy:
 
 \begin{itemize}
 \item Split Zone 5 into two sub-zones: 5A (north 20m) and 5B (south 20m)
@@ -1206,7 +1200,7 @@ Both adjacent UAVs possess sufficient capacity to reach Zone 5. The system adopt
 
 \textbf{Task Allocation Plan:}
 
-The system generates extended patrol routes for both UAVs, integrating new waypoints while maintaining constraint satisfaction and collision avoidance (Table~\ref{tab:s5_allocation}).
+Extended patrol routes integrate new waypoints (Table~\ref{tab:s5_allocation}).
 
 \begin{table}[H]
 \centering
@@ -1227,7 +1221,7 @@ UAV-4 & Zone 6 (6 pts) & Zone 5B (3 pts) & 9 points & 105s (\textasciitilde1.7 m
 
 \textbf{Constraint Verification:}
 
-Before finalizing the reallocation, the system verifies all safety constraints are satisfied, as detailed in Table~\ref{tab:s5_constraints}.
+Safety constraint verification (Table~\ref{tab:s5_constraints}):
 
 \begin{table}[H]
 \centering
@@ -1250,7 +1244,7 @@ Zone Conflicts & \cellcolor{green!25}PASS & No overlap with Zones 1, 2, 3, 4, 6,
 
 \textbf{Command Execution:}
 
-The system dispatches mission updates to affected UAVs and commands the failed vehicle to return immediately, as summarized in Table~\ref{tab:s5_commands}.
+Commands dispatched (Table~\ref{tab:s5_commands}):
 
 \begin{table}[H]
 \centering
@@ -1275,7 +1269,7 @@ UAV-3 & Emergency RTL & Immediate return-to-launch command \\
 
 \textbf{System State Update:}
 
-Table~\ref{tab:s5_status} presents the post-adaptation mission status, confirming successful autonomous recovery.
+Post-adaptation status (Table~\ref{tab:s5_status}):
 
 \begin{table}[H]
 \centering
@@ -1305,39 +1299,33 @@ Operator Action & None required (autonomous recovery successful) \\
 
 \subsection{Scenario Outcome}
 
-The OODA system achieved complete coverage recovery in 0.7 milliseconds of computation time while maintaining all safety constraints. Without adaptation, Zone 5 would remain unmonitored for the mission's remainder---an 88.9\% coverage degradation. The sub-millisecond computation ensures that algorithmic processing contributes negligibly to the 2-3 second total system response time (dominated by communication latency).
+The OODA system achieved complete coverage recovery in 0.7 milliseconds while maintaining all safety constraints. Without adaptation, Zone 5 would remain unmonitored---88.9\% coverage degradation.
 
-Two limitations emerge from this scenario. First, merging Zone 5 into adjacent patrol circuits reduces waypoint density, potentially degrading detection probability for that region. Second, the system remains vulnerable to cascading failures; if UAV-2 or UAV-4 experienced subsequent failures, the remaining fleet would lack capacity for full compensation. Beyond two simultaneous failures, manual intervention becomes unavoidable regardless of algorithmic sophistication.
+Limitations: merging Zone 5 reduces waypoint density, potentially degrading detection probability. The system remains vulnerable to cascading failures; beyond two simultaneous failures, manual intervention becomes unavoidable.
 
 \section{SCENARIO 2: Emergency Search \& Rescue}
 
 \subsection{Mission Context}
 
-Search and rescue operations represent the most time-critical application domain for UAV fault tolerance. The ``golden hour'' principle applies: survival probability decreases precipitously with elapsed time. Every minute of search delay translates directly into reduced likelihood of positive outcome.
-
-This scenario models a missing person search across the same 120m $\times$ 120m area (3$\times$3 grid). A fleet of four UAVs with thermal imaging must cover the area within a 3-hour search window. The zone-based decomposition matches the surveillance scenario's spatial model, enabling consistent constraint validation across mission types.
+SAR operations are time-critical: the ``golden hour'' principle means survival probability decreases with elapsed time. This scenario models a missing person search across 120m $\times$ 120m (3$\times$3 grid) with four thermal-equipped UAVs and a 3-hour search window.
 
 \subsection{Mission Setup}
 
-Unlike surveillance missions where all zones demand continuous attention, search and rescue prioritization follows probabilistic reasoning. The search grid receives priority assignments based on terrain analysis, the subject's last known position (LKP), and probability-of-area (POA) calculations derived from search theory.
-
-Lost persons do not distribute randomly; behavioral studies indicate predictable patterns (seeking water, following trails, gravitating toward shelter). These priors, combined with distance-decay models from the LKP, concentrate search resources where success is most likely.
+SAR prioritization follows probabilistic reasoning based on terrain analysis, last known position (LKP), and probability-of-area (POA) calculations. Behavioral studies indicate predictable patterns (seeking water, following trails), concentrating resources where success is most likely.
 
 \subsection{Search Grid Prioritization}
 
-Algorithm 1's priority scoring adapts to SAR by weighting temporal urgency heavily---the golden hour modifier amplifies scores for zones reachable quickly. The 9-zone grid follows the same priority structure, with zones in three tiers based on distance from the LKP:
+Algorithm 1 adapts to SAR by weighting temporal urgency heavily. Priority tiers based on LKP distance:
 
 \begin{itemize}
-\item \textbf{High Priority ($P = 0.9$)}: Zones 1, 2, and 3 (top row, closest to LKP) receive maximum priority based on the statistical observation that most lost persons are found close to their last confirmed location.
-\item \textbf{Medium Priority ($P = 0.6$)}: Zones 4, 5, and 6 (middle row) represent probable travel corridors where a mobile subject might move while seeking help or shelter.
-\item \textbf{Low Priority ($P = 0.4$)}: Zones 7, 8, and 9 (bottom row, farthest from LKP) cover areas where discovery is less likely but not impossible.
+\item \textbf{High ($P = 0.9$)}: Zones 1--3 (top row, closest to LKP)
+\item \textbf{Medium ($P = 0.6$)}: Zones 4--6 (middle row, travel corridors)
+\item \textbf{Low ($P = 0.4$)}: Zones 7--9 (bottom row, farthest from LKP)
 \end{itemize}
 
 \subsection{Initial Task Allocation}
 
-\textbf{Fleet Assignment:}
-
-The four-UAV fleet divides the 9-zone search grid according to zone priorities, with higher-priority areas receiving dedicated coverage from individual UAVs to maximize early detection probability (Table~\ref{tab:sar_initial_allocation}).
+The four-UAV fleet divides the 9-zone grid by priority (Table~\ref{tab:sar_initial_allocation}).
 
 \begin{table}[H]
 \centering
@@ -1367,31 +1355,23 @@ UAV-4 & Zones 7, 8, 9 (bottom row) & \cellcolor{green!25}LOW (0.4) & 12 min \\
 
 \subsection{Failure Scenario: Critical Zone UAV Loss}
 
-Eight minutes into the search, UAV-2 drops off the network. The vehicle had been sweeping Zone 3 (top-right, high priority) and Zone 4 (mid-left, medium priority)---critical areas based on the subject's likely travel patterns from the LKP. Its thermal camera was scanning the zone boundaries where a disoriented hiker might have wandered.
-
-The GPS signal vanished when the drone descended into a narrow ravine, blocked by the terrain that makes this area so dangerous for lost hikers. After 90 seconds without position updates, the failsafe activates: UAV-2 climbs to safe altitude and returns to base, abandoning 2 unsearched zones (Zones 3 and 4) including one high-priority area.
-
-With the golden hour already ticking, these zones represent areas most likely to contain the missing person. The remaining fleet must absorb this loss immediately.
+At T+8 minutes, UAV-2 drops off network while sweeping Zones 3 (HIGH) and 4 (MEDIUM). GPS vanished in a ravine; after 90 seconds without updates, failsafe activates RTL. Two unsearched zones including one high-priority area are abandoned. The remaining fleet must absorb this loss immediately.
 
 \subsubsection{OODA Cycle Execution}
 
-The OODA cycle for SAR follows the same four-phase structure demonstrated in the surveillance scenario, adapted for time-critical search operations where the golden hour constraint dominates all decisions.
+The OODA cycle adapts for time-critical operations where golden hour constraint dominates.
 
-\textbf{OBSERVE (T+0 to T+1.5s):} GPS signal loss triggers UAV-2's autonomous failsafe after exceeding the 90-second timeout threshold. Fleet state aggregation reveals: UAV-1 at 75\% battery completing Zone 2 (20\% spare capacity), UAV-3 at 80\% in Zone 5 (35\% spare), and UAV-4 at 78\% in Zone 7 (30\% spare). The failure leaves 2 zones unsearched (Zones 3 and 4)---one high-priority and one medium-priority area representing critical search regions.
+\textbf{OBSERVE:} GPS signal loss triggers failsafe after 90-second timeout. Fleet state: UAV-1 at 75\% (20\% spare), UAV-3 at 80\% (35\% spare), UAV-4 at 78\% (30\% spare). Two zones unsearched (Zones 3 and 4).
 
-\textbf{ORIENT (T+1.5s to T+3.0s):} Impact assessment quantifies 22\% coverage degradation (2 of 9 zones) with 52 minutes remaining in the golden hour. Capacity analysis confirms the fleet can absorb 2 additional zones: UAV-1 has capacity for 1 more zone, UAV-3 can handle 1 more, and UAV-4 maintains its 3-zone assignment. The system formulates a priority-based strategy: UAV-1 absorbs Zone 3 (high priority, adjacent to current position), UAV-3 absorbs Zone 4 (medium priority, maintains row coverage).
+\textbf{ORIENT:} 22\% coverage degradation with 52 minutes remaining in golden hour. UAV-1 absorbs Zone 3 (HIGH), UAV-3 absorbs Zone 4 (MEDIUM).
 
-\textbf{DECIDE (T+3.0s to T+4.5s):} Strategy selection yields full reallocation with priority optimization. The reallocation plan expands UAV-1 to 3 zones (Zones 1, 2, 3) and UAV-3 to 3 zones (Zones 4, 5, 6), while UAV-4 continues its 3-zone assignment (Zones 7, 8, 9). Constraint verification confirms all UAVs maintain battery reserves above 20\%: UAV-1 projects 23\% remaining (3\% margin), UAV-3 projects 37\% (17\% margin). Collision avoidance passes with sequential zone entry and 15m safety buffer.
+\textbf{DECIDE:} Full reallocation---UAV-1 expands to 3 zones, UAV-3 to 3 zones. All UAVs maintain >20\% reserves.
 
-\textbf{ACT (T+4.5s to T+6.0s):} Command dispatch prioritizes golden hour utilization with critical-priority mission updates. Post-adaptation status: 100\% zone coverage recovered (9/9 zones assigned), full spatial coverage maintained---demonstrating that the OODA system achieves complete recovery even in time-critical SAR operations.
+\textbf{ACT:} 100\% zone coverage recovered (9/9 zones assigned).
 
 \subsection{Scenario Outcome}
 
-The OODA system achieved 100\% zone coverage recovery in 1.2 milliseconds (R5) and 0.3 milliseconds (R6). Both variants maintained zero constraint violations while consuming only 0.00003\% of the golden hour. Without adaptation, coverage would degrade to 77.8\% (7 of 9 zones), leaving 2 critical zones (including one high-priority area) unsearched during the most survivable window.
-
-The millisecond-scale OODA computation ensures fault recovery consumes a negligible fraction of the golden hour, preserving maximum time for actual search operations.
-
-Scenario R6 validates the permission system's flexibility: when optimal reallocation requires UAV-4's out-of-grid capability, the system correctly leverages this permission while respecting each vehicle's authorized operational envelope.
+The OODA system achieved 100\% coverage recovery in 1.2 milliseconds (R5) and 0.3 milliseconds (R6), consuming only 0.00003\% of golden hour. Without adaptation, coverage degrades to 77.8\%. Scenario R6 validates the permission system: UAV-4's out-of-grid capability is correctly leveraged when required.
 
 \section{SCENARIO 3: Package Delivery}
 
@@ -1407,9 +1387,7 @@ Scenario R6 validates the permission system's flexibility: when optimal realloca
 
 \subsection{Mission Setup}
 
-\textbf{Fleet Specifications:}
-
-The heterogeneous three-UAV fleet comprises one heavy-lifter and two standard vehicles, each with distinct payload and endurance characteristics, as detailed in Table~\ref{tab:delivery_fleet}.
+The heterogeneous fleet comprises one heavy-lifter and two standard vehicles (Table~\ref{tab:delivery_fleet}).
 
 \begin{table}[H]
 \centering
@@ -1427,9 +1405,7 @@ UAV-3 & Standard & 0.5 kg & 30 min & 15 m/s & Dest. 5 \\
 \label{tab:delivery_fleet}
 \end{table}
 
-\textbf{Package Priorities:}
-
-Algorithm 1 assigns priority scores based on package urgency, temporal deadlines, and delivery distance, resulting in the stratified priority hierarchy shown in Table~\ref{tab:delivery_packages}.
+Package priorities based on urgency and deadlines (Table~\ref{tab:delivery_packages}).
 
 \begin{table}[H]
 \centering
@@ -1451,9 +1427,9 @@ E & Parts & 0.35 kg & Dest. 5, Zone 8 (60, 20) & 90 min & 0.2 (LOW) \\
 
 \subsection{Failure Scenario: Heavy Lifter Battery Anomaly}
 
-Fifteen minutes into the delivery mission, UAV-1 is fighting an unexpected headwind. The heavy lifter is carrying 0.9 kilograms of time-sensitive cargo that must be delivered within the hour. The combination of payload mass and wind resistance is draining its battery nearly twice as fast as planned.
+At T+15 minutes, UAV-1 fights unexpected headwind while carrying 0.9 kg of time-sensitive cargo. Payload mass and wind drain battery nearly twice as fast as planned.
 
-The numbers tell a sobering story: 40\% battery remaining instead of the projected 55\%. At this rate, UAV-1 cannot complete its route and return safely. It carries two critical packages---one destined for Destination 1 (priority 1.0), another for Destination 2 (priority 0.7). One of these deliveries will not happen as planned.
+Battery at 40\% (projected: 55\%). UAV-1 cannot complete its route safely. It carries Package A (priority 1.0) and Package B (priority 0.7).
 
 % \begin{figure}[H]
 % \centering
@@ -1464,15 +1440,15 @@ The numbers tell a sobering story: 40\% battery remaining instead of the project
 
 \subsubsection{OODA Cycle Execution}
 
-The delivery scenario demonstrates the OODA system's intelligent escalation capability---recognizing when autonomous recovery is physically impossible and deferring appropriately to human operators.
+This scenario demonstrates intelligent escalation when autonomous recovery is physically impossible.
 
-\textbf{OBSERVE (T+0 to T+1.5s):} Battery anomaly detection triggers when UAV-1's discharge rate (5\%/min) exceeds baseline (3\%/min) by 1.5$\times$. Battery projection analysis reveals the current 40\% charge cannot support the full route: completing Package A delivery to Zone 1 (20m) leaves 38.6\%, but continuing to Package B at Zone 3 (80m additional) and returning to depot (100m) would deplete to 16.6\%---below the 20\% safety threshold. Package A (electronics, priority 1.0) remains deliverable; Package B (components, priority 0.7) becomes infeasible.
+\textbf{OBSERVE:} Battery anomaly triggers when discharge rate (5\%/min) exceeds baseline by 1.5$\times$. Current 40\% cannot support full route---Package A deliverable, Package B infeasible (return would deplete to 16.6\%).
 
-\textbf{ORIENT (T+1.5s to T+3.0s):} Fleet capacity analysis reveals no autonomous solution exists. UAV-2 carries 0.45 kg (packages C+D) against 0.5 kg capacity, leaving 0.05 kg spare. UAV-3 carries 0.35 kg (package E), leaving 0.15 kg spare. Neither can absorb Package B's 0.4 kg weight---a 0.25 kg (62.5\%) capacity deficit. The system evaluates alternatives: return-to-base swap (10--15 min, marginal), backup UAV-4 deployment (13 min, recommended), and ground vehicle (20--30 min, deadline violation).
+\textbf{ORIENT:} No autonomous solution exists. UAV-2 has 0.05 kg spare, UAV-3 has 0.15 kg---neither can absorb Package B's 0.4 kg. Alternatives: return-to-base swap (10--15 min), backup UAV-4 (13 min, recommended).
 
-\textbf{DECIDE (T+3.0s to T+4.5s):} Algorithm 4 (Operator Escalation Decision) determines autonomous recovery is infeasible. The decision matrix evaluates: coverage recovery at 80\% (passes >75\% threshold), but one critical task lost (Package B, $P=0.7$) and one constraint violation (payload), as summarized in Table~\ref{tab:delivery_escalation_decision}. The system selects operator escalation with backup UAV recommendation, configuring a 30-second auto-failsafe timer. Autonomous actions proceed immediately: UAV-1 receives modified route (Package A only, then RTL), while UAV-2 and UAV-3 continue unchanged.
+\textbf{DECIDE:} Algorithm 4 determines autonomous recovery infeasible (Table~\ref{tab:delivery_escalation_decision}). Coverage 80\%, but one critical task lost. Operator escalation with 30-second auto-failsafe.
 
-\textbf{ACT (T+4.5s to T+5.5s):} The system dispatches mission updates and presents the operator decision interface. The critical alert summarizes: Package B (0.4 kg, $P=0.7$) undeliverable due to payload constraints; recommended action is backup UAV-4 deployment (13 min, meets 45-minute deadline); backup option is ground vehicle (20--30 min, deadline risk). Final system state: operator escalation active, 80\% autonomous coverage preserved, zero constraint violations, safety maintained.
+\textbf{ACT:} UAV-1 receives modified route (Package A only, then RTL). Operator interface presents backup options. 80\% autonomous coverage preserved, zero violations.
 
 \begin{table}[H]
 \centering
@@ -1495,13 +1471,13 @@ Autonomous Feasibility & TRUE & \cellcolor{red!25}\textbf{FALSE} \\
 
 \subsection{Scenario Outcome}
 
-The delivery scenarios demonstrate constraint-aware design when physical reality defeats autonomous recovery. In D6, Package B (0.4 kg) exceeds all available spare payload capacity (maximum 0.15 kg); in D7, destination coordinates lie outside the operational grid with no UAV holding out-of-grid permission. The OODA system identified both as autonomously infeasible in 0.2 ms and 0.4 ms respectively, escalating to operators while preserving zero constraint violations.
+The delivery scenarios demonstrate constraint-aware design. In D6, Package B (0.4 kg) exceeds spare capacity (maximum 0.15 kg); in D7, destination lies outside operational grid. Both identified as infeasible in 0.2--0.4 ms, escalating while preserving zero violations.
 
-This outcome inverts the usual success metric. A greedy baseline would report 100\% coverage by overloading UAV-2 to 0.85 kg against 0.5 kg capacity---``success'' that would cause mid-flight failure. The OODA system's 0\% autonomous coverage represents constraint-aware intelligence refusing plans that physics cannot execute. The hybrid approach (80\% autonomous, 20\% supervised) proves more deployable than systems claiming full autonomy while ignoring physical constraints.
+A greedy baseline would overload UAV-2 to 0.85 kg against 0.5 kg capacity---causing mid-flight failure. The OODA system's 0\% autonomous coverage represents refusing plans that physics cannot execute. The hybrid approach (80\% autonomous, 20\% supervised) proves more deployable.
 
 \section{Cross-Scenario Comparative Analysis}
 
-Table~\ref{tab:scenario_performance} synthesizes performance metrics across all three mission types, enabling direct comparison of OODA behavior under different operational constraints.
+Table~\ref{tab:scenario_performance} synthesizes performance metrics across all three mission types.
 
 \begin{table}[H]
 \centering
@@ -1522,9 +1498,9 @@ Dominant Constraint & Battery & Time (golden hour) & Payload \\
 \end{tabular}
 \end{table}
 
-The three scenarios validate consistent OODA behavior across diverse contexts. Surveillance and SAR achieved full autonomous recovery because constraints permitted reallocation within fleet capacity. Delivery scenarios correctly escalated when payload constraints made autonomous recovery physically impossible---demonstrating that intelligent escalation is a feature, not a failure mode.
+Surveillance and SAR achieved full autonomous recovery within fleet capacity. Delivery correctly escalated when payload constraints made recovery impossible---intelligent escalation is a feature, not a failure mode.
 
-Statistical validation (N=30 runs per scenario) confirms consistent sub-millisecond computation across all experiments. Mean OODA computation times ranged from 0.10 ms (D7) to 0.88 ms (R5), with 95\% confidence intervals confirming stable performance (e.g., R5: 0.68--1.08 ms CI). Combined with projected communication latency, total end-to-end response of ~2.2 seconds remains well within the 4-6 second design target. Zero constraint violations occurred across all 150 experimental runs (30 runs $\times$ 5 scenarios). The combination of full autonomous recovery in feasible scenarios with appropriate escalation in infeasible cases demonstrates that honest acknowledgment of physical limitations produces deployable systems.
+Statistical validation (N=30 per scenario) confirms sub-millisecond computation (0.10--0.88 ms range, 95\% CI stable). Total end-to-end response ~2.2 seconds, within 4-6 second target. Zero constraint violations across all 150 runs.
 
 \chapter{Methodology and Experimental Design}
 
