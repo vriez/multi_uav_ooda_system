@@ -1340,7 +1340,9 @@ The three scenarios validate consistent OODA behavior across diverse contexts. S
 
 Statistical validation (N=30 runs per scenario) confirms consistent sub-millisecond computation across all experiments. Mean OODA computation times ranged from 0.10 ms (D7) to 0.88 ms (R5), with 95\% confidence intervals confirming stable performance (e.g., R5: 0.68--1.08 ms CI). Combined with projected communication latency, total end-to-end response of ~2.2 seconds remains well within the 4-6 second design target. Zero constraint violations occurred across all 150 experimental runs (30 runs $\times$ 5 scenarios). The combination of full autonomous recovery in feasible scenarios with appropriate escalation in infeasible cases demonstrates that honest acknowledgment of physical limitations produces deployable systems.
 
-\chapter{Implementation and Validation Plan}
+\chapter{Methodology and Experimental Design}
+
+This chapter describes the methodological approach employed to validate the OODA-based fault-tolerant system. Validation employs software-in-the-loop simulation with deterministic failure injection, enabling controlled and reproducible experiments. Performance is assessed through comparative evaluation against baseline strategies across three mission types, with statistical validation (N=30 runs per scenario) ensuring result reliability.
 
 \section{Simulation Environment}
 
