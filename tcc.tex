@@ -545,7 +545,7 @@ This research addresses that gap through a hybrid OODA-based architecture that u
 
 \section{Centralized OODA Architecture with Distributed Execution}
 
-The system implements a hierarchical control structure in which the Ground Control Station hosts the OODA Loop Engine for centralized decision-making while UAVs execute tasks with operational autonomy. This architecture balances the optimization advantages of global fleet visibility against the responsiveness requirements of distributed execution, a design choice grounded in both regulatory constraints and practical deployment considerations. Figure~\ref{fig:architecture} presents a comprehensive overview of this layered architecture, illustrating the information flow between the GCS decision engine, the communication infrastructure, and the distributed UAV fleet. The diagram delineates the separation of concerns between centralized planning---where the OODA loop processes fleet-wide telemetry to generate optimal task allocations---and decentralized execution, where individual vehicles maintain local autonomy for navigation and immediate obstacle avoidance.
+The system implements a hierarchical control structure: the Ground Control Station hosts the OODA Loop Engine for centralized decision-making while UAVs execute tasks autonomously. This architecture balances global fleet visibility for optimization against distributed execution for responsiveness. Figure~\ref{fig:architecture} presents this layered architecture, illustrating information flow between the GCS decision engine, communication infrastructure, and UAV fleet---separating centralized planning (OODA loop processing fleet-wide telemetry for task allocation) from decentralized execution (vehicles maintaining local autonomy for navigation and obstacle avoidance).
 
 \begin{figure}[h!tbp]
     \centering
@@ -556,33 +556,33 @@ The system implements a hierarchical control structure in which the Ground Contr
 
 \subsection{Design Rationale and Trade-offs}
 
-The centralized OODA architecture derives from convergent factors: regulatory compliance for Beyond Visual Line of Sight operations mandates operator oversight, global fleet visibility enables superior optimization compared to distributed consensus, and single-point decision-making eliminates complex inter-UAV coordination protocols. The hybrid autonomy model explicitly recognizes scenarios where complete failure compensation proves physically impossible, maintaining safety through human-in-the-loop oversight while prioritizing honest performance assessment over aspirational capabilities.
+The centralized architecture derives from convergent factors: BVLOS regulatory compliance mandates operator oversight, global fleet visibility enables superior optimization versus distributed consensus, and single-point decision-making eliminates complex inter-UAV coordination protocols. The hybrid autonomy model recognizes scenarios where complete failure compensation proves physically impossible, maintaining safety through human-in-the-loop oversight.
 
-Architectural trade-offs require mitigation. The GCS single point of failure is addressed through autonomous Return-to-Launch behaviors triggered by communication timeout. Communication bandwidth scales linearly with fleet size, though 2 Hz telemetry maintains manageable overhead for fleets up to twelve UAVs. The bidirectional architecture exhibits asymmetric data flow: telemetry uplink packets (~2 KB) exceed command downlink packets (~1 KB), reflecting the richer state information transmitted from UAVs compared to the compact waypoint commands dispatched by the GCS.
+Architectural trade-offs require mitigation. The GCS single point of failure is addressed through autonomous Return-to-Launch triggered by communication timeout. Communication bandwidth scales linearly with fleet size, though 2 Hz telemetry maintains manageable overhead for up to twelve UAVs. The bidirectional architecture exhibits asymmetric data flow: telemetry uplink (~2 KB) exceeds command downlink (~1 KB).
 
-The 2 Hz telemetry rate reflects practical deployment constraints rather than simulation convenience. Commercial systems typically employ 1-2 Hz rates; higher frequencies increase bandwidth requirements and packet collision probability without proportional benefit given the 3-6 second OODA response latency. This conservative choice ensures field deployability while maintaining responsive fault detection, contrasting with prior simulation work that assumes instantaneous communication.
+The 2 Hz telemetry rate reflects practical deployment constraints. Commercial systems typically employ 1-2 Hz; higher frequencies increase bandwidth and packet collision probability without proportional benefit given 3-6 second OODA response latency. This ensures field deployability while maintaining responsive fault detection.
 
 \section{OODA Loop Execution Flow}
 
-The OODA loop implements continuous monitoring and reactive decision-making through four sequential phases. \textbf{Statistical validation (N=30 runs per scenario) demonstrates algorithmic computation times of 0.1--0.9 ms (mean) for the complete OODA cycle}, with 95\% confidence intervals confirming sub-millisecond performance. This ensures that algorithmic processing never becomes the system bottleneck, leaving the 4-6 second end-to-end response budget available for communication latency and command verification.
+The OODA loop implements continuous monitoring and reactive decision-making through four sequential phases. \textbf{Statistical validation (N=30 runs per scenario) demonstrates algorithmic computation times of 0.1--0.9 ms (mean)}, with 95\% confidence intervals confirming sub-millisecond performance. This ensures algorithmic processing never becomes the bottleneck, leaving the 4-6 second end-to-end budget for communication latency.
 
 \subsection{Computation Time vs. End-to-End System Latency}
 
-An important distinction exists between \textbf{OODA algorithm computation time} and \textbf{total system response latency}. The original 4-6 second design target specified end-to-end response time including communication; the sub-millisecond measurements represent pure algorithmic computation. These are complementary metrics, not a discrepancy:
+A key distinction exists between \textbf{OODA algorithm computation time} and \textbf{total system response latency}. The 4-6 second design target specifies end-to-end response including communication; sub-millisecond measurements represent pure algorithmic computation. These are complementary metrics:
 
-\textbf{OODA computation time (measured):} The complete OODA cycle---encompassing all four phases (Observe, Orient, Decide, Act) with failure detection logic, capacity analysis, constraint validation, and reallocation optimization---executes in 0.2 to 1.2 milliseconds end-to-end. Within this cycle, the core greedy allocation algorithm (Algorithm 2) executes in 0.1-0.3 ms. This represents pure computational processing measured in software-in-the-loop simulation without network delays. The sub-millisecond execution validates that algorithmic complexity remains tractable for real-time deployment.
+\textbf{OODA computation time (measured):} The complete OODA cycle---encompassing all four phases with failure detection, capacity analysis, constraint validation, and reallocation optimization---executes in 0.2 to 1.2 milliseconds. The core greedy allocation (Algorithm 2) executes in 0.1-0.3 ms. This represents pure computation in software-in-the-loop simulation without network delays, validating tractable algorithmic complexity for real-time deployment.
 
-\textbf{End-to-end system latency (design target):} The original 4-6 second estimate accounts for complete system response including bidirectional RF communication delays, a critical factor in distributed UAV coordination (ABDESSAMEUD; TAYEBI, 2011; IZADI; GORDON; ZHANG, 2009). This encompasses 0.5-1.0 seconds uplink for failure notification, 0.5-1.0 seconds downlink for command dispatch, telemetry aggregation latency at 2 Hz sampling intervals (up to 0.5 seconds), and command acknowledgment verification (0.2 seconds). In field deployment with long-range radio links, total adaptation time spans:
+\textbf{End-to-end system latency (design target):} The 4-6 second estimate accounts for bidirectional RF communication delays (ABDESSAMEUD; TAYEBI, 2011; IZADI; GORDON; ZHANG, 2009): 0.5-1.0s uplink for failure notification, 0.5-1.0s downlink for command dispatch, telemetry aggregation at 2 Hz (up to 0.5s), and acknowledgment verification (0.2s). In field deployment:
 
 \begin{equation}
 T_{total} = T_{uplink} + T_{compute} + T_{downlink} + T_{ack} \approx 1.0 + 0.001 + 1.0 + 0.2 = 2.2 \text{ seconds}
 \end{equation}
 
-This 2-3 second end-to-end response remains substantially faster than the 4-6 second initial conservative estimate, with the primary time consumption attributable to RF propagation delays rather than computational bottlenecks. The millisecond-scale algorithmic performance ensures that computation never becomes the limiting factor, even for larger fleet sizes where complexity increases.
+This 2-3 second response is faster than the conservative 4-6 second estimate, with time consumption dominated by RF propagation rather than computation. Millisecond-scale algorithmic performance ensures computation never becomes the limiting factor.
 
-\textbf{Practical implication:} Real-world deployments will experience 2-3 second adaptation times dominated by communication latency, not the sub-millisecond algorithmic computation. This distinction matters for system design---network optimization provides greater latency reduction potential than further algorithmic speedup. The 2-3 second end-to-end response validates the OODA approach for time-critical applications such as search and rescue operations, where rapid fault recovery directly impacts mission success.
+\textbf{Practical implication:} Real-world deployments experience 2-3 second adaptation times dominated by communication latency. Network optimization provides greater latency reduction potential than algorithmic speedup. The 2-3 second response validates OODA for time-critical applications such as search and rescue.
 
-Figure~\ref{fig:ooda_loop} illustrates the complete OODA loop execution flow, depicting the cyclical progression through Observe, Orient, Decide, and Act phases. The diagram emphasizes the continuous nature of this adaptive process: each Act phase conclusion feeds telemetry back into the subsequent Observe phase, creating an unbroken feedback loop that maintains situational awareness throughout mission execution. This visual representation clarifies how failure events trigger immediate cycle activation, with each phase contributing specific analytical or executive functions toward recovery.
+Figure~\ref{fig:ooda_loop} illustrates the OODA loop execution flow. Each Act phase feeds telemetry back into Observe, creating continuous feedback that maintains situational awareness. Failure events trigger immediate cycle activation.
 
 \begin{figure}[h!tbp]
     \centering
@@ -609,7 +609,7 @@ The ACT phase (0.5-1.5s budget) dispatches mission updates to affected UAVs (new
 
 \section{Sequential Constraint Validation Process}
 
-The constraint validation process implements fail-fast sequential checking that prioritizes constraints by criticality and commonality, enabling early termination when fundamental limitations preclude autonomous compensation while avoiding wasted computation on infeasible scenarios. Figure~\ref{fig:constraints} presents the decision flowchart governing this sequential validation, illustrating how each constraint category serves as a gate that must be passed before subsequent checks proceed. The hierarchical ordering---battery constraints first, followed by payload verification, and concluding with temporal feasibility---reflects both the relative criticality of each constraint type and the computational efficiency of early rejection when fundamental physical limitations cannot be satisfied.
+The constraint validation process implements fail-fast sequential checking, enabling early termination when fundamental limitations preclude autonomous compensation. Figure~\ref{fig:constraints} presents the decision flowchart: each constraint category serves as a gate before subsequent checks proceed. The ordering---battery first, payload second, temporal last---reflects criticality and computational efficiency of early rejection.
 
 \begin{figure}[h!tbp]
     \centering
@@ -621,23 +621,23 @@ The constraint validation process implements fail-fast sequential checking that 
 
 \subsection{Battery Constraint Verification}
 
-Battery constraint evaluation serves as the primary validation gate due to its status as the most common limiting factor and safety-critical nature. For each lost task, the system calculates Euclidean distance from candidate UAVs, determines required battery percentage via vehicle-specific efficiency factors, and computes spare capacity as current charge minus committed energy and 15--20\% safety reserves. Pass: every lost task finds one candidate UAV within spare capacity. Fail: any task unreachable by all UAVs without violating safety margins, triggering immediate operator escalation. Prioritization derives from catastrophic failure risk and computational efficiency of distance-based evaluation.
+Battery constraint evaluation serves as the primary gate due to safety-criticality. For each lost task, the system calculates Euclidean distance from candidate UAVs, determines required battery via efficiency factors, and computes spare capacity as current charge minus committed energy and 15--20\% reserves. Pass: every lost task finds a candidate UAV within spare capacity. Fail: any task unreachable without violating safety margins triggers operator escalation.
 
 \subsection{Payload Constraint Verification}
 
-Payload constraint evaluation (conducted conditionally upon battery satisfaction) applies exclusively to cargo-carrying operations. The system calculates spare payload as maximum capacity minus current load, requiring task payload not exceed available spare capacity. Pass: all payload-requiring tasks find adequate capacity. Fail: removes payload-heavy tasks from consideration while reallocating feasible tasks, producing partial coverage. Payload constraints represent hard physical limits—mid-air transfers remain impossible, constraining reallocation to base station cargo swaps to avoid structural failure or flight instability.
+Payload constraint evaluation (conditional on battery satisfaction) applies to cargo operations. Spare payload equals maximum capacity minus current load. Pass: all payload-requiring tasks find adequate capacity. Fail: removes payload-heavy tasks while reallocating feasible ones. Payload constraints are hard physical limits---mid-air transfers are impossible, constraining reallocation to base station cargo swaps.
 
 \subsection{Time Constraint Verification}
 
-Time constraint evaluation (positioned as final validation) verifies reallocated tasks achieve completion before deadline expiration via cumulative time calculation: transit time + task execution + current task remainder. Pass: yields feasible classification with 90--100\% completion plans. Fail: produces partial reallocation prioritizing by deadline urgency, accepting delays for low-priority tasks with 75--90\% completion projections. Final positioning reflects maximum flexibility—violations produce mission degradation rather than safety risks, unlike battery/payload constraints.
+Time constraint evaluation (final validation) verifies tasks complete before deadlines via cumulative calculation: transit + execution + current task remainder. Pass: 90--100\% completion plans. Fail: partial reallocation prioritizing deadline urgency, accepting delays for low-priority tasks (75--90\% completion). Final positioning reflects flexibility---violations produce mission degradation rather than safety risks.
 
 \subsection{Design Rationale}
 
-Sequential checking provides: (1) early exit efficiency, saving ~60\% computation when battery constraints fail; (2) clear failure attribution for precise diagnostics and operator understanding; (3) prioritized ordering checking safety-critical battery bottlenecks first, physical payload limits second, flexible time constraints last.
+Sequential checking provides: (1) early exit efficiency, saving ~60\% computation when battery constraints fail; (2) clear failure attribution for diagnostics; (3) prioritized ordering---safety-critical battery first, physical payload second, flexible time last.
 
 \section{Communication Sequence and Information Flow}
 
-The temporal communication sequence and information pipeline architecture demonstrate the system's end-to-end fault response capability, transforming raw sensor measurements into executable commands through systematic OODA processing.
+The communication sequence and pipeline architecture demonstrate end-to-end fault response, transforming sensor measurements into executable commands through OODA processing.
 
 \begin{figure}[h!tbp]
     \centering
@@ -648,9 +648,7 @@ The temporal communication sequence and information pipeline architecture demons
 
 \subsection{Temporal Execution Analysis}
 
-Figure~\ref{fig:sequence} illustrates communication flow during failure events with precise timing. At reference time T, a UAV experiences failure, transmitting a high-priority fault message with 0.4-1.0 second latency. The OBSERVE phase confirms the fault and aggregates fleet state by T+1.5 seconds. The ORIENT phase completes impact assessment and capacity analysis by T+2.5 seconds. The DECIDE phase generates reallocation plans by T+3.5 seconds. The ACT phase dispatches commands and updates dashboards by T+4.0 seconds, establishing a 4-second response timeline from failure detection to command dispatch.
-
-This temporal progression demonstrates responsive fault recovery while accommodating realistic communication latencies inherent in long-range RF links. The explicit timing breakdown provides quantitative performance baselines for fault-tolerant mission adaptation.
+Figure~\ref{fig:sequence} illustrates communication flow during failure events. At time T, a UAV fails, transmitting a fault message (0.4-1.0s latency). OBSERVE confirms and aggregates fleet state by T+1.5s. ORIENT completes impact assessment by T+2.5s. DECIDE generates reallocation plans by T+3.5s. ACT dispatches commands by T+4.0s, establishing a 4-second response timeline.
 
 \subsection{Information Pipeline Architecture}
 
@@ -661,17 +659,17 @@ This temporal progression demonstrates responsive fault recovery while accommoda
 \label{fig:pipeline}
 \end{figure}
 
-The data flow architecture, depicted in Figure~\ref{fig:pipeline}, implements unidirectional information transformation with clear phase boundaries. The input layer ingests dual streams: high-frequency telemetry from UAV sensors updated at 2 Hz, and static mission definitions loaded at initialization. The processing layer transforms these inputs sequentially—OBSERVE produces fleet states and failure lists, ORIENT generates impact assessments and capacity analyses, DECIDE creates strategies and command packets, and ACT executes commands while logging performance metrics. The output layer distributes results through three channels: commands transmitted to UAVs, alerts displayed to operators, and logs persisted for post-mission analysis.
+The data flow architecture (Figure~\ref{fig:pipeline}) implements unidirectional transformation with clear phase boundaries. The input layer ingests telemetry at 2 Hz and static mission definitions. The processing layer transforms sequentially: OBSERVE produces fleet states and failure lists, ORIENT generates impact assessments, DECIDE creates strategies and commands, ACT executes and logs. The output layer distributes commands to UAVs, alerts to operators, and logs for analysis.
 
-This unidirectional flow pattern provides clear data provenance enabling traceability, testability through phase isolation with mock input capability, and maintainability where phase modifications avoid backward ripple effects. The implicit feedback loop manifests as ACT phase commands update UAV operational states, with updated telemetry reflecting new states flowing back into OBSERVE phase in subsequent cycles.
+This unidirectional pattern provides traceability, testability through phase isolation, and maintainability. The feedback loop manifests as ACT commands update UAV states, with telemetry flowing back into OBSERVE in subsequent cycles.
 
 \subsection{Scalability Considerations}
 
-Computational complexity analysis reveals scaling characteristics across OODA phases. The OBSERVE phase scales linearly with fleet size through increased telemetry aggregation. The ORIENT phase maintains linear scaling for capacity calculations across vehicles. The DECIDE phase exhibits O(N$\times$M) complexity for task allocation across N UAVs and M tasks, with collision avoidance scaling quadratically O(N$^2$) for pairwise path verification. These complexity characteristics yield expected OODA execution times of 5-6 seconds for twelve-UAV fleets and 8-10 seconds for twenty-UAV fleets, potentially exceeding acceptable response thresholds for larger deployments.
+Complexity analysis: OBSERVE and ORIENT scale linearly with fleet size. DECIDE exhibits O(N$\times$M) for task allocation across N UAVs and M tasks, with collision avoidance scaling O(N$^2$) for pairwise verification. Expected execution times: 5-6 seconds for twelve-UAV fleets, 8-10 seconds for twenty-UAV fleets, potentially exceeding acceptable thresholds for larger deployments.
 
 \section{Scenario-Specific Adaptations}
 
-The architecture demonstrates flexibility across diverse mission profiles through scenario-specific workflow patterns while maintaining consistent OODA loop mechanics. Three representative mission types illustrate architectural adaptation to varying operational requirements and constraint priorities, as depicted in Figures~\ref{fig:surveillance}, \ref{fig:sar}, and~\ref{fig:delivery}.
+The architecture demonstrates flexibility through scenario-specific workflow patterns while maintaining consistent OODA mechanics. Three mission types illustrate adaptation to varying requirements and constraint priorities (Figures~\ref{fig:surveillance}, \ref{fig:sar}, \ref{fig:delivery}).
 
 \begin{figure}[h!tbp]
     \centering
@@ -680,7 +678,7 @@ The architecture demonstrates flexibility across diverse mission profiles throug
     \label{fig:surveillance}
 \end{figure}
 
-\textbf{Surveillance missions} (Figure~\ref{fig:surveillance}) emphasize continuous area coverage through patrol patterns with failures requiring coverage gap minimization and critical zone protection. The workflow depicts a 120m $\times$ 120m perimeter divided into 9 patrol zones (40m $\times$ 40m each) monitored by 6 UAVs with 30-minute endurance. Task characteristics include waypoint-based patrol routes, priority differentials between critical security zones ($P=0.9$ for top row) and routine patrol areas ($P=0.4$ for bottom row), and deadline constraints for periodic revisit frequencies. Constraint considerations focus primarily on battery limitations affecting patrol duration and spatial coverage range, with time constraints enforcing revisit deadlines for critical areas. When UAV-3 experiences battery anomaly (8\% vs.\ expected 55\%), the OODA cycle detects the failure, evaluates spare capacity in adjacent UAVs (UAV-2: 15\%, UAV-4: 12\%), and executes a split-zone reallocation strategy---Zone 5 divides between UAV-2 and UAV-4, achieving 100\% coverage recovery with 91.7\% surveillance quality in 0.7 milliseconds. Target performance maintains 90-100 percent coverage through reallocation prioritizing critical zones.
+\textbf{Surveillance missions} (Figure~\ref{fig:surveillance}) emphasize continuous area coverage with failures requiring coverage gap minimization. The workflow depicts a 120m $\times$ 120m perimeter divided into 9 zones (40m $\times$ 40m) monitored by 6 UAVs with 30-minute endurance. Priorities differentiate critical zones ($P=0.9$ for top row) from routine areas ($P=0.4$ for bottom row). Battery limitations dominate constraint considerations. When UAV-3 experiences battery anomaly (8\% vs.\ expected 55\%), the OODA cycle evaluates spare capacity (UAV-2: 15\%, UAV-4: 12\%) and executes split-zone reallocation---Zone 5 divides between UAV-2 and UAV-4, achieving 100\% coverage in 0.7 milliseconds.
 
 \begin{figure}[H]
     \centering
@@ -689,7 +687,7 @@ The architecture demonstrates flexibility across diverse mission profiles throug
     \label{fig:sar}
 \end{figure}
 
-\textbf{Search and rescue missions} (Figure~\ref{fig:sar}) emphasize time-critical area coverage through systematic grid search patterns with failures requiring rapid reallocation to maintain search efficiency. The workflow illustrates a 120m $\times$ 120m search area with 9 zones searched by 4 thermal-equipped UAVs under golden hour constraints. Zone priorities reflect distance from last known position (LKP): $P=0.9$ for the top row (closest to LKP), $P=0.6$ for the middle row (travel corridors), and $P=0.4$ for the bottom row (remote areas). Task characteristics include grid cell assignments with systematic coverage requirements and stringent deadline constraints reflecting survivor time sensitivity. Battery and time constraints dominate feasibility assessment. When UAV-2 loses GPS signal in a ravine, the system reallocates Zone 3 (HIGH priority) to UAV-1 and Zone 4 (MEDIUM priority) to UAV-3, achieving 100\% coverage recovery in 1.2 milliseconds while consuming only 0.00003\% of the golden hour window. Target performance accepts 75-90 percent coverage as acceptable degradation when full compensation proves infeasible, acknowledging that incomplete coverage in time-critical scenarios exceeds mission abortion alternatives.
+\textbf{Search and rescue missions} (Figure~\ref{fig:sar}) emphasize time-critical coverage through systematic grid search under golden hour constraints. The 120m $\times$ 120m area with 9 zones is searched by 4 thermal-equipped UAVs. Zone priorities reflect distance from last known position: $P=0.9$ (closest), $P=0.6$ (corridors), $P=0.4$ (remote). Battery and time constraints dominate. When UAV-2 loses GPS in a ravine, the system reallocates Zone 3 to UAV-1 and Zone 4 to UAV-3, achieving 100\% coverage in 1.2 milliseconds. Target: 75-90\% coverage acceptable when full compensation proves infeasible.
 
 \begin{figure}[h!tbp]
     \centering
@@ -698,9 +696,9 @@ The architecture demonstrates flexibility across diverse mission profiles throug
     \label{fig:delivery}
 \end{figure}
 
-\textbf{Delivery missions} (Figure~\ref{fig:delivery}) emphasize reliable cargo transport to designated destinations with failures requiring payload-aware reallocation and potential return-to-base cargo swaps when reallocation proves infeasible. The workflow depicts a heterogeneous 3-UAV fleet---UAV-1 (heavy lifter, 1.0 kg capacity), UAV-2 and UAV-3 (standard, 0.5 kg capacity each)---delivering 5 packages ranging from 0.2 to 0.5 kg. Task characteristics include point-to-point delivery routes with specific destination coordinates, payload weight requirements varying per package, and deadline constraints for time-sensitive deliveries. Payload constraints assume critical importance alongside battery limitations. When UAV-1 experiences battery anomaly while carrying Packages A and B (0.9 kg total), the system evaluates reallocation feasibility: Package B (0.4 kg) exceeds all available spare capacity (UAV-2: 0.05 kg spare, UAV-3: 0.15 kg spare), triggering operator escalation. The OODA cycle completes constraint analysis in 0.2 milliseconds, preserving 80\% autonomous coverage while correctly deferring the infeasible task to human judgment---demonstrating that mid-air cargo transfer remains impossible, constraining reallocation to base station cargo swaps. Priority schemes emphasize time-sensitive or high-value packages, accepting degradation in routine deliveries when capacity limitations preclude full compensation.
+\textbf{Delivery missions} (Figure~\ref{fig:delivery}) emphasize reliable cargo transport with payload-aware reallocation. The heterogeneous 3-UAV fleet---UAV-1 (1.0 kg capacity), UAV-2 and UAV-3 (0.5 kg each)---delivers 5 packages (0.2-0.5 kg). Payload and battery constraints dominate. When UAV-1 experiences battery anomaly while carrying 0.9 kg, Package B (0.4 kg) exceeds spare capacity (UAV-2: 0.05 kg, UAV-3: 0.15 kg), triggering operator escalation. The OODA cycle completes in 0.2 milliseconds, preserving 80\% autonomous coverage while deferring the infeasible task to human judgment.
 
-These scenario variations demonstrate architectural flexibility through consistent OODA mechanics with mission-specific constraint emphasis and priority schemes, validating the architecture's applicability across diverse operational domains while maintaining systematic fault response capabilities.
+These variations demonstrate architectural flexibility through consistent OODA mechanics with mission-specific constraint emphasis.
 
 \chapter{Core Algorithms and Technical Contributions}
 
