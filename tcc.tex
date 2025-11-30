@@ -1512,7 +1512,18 @@ Real-world UAV failures are dangerous and difficult to reproduce. This research 
 
 The framework implements six-degree-of-freedom quaternion dynamics with cascaded PID control. Vehicle parameters: 1.5 kg mass, 100 Wh battery, 0.5--1.0 kg payload capacity (Quad SimCon reference, adapted for multi-vehicle coordination). Communication uses TCP/IP with JSON-RPC 2.0; GCS (port 5555) aggregates state at 2 Hz; Flask dashboard (port 8085) provides WebSocket visualization.
 
-Key modules: \texttt{gcs/ooda\_engine.py} (phase timing), \texttt{gcs/fleet\_monitor.py} (failure detection), \texttt{gcs/constraint\_validator.py} (safety margins), \texttt{gcs/mission\_manager.py} (task tracking), \texttt{gcs/objective\_function.py} (optimization), \texttt{uav/simulation.py} (dynamics), \texttt{uav/client.py} (communication). Source publicly available (EULÁLIO REIS, 2025).
+The implementation distributes functionality across purpose-specific modules:
+\begin{itemize}
+    \item \texttt{gcs/ooda\_engine.py} --- phase timing
+    \item \texttt{gcs/fleet\_monitor.py} --- failure detection
+    \item \texttt{gcs/constraint\_validator.py} --- safety margins
+    \item \texttt{gcs/mission\_manager.py} --- task tracking
+    \item \texttt{gcs/objective\_function.py} --- optimization
+    \item \texttt{uav/simulation.py} --- dynamics
+    \item \texttt{uav/client.py} --- communication
+\end{itemize}
+
+\noindent The complete source code is publicly available to enable replication and extension of this research (EULÁLIO REIS, 2025).
 
 \section{Validation Metrics}
 
@@ -1578,13 +1589,13 @@ Three baseline strategies:
 
 \section{Visualization and Logging}
 
-The web dashboard renders fleet state via Flask/WebSocket: UAV positions, battery bars (2 Hz, 20\% reserve marked), OODA timeline, and alert log. Post-mission analysis generates coverage traces and efficiency heatmaps (JSON exportable).
+The web dashboard renders fleet state via Flask/WebSocket: UAV positions, battery bars, OODA timeline, and alert log.
 
 \chapter{Experimental Results and Validation}
 
 \section{Quantitative Performance Results}
 
-The system was validated through five experimental scenarios comparing OODA-based fault tolerance against three baseline strategies. Results demonstrate performance significantly exceeding initial expectations.
+The system was validated through five scenarios comparing OODA against three baselines. Results exceed initial expectations.
 
 \subsection{Executive Summary}
 
@@ -1654,13 +1665,13 @@ Safe Escalation Rate & >90\% & 100\% & Perfect \\
 
 \subsection{Detailed Performance Metrics}
 
-The measured OODA adaptation timings reveal performance characteristics that substantially exceed initial design expectations, as quantified in Figure~\ref{fig:ch6_time}. The surveillance scenario (S5) completed its entire OODA cycle in 0.7 milliseconds, achieving a response 7,000 times faster than the conservative five-second target established during system design. Search and rescue operations demonstrated comparable efficiency, with scenario R5 completing in 1.2 milliseconds and the out-of-grid variant R6 achieving the fastest measured response at 0.3 milliseconds. Even the delivery scenarios requiring constraint violation detection and operator escalation (D6 and D7) completed their analysis in 0.2 and 0.4 milliseconds respectively, demonstrating that safety-critical constraint checking imposes negligible computational overhead.
+Measured OODA timings (Figure~\ref{fig:ch6_time}) exceed design expectations: S5 completed in 0.7 ms (7,000$\times$ faster than 5-second target), R5 in 1.2 ms, R6 in 0.3 ms, D6/D7 in 0.2--0.4 ms. Constraint checking imposes negligible overhead.
 
-Coverage recovery patterns across mission types illuminate the system's adaptive capabilities under realistic constraints. Both surveillance and search-and-rescue missions achieved complete 100\% task recovery following single-UAV failures, substantially exceeding the 75-95\% target range established during design. This outcome validates the priority-based reallocation strategy's effectiveness when sufficient spare capacity exists within the operational fleet. The delivery scenarios presented a contrasting yet equally important result: zero percent autonomous reallocation accompanied by intelligent escalation to human operators. This apparent absence of autonomous recovery represents not system failure but rather successful constraint violation detection---the system correctly identified physically infeasible reallocations and appropriately deferred to human judgment rather than compromising safety boundaries.
+Coverage recovery: surveillance and SAR achieved 100\% task recovery, exceeding 75--95\% target. Delivery scenarios achieved 0\% autonomous coverage with intelligent escalation---correct behavior when physical constraints preclude safe reallocation.
 
-The computational performance proves particularly striking when examined against design targets. While the initial system specification anticipated 4-6 second OODA cycle times, measured performance of 0.2 to 1.2 milliseconds exceeds this target by nearly four orders of magnitude. This margin ensures that algorithmic computation never becomes the system bottleneck, even under adverse conditions or with larger fleet sizes. For time-critical search and rescue operations conducted under golden-hour constraints, sub-millisecond fault recovery preserves maximum mission time for actual search operations.
+Computational performance (0.2--1.2 ms) exceeds the 4--6 second target by four orders of magnitude, ensuring computation never becomes the bottleneck. For SAR under golden-hour constraints, sub-millisecond recovery preserves maximum search time.
 
-Safety validation across all experimental scenarios demonstrates perfect constraint adherence, as summarized in Figure~\ref{fig:ch6_safety} and detailed in Tables~\ref{tab:coverage_matrix} and~\ref{tab:safety_violations}. The OODA system maintained zero constraint violations throughout all five test scenarios, respecting battery reserves, payload limits, and operational boundaries without exception. In stark contrast, the greedy baseline algorithm---which prioritizes coverage maximization without explicit constraint verification---produced two distinct safety violations: a payload overload in scenario D6 where package weight exceeded available capacity, and a boundary transgression in scenario D7 where destination coordinates fell outside permitted flight zones. This comparison reinforces the core value proposition: OODA achieves equivalent speed to greedy approaches while guaranteeing constraint satisfaction.
+Safety validation (Figure~\ref{fig:ch6_safety}): Table~\ref{tab:coverage_matrix} shows OODA and greedy both achieving 100\% coverage for S5/R5/R6, but OODA correctly escalates D6/D7 while greedy claims unsafe 100\%. Table~\ref{tab:safety_violations} details the greedy approach's two constraint violations: one payload overload (D6) and one boundary transgression (D7). OODA maintained zero violations across all scenarios while achieving equivalent speed.
 
 \begin{table}[H]
 \centering
@@ -1717,9 +1728,9 @@ No Adaptation & 0 & 0 & 0 & 0 \\
 
 \subsection{S5: Surveillance Mission Recovery}
 
-The surveillance scenario (S5) evaluated system response to a single UAV failure during sustained perimeter monitoring operations. This experiment compared three distinct operational strategies to isolate the contribution of constraint-aware adaptive planning. The no-adaptation baseline, which simply aborted affected tasks without reallocation, achieved only 88.9\% coverage---effectively declaring mission failure upon detecting the fault. The greedy nearest-neighbor heuristic recovered full 100\% coverage in 1.5 milliseconds by assigning orphaned tasks to the spatially nearest available vehicles, though this approach succeeded only because the particular failure configuration happened not to violate capacity constraints.
+S5 compared three strategies: no-adaptation achieved 88.9\% coverage; greedy recovered 100\% in 1.5 ms (succeeding only because constraints weren't violated); OODA achieved 100\% in 0.7 ms with verified constraint satisfaction.
 
-The OODA system achieved 100\% coverage recovery in 0.7 milliseconds while maintaining perfect safety through explicit constraint verification at each allocation step. This computation time, nearly four orders of magnitude faster than the 4-6 second design target, transforms fault recovery into an essentially instantaneous adaptation invisible to mission progress. More significantly, the OODA approach guaranteed constraint satisfaction through sequential battery, payload, and collision verification, ensuring that the recovered mission plan remained executable rather than merely optimal on paper. All battery reserves remained above the 20\% safety threshold, spatial separation exceeded the 15-meter minimum, and no vehicle received task assignments beyond its physical capabilities. Figure~\ref{fig:surveillance_trajectory} visualizes the pre- and post-failure trajectories, illustrating how the system seamlessly redistributes patrol responsibilities while preserving continuous area coverage.
+The OODA approach guaranteed safety through sequential battery, payload, and collision verification. All reserves remained above 20\%, spatial separation exceeded 15 m. Figure~\ref{fig:surveillance_trajectory} visualizes pre/post-failure trajectories.
 
 \begin{figure}[H]
 \centering
@@ -1728,13 +1739,11 @@ The OODA system achieved 100\% coverage recovery in 0.7 milliseconds while maint
 \label{fig:surveillance_trajectory}
 \end{figure}
 
-As shown in Figure~\ref{fig:surveillance_trajectory}, the dashboard provides a real-time visualization of the five-UAV fleet conducting zone-bounded perimeter monitoring. The interface displays individual UAV trajectories, current positions, and zone assignments following dynamic workload reallocation after vehicle failure detection.
-
 \subsection{R5 \& R6: Search \& Rescue with Time Criticality}
 
-The search and rescue scenarios (R5 and R6) examined system performance under the most stringent temporal constraints encountered in civilian UAV operations: the sixty-minute golden hour during which victim survival probability remains highest. Scenario R5 simulated a standard UAV failure during systematic grid search operations, where the no-adaptation baseline abandoned 22.2\% of the search area (2 of 9 zones)---effectively leaving critical zones including one high-priority area unsearched and potentially condemning an injured person to prolonged exposure. The OODA system recovered complete 100\% coverage in 1.2 milliseconds, consuming a negligible 0.00003\% of the precious golden hour interval, as illustrated in Figure~\ref{fig:ch6_golden_hour}. In scenarios where every second directly correlates with survival probability, minimizing fault recovery overhead ensures maximum time remains available for actual search operations.
+R5 and R6 examined performance under golden hour constraints. R5: no-adaptation abandoned 22.2\% of search area; OODA recovered 100\% in 1.2 ms, consuming 0.00003\% of golden hour (Figure~\ref{fig:ch6_golden_hour}).
 
-Scenario R6 introduced an additional complexity by positioning one high-priority search zone ten meters outside the nominal 120m $\times$ 120m operational grid boundaries. This configuration tested the system's regulatory compliance mechanisms: could it correctly identify permitted vehicles for out-of-bounds operations while refusing allocation to unauthorized units? The experiment validated this capability comprehensively. With UAV-4 having received explicit out-of-grid authorization from the operator prior to mission commencement, the OODA system correctly reallocated the exterior zone to this permitted vehicle while excluding unauthorized units from consideration. The decision completed in 0.3 milliseconds---the fastest measured across all experimental scenarios---demonstrating that permission verification and regulatory constraint checking impose minimal computational burden. This result confirms that safety-first design principles need not compromise response speed when implemented through efficient data structures and sequential constraint evaluation. Figure~\ref{fig:sar_trajectory} depicts the zone-based search pattern and priority-driven reallocation that ensures complete coverage of high-probability areas within the golden hour window.
+R6 positioned one zone 10 m outside the 120m $\times$ 120m grid, testing regulatory compliance. UAV-4 (with out-of-grid authorization) correctly received the exterior zone; unauthorized units excluded. Decision completed in 0.3 ms---fastest across all scenarios. Figure~\ref{fig:sar_trajectory} depicts the zone-based search pattern.
 
 \begin{figure}[H]
 \centering
@@ -1742,8 +1751,6 @@ Scenario R6 introduced an additional complexity by positioning one high-priority
 \caption{Search and Rescue Mission Dashboard (R5/R6)}
 \label{fig:sar_trajectory}
 \end{figure}
-
-Figure~\ref{fig:sar_trajectory} illustrates the lawnmower search pattern execution across priority-weighted zones targeting water sources and shelters. The visualization demonstrates systematic zone-by-zone coverage with priority-based task reallocation. Asset detection states are color-coded: yellow denotes active detection by UAV-4, green indicates confirmed identification by UAV-3, and red marks an unconfirmed asset located outside the defined search boundaries. UAV-5 remains positioned at the grid perimeter, awaiting operator authorization to extend beyond the initially specified operational area.
 
 \begin{figure}[H]
 \centering
@@ -1754,13 +1761,13 @@ Figure~\ref{fig:sar_trajectory} illustrates the lawnmower search pattern executi
 
 \subsection{D6 \& D7: Delivery with Intelligent Escalation}
 
-The delivery scenarios (D6 and D7) presented perhaps the most philosophically significant experimental results by validating the system's capacity to recognize its own limitations and appropriately defer to human judgment. Scenario D6 configured a deliberately infeasible task reallocation: following primary delivery vehicle failure, the stranded Package B weighed 0.4 kilograms while the maximum spare payload capacity across all operational vehicles reached only 0.15 kilograms. This represents a fundamental physical impossibility---no combination of available resources could legally transport the package without exceeding structural load limits, as geometrically illustrated in Figure~\ref{fig:ch6_constraint}.
+D6 and D7 validated the system's capacity to recognize limitations and defer to human judgment. D6 configured deliberate infeasibility: Package B weighed 0.4 kg while maximum spare payload capacity reached only 0.15 kg---a physical impossibility illustrated in Figure~\ref{fig:ch6_constraint}.
 
-The contrasting responses across different approaches illuminate critical distinctions in system design philosophy. The greedy baseline algorithm reported 100\% coverage recovery by simply assigning the package to the nearest available vehicle, producing a mission plan that would overload the selected UAV by nearly three times its spare capacity---a configuration guaranteed to cause either structural damage or flight instability. The OODA system correctly identified the infeasibility, completing constraint analysis in 0.2 milliseconds before escalating to operator intervention with explicit explanation: "Package B (0.4 kg) exceeds maximum available spare capacity (0.15 kg). Recommend backup UAV deployment or ground vehicle dispatch."
+The greedy algorithm reported 100\% coverage by assigning the package regardless, overloading the UAV by 3$\times$ its spare capacity. The OODA system identified the infeasibility in 0.2 ms and escalated: "Package B (0.4 kg) exceeds maximum available spare capacity (0.15 kg). Recommend backup UAV deployment or ground vehicle dispatch."
 
-Scenario D7 examined boundary constraint violations by positioning a delivery destination at coordinates (150, 100) meters---well outside the authorized 120m $\times$ 120m operational grid. Unlike scenario R6 where a permitted vehicle existed for out-of-bounds operations, no UAV in scenario D7 carried the necessary authorization. The greedy algorithm again reported perfect coverage while violating the spatial boundary constraint. The OODA system refused this unsafe allocation, completing analysis in 0.4 milliseconds before escalating with regulatory justification: "Destination outside authorized flight zone. No vehicle possesses out-of-grid permission. Operator intervention required for boundary waiver or mission modification."
+D7 positioned a delivery destination at (150, 100) m---outside the authorized 120m $\times$ 120m grid---with no UAV carrying out-of-bounds authorization (unlike R6). The greedy algorithm violated the boundary; OODA refused in 0.4 ms, escalating with regulatory justification.
 
-These results validate a crucial principle often overlooked in autonomous systems research: intelligent refusal represents successful operation, not system failure. The OODA system's zero percent autonomous reallocation in physically or regulatorily infeasible scenarios demonstrates correct constraint detection and appropriate escalation rather than algorithmic inadequacy. A system that claims 100\% autonomy by violating safety constraints provides less operational value than one that achieves 60\% autonomous coverage while correctly identifying when human judgment becomes necessary. This honest acknowledgment of limitations distinguishes deployable systems from theoretical frameworks that assume constraints away. Figure~\ref{fig:delivery_trajectory} illustrates this intelligent escalation behavior, showing how deliverable tasks proceed while physically infeasible assignments trigger operator alerts with recommended actions.
+These results validate a key principle: intelligent refusal represents successful operation. Zero autonomous reallocation in infeasible scenarios demonstrates correct constraint detection, not algorithmic inadequacy. A system claiming 100\% autonomy while violating safety constraints provides less value than one achieving lower autonomous coverage while correctly identifying when human judgment is necessary. Figure~\ref{fig:delivery_trajectory} illustrates this escalation behavior.
 
 \begin{figure}[H]
 \centering
@@ -1769,7 +1776,7 @@ These results validate a crucial principle often overlooked in autonomous system
 \label{fig:delivery_trajectory}
 \end{figure}
 
-Figure~\ref{fig:delivery_trajectory} presents the point-to-point delivery route visualization. UAV-2 (blue, loaded) approaches the designated drop-off location, while UAV-3 proceeds toward an out-of-bounds pick-up position following explicit operator authorization. UAV-4 has reached the operational boundary, triggering an escalation request for operator permission. The dashboard interface displays real-time fleet status alongside the active operator alert requiring human intervention.
+Figure~\ref{fig:delivery_trajectory} shows delivery route visualization: UAV-2 approaches the drop-off; UAV-3 proceeds to an out-of-bounds position after operator authorization; UAV-4 triggered escalation at the operational boundary. The dashboard displays fleet status with active operator alerts.
 
 \begin{figure}[H]
 \centering
@@ -1857,7 +1864,7 @@ No Adaptation & 10 & 10 & \textbf{3} & 23 \\
 \end{tabular}
 \end{table}
 
-Tables~\ref{tab:approach_comparison} and~\ref{tab:tradeoffs} synthesize these findings into a comprehensive comparison framework. Four patterns emerge from this data. First, computational speed remains uniformly under 1.5 milliseconds across all mission types, validating the greedy heuristic approach over optimization algorithms with unpredictable execution times. Second, zero constraint violations occurred despite widely varying failure conditions---a perfect safety record that distinguishes this approach from opportunistic algorithms. Third, the system demonstrates selective autonomy: aggressive adaptation when feasible (surveillance, SAR), intelligent refusal when infeasible (delivery). Fourth, sub-millisecond response times ensure fault recovery never becomes a mission bottleneck.
+Table~\ref{tab:approach_comparison} compares approaches across seven criteria: OODA achieves full constraint awareness and regulatory compliance with zero violations, greedy produces two violations rendering it non-deployable, and no-adaptation degrades to 77.8--88.9\% coverage. Table~\ref{tab:tradeoffs} quantifies trade-offs using normalized 0--10 scores: OODA scores 28/30 (10 speed, 10 safety, 8 coverage), greedy scores 22/30 (penalized for safety violations), no-adaptation scores 23/30 (penalized for coverage loss). Four patterns emerge: (1) computational speed uniformly under 1.5 ms validates greedy heuristics over unpredictable optimization; (2) zero constraint violations despite varying failure conditions; (3) selective autonomy---aggressive adaptation when feasible, intelligent refusal when not; (4) sub-millisecond responses ensure fault recovery never bottlenecks missions.
 
 \subsection{Claims Validated}
 
@@ -1872,133 +1879,113 @@ The experimental program validated all primary thesis claims:
 
 \subsection{Research Contributions}
 
-The work advances three contributions. First, a \textbf{unified constraint verification framework} that simultaneously enforces battery reserves, payload limits, and temporal deadlines through fail-fast sequential checking---the first multi-UAV fault tolerance system to address all three constraint categories together. Second, a \textbf{quantified degradation framework} with explicit decision rules governing when autonomous reallocation transitions from feasible to infeasible, enabling honest acknowledgment of system limitations rather than claiming universal fault tolerance. Third, a \textbf{hybrid autonomy architecture} that balances machine speed with human oversight, enabling deployment under current BVLOS regulations that require operator-in-the-loop supervision.
+The work advances three contributions: (1) a \textbf{unified constraint verification framework} enforcing battery reserves, payload limits, and temporal deadlines through fail-fast sequential checking---the first multi-UAV fault tolerance system addressing all three categories; (2) a \textbf{quantified degradation framework} with explicit decision rules for when autonomous reallocation becomes infeasible; (3) a \textbf{hybrid autonomy architecture} balancing machine speed with human oversight for BVLOS regulatory compliance.
 
-Beyond algorithmic innovation, the research delivers practical value: compatibility with commercial UAV platforms, autonomous recovery in three of five scenarios (S5, R5, R6) with appropriate escalation in the remaining two, and a comprehensive test suite (169 tests, 0.22s execution) enabling rapid validation. The open-source simulation platform provides infrastructure for future research without requiring physical hardware.
+Practical deliverables include commercial platform compatibility, autonomous recovery in three scenarios (S5, R5, R6) with appropriate escalation in two, and a comprehensive test suite (169 tests, 0.22s). The open-source simulation platform enables future research without physical hardware.
 
-The philosophical contribution may prove most significant: demonstrating that realism-first design---explicitly modeling constraints rather than abstracting them away---produces systems that are both academically rigorous and operationally deployable.
+The core insight: realism-first design---modeling constraints explicitly---produces systems both academically rigorous and operationally deployable.
 
 \chapter{Limitations and Future Work}
-
-This chapter examines current limitations and future research directions for the OODA-based fault-tolerant control system.
 
 \section{Architectural Constraints}
 
 \subsection{Centralized Control Architecture}
 
-The system employs a centralized Ground Control Station for OODA loop execution, creating a single point of failure. Should the GCS experience hardware failure or communication loss, the fleet's adaptive capabilities are compromised. Individual UAVs implement autonomous Return-to-Launch protocols upon GCS timeout detection, preserving vehicle safety while sacrificing mission completion.
-
-Distributed OODA architectures using consensus algorithms (IZADI; GORDON; ZHANG, 2013) could eliminate this vulnerability while introducing communication complexity, network partitioning risks, and Byzantine fault tolerance requirements.
+The centralized GCS creates a single point of failure. Upon GCS timeout, UAVs implement autonomous Return-to-Launch protocols, preserving vehicle safety while sacrificing mission completion. Distributed OODA architectures using consensus algorithms could eliminate this vulnerability while introducing communication complexity and Byzantine fault tolerance requirements.
 
 \subsection{Fleet Scalability}
 
-The system supports fleets of three to twelve UAVs. Beyond this scale, two constraints become significant. Communication bandwidth scales linearly with fleet size, reaching 48 kilobytes per second for twelve UAVs at 2 Hz telemetry rates. Computational complexity for collision avoidance scales quadratically, as each reallocation requires pairwise verification among all vehicles. At twenty UAVs, collision checking workload increases 2.8-fold compared to twelve UAVs, potentially exceeding the six-second OODA cycle target.
-
-Hierarchical architectures partitioning large fleets into coordinated subgroups, or spatial hashing for approximate collision avoidance, could enable coordination of dozens or hundreds of vehicles.
+The system supports 3--12 UAVs. Beyond this, communication bandwidth scales linearly (48 KB/s for 12 UAVs at 2 Hz) while collision avoidance complexity scales quadratically. At 20 UAVs, collision checking increases 2.8-fold, potentially exceeding the 6-second OODA target. Hierarchical architectures or spatial hashing could enable coordination of larger fleets.
 
 \subsection{Validation Approach and Limitations}
 
 \subsubsection{Experimental Methodology}
 
-Validation employs a software-in-the-loop simulation framework with deterministic failure injection, enabling controlled and reproducible experiments. The methodology proceeds in four stages:
+Validation employs software-in-the-loop simulation with deterministic failure injection:
 
 \begin{enumerate}
-\item \textbf{Scenario Definition:} Each experiment specifies mission type (surveillance, SAR, delivery), fleet size, task distribution, and failure events with precise timing and affected UAVs.
+\item \textbf{Scenario Definition:} Mission type, fleet size, task distribution, and failure events with timing.
 
-\item \textbf{Baseline Comparison:} Three strategies are evaluated under identical conditions: (a) \textit{No Adaptation}---tasks remain assigned to failed UAVs, establishing coverage loss baseline; (b) \textit{Greedy Nearest}---assigns orphaned tasks to nearest capable UAV without pre-validation, measuring constraint violation frequency; (c) \textit{OODA}---the proposed constraint-aware approach with pre-allocation validation.
+\item \textbf{Baseline Comparison:} Three strategies under identical conditions: (a) \textit{No Adaptation}---coverage loss baseline; (b) \textit{Greedy Nearest}---no pre-validation; (c) \textit{OODA}---constraint-aware pre-allocation.
 
-\item \textbf{Statistical Validation:} Each scenario executes N=30 independent runs to establish statistical significance. Results report mean $\pm$ standard deviation with 95\% confidence intervals, ensuring reproducibility claims are quantified rather than anecdotal.
+\item \textbf{Statistical Validation:} N=30 runs per scenario with mean $\pm$ std and 95\% confidence intervals.
 
-\item \textbf{Metrics Collection:} Coverage recovery percentage, OODA computation time, constraint violations, and escalation events are recorded per run and aggregated across the statistical ensemble.
+\item \textbf{Metrics Collection:} Coverage recovery, OODA time, constraint violations, and escalation events.
 \end{enumerate}
-
-This methodology isolates the contribution of constraint-aware decision-making by holding environmental variables constant while varying only the reallocation strategy.
 
 \subsubsection{Simulation Limitations}
 
-Current validation relies exclusively on software-in-the-loop simulation using physics-based models representative of mid-size commercial quadrotors. While appropriate for algorithm development, simulation abstracts real-world phenomena including GPS multipath errors, communication packet corruption, sensor noise, and environmental disturbances.
-
-Hardware-in-the-loop testing with physical flight controllers would capture timing constraints and communication latencies. Field trials with two to three UAVs would expose the system to genuine environmental challenges, establishing the operational envelope for reliable performance.
+Current validation relies on software-in-the-loop simulation with physics-based quadrotor models. While appropriate for algorithm development, simulation abstracts GPS multipath, packet corruption, sensor noise, and environmental disturbances. Hardware-in-the-loop testing and field trials would establish operational reliability bounds.
 
 \section{Algorithmic Limitations}
 
 \subsection{Greedy Task Reallocation}
 
-The constraint-aware reallocation algorithm employs a greedy heuristic that assigns tasks to the nearest UAV satisfying capacity constraints. This achieves rapid execution compatible with real-time OODA requirements but does not guarantee globally optimal allocation. Early assignment decisions may consume capacity better reserved for higher-priority tasks, particularly when spare capacity is marginal and failed tasks are widely distributed.
-
-Mixed-integer linear programming could guarantee optimal solutions though solution times may exceed OODA cycle budgets. Auction-based algorithms, particularly the Consensus-Based Bundle Algorithm, offer near-optimal solutions through distributed iterative bidding with polynomial-time complexity.
+The greedy heuristic assigns tasks to the nearest constraint-satisfying UAV, achieving rapid execution but not globally optimal allocation. Mixed-integer linear programming could guarantee optimality, though solution times may exceed OODA budgets. Auction-based algorithms (Consensus-Based Bundle Algorithm) offer near-optimal solutions with polynomial complexity.
 
 \subsection{Simplified Collision Avoidance}
 
-The collision avoidance strategy maintains fifteen-meter spatial separation with temporal deconfliction when conflicts arise. This proves sufficient for sparse operational densities but exhibits limitations in dense flight patterns. The fixed safety buffer does not adapt to relative velocities, and the pairwise verification approach does not efficiently handle complex multi-vehicle conflicts.
-
-Velocity obstacle approaches (Reciprocal Velocity Obstacles) and model predictive control formulations could extend applicability to urban air mobility scenarios with higher flight densities.
+The 15-meter spatial separation with temporal deconfliction suffices for sparse densities but exhibits limitations in dense patterns: the fixed buffer ignores relative velocities, and pairwise verification scales poorly. Velocity obstacle approaches and model predictive control could extend applicability to urban air mobility.
 
 \section{Application Scope}
 
-The system addresses three mission classes: long-duration surveillance, emergency search and rescue, and priority-based delivery. These applications share waypoint-based navigation, quantifiable task priorities, and tolerance for mission degradation under resource constraints.
-
-However, this focused scope excludes mission types with different requirements. Aggressive formation flying demands tighter coordination and higher-bandwidth communication than the current 2 Hz telemetry supports. Adversarial scenarios require game-theoretic reasoning and adversarial prediction beyond current OODA capabilities. Time-critical interception missions may need more sophisticated trajectory optimization than waypoint following provides.
-
-Extending to these domains could involve augmented OODA loops for formation flying or game-theoretic task allocation for adversarial scenarios, broadening applicability while preserving core OODA principles.
+The system addresses surveillance, SAR, and delivery---missions sharing waypoint navigation, quantifiable priorities, and tolerance for degradation. Excluded are formation flying (requires tighter coordination than 2 Hz telemetry), adversarial scenarios (requires game-theoretic reasoning), and time-critical interception (requires trajectory optimization beyond waypoint following). Extensions could involve augmented OODA loops or game-theoretic allocation.
 
 \section{Future Research Directions}
 
-\textbf{Near-term enhancements} include validation across all twenty-seven planned scenarios, sensitivity analysis of safety reserves (5--20\% battery), and environmental modeling incorporating turbulence effects.
+\textbf{Near-term:} Validation across all 27 scenarios, battery reserve sensitivity analysis (5--20\%), turbulence modeling.
 
-\textbf{Medium-term objectives} encompass hardware-in-the-loop testing via PX4 SITL, field demonstrations revealing GPS and RF interference challenges, and distributed OODA architectures with consensus-based decision-making. Auction mechanisms such as the Consensus-Based Bundle Algorithm require attention to Byzantine fault tolerance. Formal verification using model checking and temporal logic could guarantee constraint satisfaction and liveness properties.
+\textbf{Medium-term:} Hardware-in-the-loop via PX4 SITL, field demonstrations exposing GPS/RF interference, distributed OODA with consensus decision-making, formal verification via model checking.
 
-\textbf{Long-term frontiers} involve machine learning for priority optimization---neural networks for battery prediction, reinforcement learning for adaptive OODA tuning---and game-theoretic analysis for adversarial scenarios (Stackelberg formulations, Nash equilibria). Fleet heterogeneity with mixed vehicle capabilities and swarm coordination for fleets exceeding fifty vehicles demand hierarchical architectures and allocation strategies exploiting complementary strengths.
+\textbf{Long-term:} Machine learning for priority optimization (neural battery prediction, RL for OODA tuning), game-theoretic adversarial analysis, fleet heterogeneity, and swarm coordination (50+ vehicles) requiring hierarchical architectures.
 
 \section{Concluding Perspective}
 
-The limitations discussed reflect conscious design choices prioritizing practical deployability over theoretical completeness. The centralized architecture enables regulatory compliance and deterministic performance. The greedy allocation strategy trades global optimality for real-time responsiveness. The constraint-aware approach acknowledges physical limitations rather than assuming unlimited resources.
+These limitations reflect design choices prioritizing deployability over theoretical completeness. Centralized architecture enables regulatory compliance; greedy allocation trades optimality for real-time responsiveness; constraint awareness acknowledges physical limitations.
 
-A system achieving 65--95\% autonomous coverage recovery within realistic bounds provides more value than theoretical frameworks promising perfect adaptation under idealized assumptions. The identified future work charts a path toward enhanced capabilities while maintaining honest, deployable autonomy.
-
-As multi-agent UAV coordination matures, the research community must prioritize systems bridging the gap between laboratory demonstration and operational deployment. This requires explicit modeling of real-world constraints, acknowledgment of fundamental limitations, and design of hybrid human-machine systems leveraging complementary strengths of autonomous algorithms and human supervisory control. The present work contributes to this maturation by demonstrating that constraint-aware, operator-supervised fault tolerance represents the appropriate architecture for near-term UAV fleet deployments in regulated, safety-critical applications.
+A system achieving 65--95\% autonomous recovery within realistic bounds provides more value than theoretical frameworks promising perfection under idealized assumptions. As multi-agent coordination matures, the community must prioritize systems bridging laboratory demonstration and operational deployment through explicit constraint modeling and hybrid human-machine architectures. This work demonstrates that constraint-aware, operator-supervised fault tolerance is the appropriate architecture for near-term UAV deployments in regulated, safety-critical applications.
 
 \chapter{Conclusion}
 
-This research addresses the methodological gap between theoretical fault tolerance mechanisms and deployable autonomous UAV systems through the design, implementation, and validation of a constraint-aware multi-agent coordination framework. By explicitly modeling operational constraints---energy limitations, payload capacity, and regulatory airspace boundaries---the proposed hybrid OODA architecture provides quantified mission completion assistance within realistic operational bounds, advancing beyond idealized fault tolerance assumptions prevalent in existing literature.
+This research addresses the gap between theoretical fault tolerance and deployable UAV systems through a constraint-aware multi-agent coordination framework. By explicitly modeling energy, payload, and regulatory constraints, the hybrid OODA architecture provides quantified mission assistance within realistic bounds, advancing beyond idealized assumptions in existing literature.
 
 \section{Summary of Contributions}
 
-The research objectives established in Chapter 1 have been systematically addressed through the development and empirical validation of the proposed framework.
+The research objectives from Chapter 1 have been systematically addressed:
 
-\textbf{SO1 (Hybrid OODA-FSM Architecture):} The centralized OODA Loop Engine integrated with a deterministic finite-state machine was successfully implemented, enabling formally verifiable state transitions with probabilistic failure identification. The architecture maintains compliance with Beyond Visual Line of Sight (BVLOS) operational requirements through explicit regulatory boundary enforcement.
+\textbf{SO1 (Hybrid OODA-FSM Architecture):} Centralized OODA Engine with deterministic FSM enables verifiable state transitions and probabilistic failure identification, maintaining BVLOS compliance through regulatory boundary enforcement.
 
-\textbf{SO2 (Multi-Modal Failure Detection):} Fault detection mechanisms operating at 2 Hz telemetry acquisition frequency were validated across three complementary pathways: communication timeout detection (1.5-second threshold), explicit fault code recognition, and statistical anomaly detection. Empirical results confirm reliable detection of abnormal battery discharge rates (>5\% per 30-second window), position discontinuities (>100m), and altitude constraint violations.
+\textbf{SO2 (Multi-Modal Failure Detection):} 2 Hz telemetry validated across communication timeout (1.5s), fault code recognition, and anomaly detection (battery discharge >5\%/30s, position discontinuities >100m, altitude violations).
 
-\textbf{SO3 (Constraint-Aware Task Reallocation):} The priority-based allocation algorithms demonstrated effective joint optimization across energy reserves (20\% safety margin), payload capacity limitations, temporal deadlines, and collision avoidance requirements (15m spatial separation). Sequential fail-fast constraint verification ensures physically realizable mission plans, with delivery scenarios correctly identifying infeasible reallocations and escalating to operator intervention.
+\textbf{SO3 (Constraint-Aware Task Reallocation):} Priority-based allocation jointly optimizes energy reserves (20\% margin), payload limits, deadlines, and collision avoidance (15m). Fail-fast verification ensures realizable plans; infeasible reallocations escalate to operators.
 
-\textbf{SO4 (Operator Escalation Framework):} Graduated escalation policies were validated through experimental scenarios: operator escalation for coverage recovery below 50\%, partial reallocation for degradation within 50--75\%, and autonomous full reallocation above 75\% recovery. This framework preserves human authority over safety-critical determinations while maximizing autonomous response capability.
+\textbf{SO4 (Operator Escalation Framework):} Graduated escalation validated: operator involvement below 50\% recovery, partial reallocation at 50--75\%, autonomous above 75\%.
 
-\textbf{SO5 (Statistical Validation):} Rigorous validation (N=30 independent trials per experimental condition) across surveillance, search-and-rescue, and delivery mission typologies yielded quantified metrics for coverage recovery percentage, adaptation latency, and escalation appropriateness. Results demonstrate complete coverage recovery for surveillance and search-and-rescue missions, with delivery scenarios exhibiting appropriate constraint-driven escalation behavior.
+\textbf{SO5 (Statistical Validation):} N=30 trials per condition across mission types. Complete recovery for surveillance and SAR; appropriate escalation for delivery.
 
-\textbf{SO6 (Real-Time Performance):} Statistical validation demonstrates mean computation times of 0.10--0.88 milliseconds for OODA cycle algorithmic processing, with 95\% confidence intervals confirming consistent sub-millisecond performance. Combined with projected communication latency (~2 seconds), end-to-end system response of approximately 2.2 seconds satisfies the 6-second design target (OBSERVE <500ms, ORIENT <500ms, DECIDE <1200ms, ACT <300ms).
+\textbf{SO6 (Real-Time Performance):} Mean OODA computation 0.10--0.88 ms with 95\% CI confirming sub-millisecond performance. End-to-end ~2.2s satisfies 6-second target.
 
-\textbf{SO7 (Safety Constraint Satisfaction):} Zero safety violations were recorded across all 150 statistical runs and 169 automated test cases, empirically validating that the constraint-aware architecture maintains safety invariants---battery reserves, payload limits, spatial separation, and regulatory boundaries---without compromising mission coverage objectives.
+\textbf{SO7 (Safety Constraint Satisfaction):} Zero violations across 150 runs and 169 tests, validating constraint maintenance without compromising coverage.
 
 \section{Principal Findings}
 
-The experimental results yield a central insight: \textit{selective autonomy}---characterized by aggressive adaptation when operationally feasible and intelligent refusal when constraints preclude safe execution---demonstrates superior practical value compared to unconstrained systems that risk safety violations. In time-critical search-and-rescue operations, sub-millisecond fault recovery ensures adaptation overhead remains negligible relative to mission duration, preserving maximum operational time during golden-hour scenarios.
+The central insight: \textit{selective autonomy}---aggressive adaptation when feasible, intelligent refusal when constraints preclude safety---demonstrates superior practical value over unconstrained systems risking violations. Sub-millisecond recovery ensures adaptation overhead remains negligible in golden-hour SAR scenarios.
 
-The three principal technical contributions---resource-aware reallocation, priority-based partial coverage, and graduated operator escalation---function synergistically to balance autonomous response latency with human oversight requirements, establishing suitability for deployment under current regulatory frameworks.
+The three contributions---resource-aware reallocation, priority-based partial coverage, and graduated escalation---synergistically balance autonomous response with human oversight for regulatory compliance.
 
 \section{Limitations and Threats to Validity}
 
-These findings must be interpreted within acknowledged methodological constraints. The centralized Ground Control Station architecture introduces a single-point-of-failure vulnerability; while individual UAVs implement autonomous Return-to-Launch protocols upon communication timeout, fleet-level adaptive coordination ceases during GCS failure. The greedy allocation strategy prioritizes real-time responsiveness over global optimality, potentially yielding suboptimal task assignments under marginal spare capacity conditions.
+Findings must be interpreted within methodological constraints. The centralized GCS introduces single-point-of-failure vulnerability; fleet coordination ceases during GCS failure (UAVs implement Return-to-Launch). Greedy allocation prioritizes responsiveness over global optimality.
 
-Most significantly, validation remains exclusively software-in-the-loop, without exposure to field deployment conditions including GPS multipath errors, radio frequency interference, environmental turbulence, and sensor noise characteristic of operational environments. Hardware-in-the-loop testing and controlled field trials constitute essential validation steps prior to operational deployment.
+Validation remains software-in-the-loop without field exposure to GPS multipath, RF interference, turbulence, and sensor noise. Hardware-in-the-loop and field trials are essential prior to deployment.
 
 \section{Future Research Directions}
 
-Several research trajectories emerge from this work: (i) distributed OODA architectures eliminating single-point-of-failure vulnerabilities, (ii) machine learning approaches for predictive failure detection based on historical telemetry patterns, (iii) formal verification of safety constraint satisfaction guarantees, and (iv) field validation under realistic environmental conditions.
+Research trajectories: (i) distributed OODA eliminating single-point failures, (ii) ML for predictive failure detection, (iii) formal safety verification, (iv) field validation under realistic conditions.
 
 \section{Concluding Remarks}
 
-This research demonstrates that constraint-aware, operator-supervised fault tolerance constitutes a viable architectural paradigm for near-term UAV fleet deployments in regulated, safety-critical applications. The methodological contribution lies not in claiming unrestricted autonomy, but in designing hybrid human-machine systems that explicitly acknowledge physical and regulatory limitations while maximizing autonomous capability within those bounds. The proposed framework bridges theoretical fault tolerance research and practical deployment requirements, contributing toward the broader objective of dependable autonomous aerial systems.
+This research demonstrates that constraint-aware, operator-supervised fault tolerance constitutes a viable paradigm for near-term UAV fleet deployments. The contribution lies not in claiming unrestricted autonomy, but in designing hybrid human-machine systems acknowledging physical and regulatory limitations while maximizing autonomous capability within those bounds---bridging theoretical research and practical deployment toward dependable autonomous aerial systems.
 
 % ====================================
 % REFERENCES
